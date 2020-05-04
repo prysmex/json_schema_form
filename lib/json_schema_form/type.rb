@@ -1,6 +1,4 @@
-require_relative 'type/structt'
 require_relative 'type/base'
-require_relative 'type/builder'
 require_relative 'type/array'
 require_relative 'type/boolean'
 require_relative 'type/null'

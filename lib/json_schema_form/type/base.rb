@@ -1,53 +1,78 @@
+require_relative '../custom_struct'
+
 module JsonSchemaForm
   module Type
 
-    # module Test
-    #   def initialize(obj, parent=nil)
-    #     deep_symbolize!(obj)
-    #     super(obj)
-    #   end
-    # end
+    class Base < JsonSchemaForm::CustomStruct
 
-    class Base < Structt
+      BUILDER = Proc.new do |obj, parent|
 
-      # include JsonSchemaForm::Type::Test
+        klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.classify}"
+        klass = klass_name.constantize
+        type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:parent]) }
+        type[{obj: obj, parent: parent}]
 
-      property :'$id'
-      property :'$schema'
-      property :type
-      property :title
-      property :description, required: -> { _title.nil? }, message: 'is required if title is not set.'
-      property :default, required: true
-      property :examples
+        # case obj[:type]
+        # when 'string', :string
+        #   JsonSchemaForm::Type::String.new(obj, parent)
+        # when 'number', :number, 'integer', :integer
+        #   JsonSchemaForm::Type::Number.new(obj, parent)
+        # when 'boolean', :boolean
+        #   JsonSchemaForm::Type::Boolean.new(obj, parent)
+        # when 'array', :array
+        #   JsonSchemaForm::Type::Array.new(obj, parent)
+        # when 'object', :object
+        #   JsonSchemaForm::Type::Object.new(obj, parent)
+        # when 'null', :null
+        #   JsonSchemaForm::Type::Null.new(obj, parent)
+        # else
+        #   raise StandardError.new('schema type is not valid')
+        # end
+      end
 
-      # def key_name
-      #   id&.gsub(/^(.*[\\\/])/, '')
-      # end
+      attr_reader :parent
 
-      # def _required?
-      #   if parent&.type == 'object'
-      #     parent.required.include?(key_name)
-      #   end
-      # end
+      def initialize(obj, parent=nil, &block)
+        @parent = parent
+        super(obj, &block)
+      end
 
-      # def validations
-      #   {
-      #     required: _required?
-      #   }
-      # end
+      attribute :'$id', {
+        type: Types::String.default('http://example.com/example.json')
+      }
+      attribute :'$schema', {
+        type: Types::String.default('http://json-schema.org/draft-07/schema#')
+      }
+      attribute :type, {
+        type: Types::String.enum('array','boolean','null','number','object','string')
+      }
+      attribute :title, {
+        type: Types::String
+      }
+      attribute? :description, {
+        type: Types::String,
+        # default: ->(instance) { instance[:title] }
+      }
+      attribute? :default
+      attribute? :examples
 
-      private
-    
-      def deep_symbolize!(object)
-        case object
-        when Hash
-          object.transform_keys!(&:to_sym)
-        when Array
-          object.map { |val| deep_symbolize! val }
-        else
-          raise StandardError.new('error')
+      def key_name
+        self[:'$id']&.gsub(/^(.*[\\\/])/, '')
+      end
+
+      def required?
+        if parent && parent[:type] == 'object'
+          parent[:required].include?(key_name)
         end
       end
+
+      def validations
+        {
+          required: required?
+        }
+      end
+
+      private
 
     end
   end

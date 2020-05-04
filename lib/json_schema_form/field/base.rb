@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class Base
+    class Base < JsonSchemaForm::CustomStruct
       
     end
   end
