@@ -11,7 +11,6 @@ module JsonSchemaForm
         klass = klass_name.constantize
         type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:parent]) }
         type[{obj: obj, parent: parent}]
-
         # case obj[:type]
         # when 'string', :string
         #   JsonSchemaForm::Type::String.new(obj, parent)
@@ -46,7 +45,7 @@ module JsonSchemaForm
       attribute :type, {
         type: Types::String.enum('array','boolean','null','number','object','string')
       }
-      attribute :title, {
+      attribute? :title, {
         type: Types::String
       }
       attribute? :description, {

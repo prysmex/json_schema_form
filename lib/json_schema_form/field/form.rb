@@ -17,7 +17,11 @@ module JsonSchemaForm
         when 'boolean', :boolean
           JsonSchemaForm::Field::Switch.new(obj, parent)
         when 'array', :array
-          JsonSchemaForm::Field::Hey.new(obj, parent)
+          if true
+            JsonSchemaForm::Field::Checkbox.new(obj, parent)
+          else
+            # JsonSchemaForm::Field::Hey.new(obj, parent)
+          end
         # when 'object', :object
         #   JsonSchemaForm::Field::Object.new(obj, parent)
         when 'null', :null

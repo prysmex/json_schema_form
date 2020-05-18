@@ -4,16 +4,16 @@ module JsonSchemaForm
 
       ITEMS_PROC = ->(instance, value) {
         if value.is_a?(::Array)
-          value.map{|i| Builder.build_schema(i, instance) }
+          value.map{|i| BUILDER.call(i, instance) }
         elsif value.is_a?(::Hash)
-          Builder.build_schema(value, instance)
+          BUILDER.call(value, instance)
         else
           raise StandardError.new('invalid items')
         end
       }
 
       CONTAINS_PROC = ->(instance, value) {
-        Builder.build_schema(value, instance) if value.present?
+        BUILDER.call(value, instance) if value.present?
       }
 
       attribute :type, {
