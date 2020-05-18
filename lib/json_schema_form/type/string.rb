@@ -2,11 +2,16 @@ module JsonSchemaForm
   module Type
     class String < Base
 
+      attribute :type, {
+        type: Types::String.enum('string')
+      }
       attribute? :minLength
       attribute? :maxLength
       attribute? :pattern
       attribute? :format
-      attribute? :enum
+      attribute? :enum, {
+        type: Types::Array.optional#.of(Types::String)
+      }
 
       def validations
         super.merge({

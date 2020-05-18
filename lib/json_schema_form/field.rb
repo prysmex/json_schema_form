@@ -1,1 +1,9 @@
-Dir[ File.expand_path('../field/**.rb', __FILE__) ].each   { |f| require f }
+require_relative 'field/form'
+require_relative 'field/checkbox'
+require_relative 'field/date_input'
+require_relative 'field/header'
+require_relative 'field/number_input'
+require_relative 'field/select'
+require_relative 'field/static'
+require_relative 'field/switch'
+require_relative 'field/text_input'

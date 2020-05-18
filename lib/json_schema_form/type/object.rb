@@ -7,13 +7,13 @@ module JsonSchemaForm
         value.each do |name, definition|
           property = BUILDER.call(definition, instance)
           hash[name] = property
-          hash.singleton_class.define_method("#{PREFIX}#{name}".to_sym) do
-            property
-          end
         end
         hash
       }
 
+      attribute :type, {
+        type: Types::String.enum('object')
+      }
       attribute :required, type: Types::Array.default([].freeze)
       attribute :properties, type: Types::Hash.default({}.freeze), transform: PROPERTIES_PROC
 
@@ -28,9 +28,11 @@ module JsonSchemaForm
       ###property management###
   
       def add_property(id, definition)
-        hash = {}
-        hash[id] = definition
-        hash = self[:properties].as_json.merge(hash)
+        new_definition = {}.merge(definition)
+        new_definition[:'$id'] = "/properties/#{id}"
+
+        hash = self[:properties].as_json
+        hash[id] = new_definition
         self[:properties] = self.class.deep_symbolize!(hash)
       end
 

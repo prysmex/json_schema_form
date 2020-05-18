@@ -20,7 +20,7 @@ module JsonSchemaForm
     # * <tt>:default</tt> - Default value that can also be a proc evaluated at the instance level
     # * <tt>:transform</tt> - A proc that will be evaluated at the instance level
 
-    PREFIX = '_'.freeze
+    # PREFIX = '_'.freeze
 
     def self.attribute?(attribute_name, options = {})
       options = options.merge({required: false})
@@ -34,8 +34,8 @@ module JsonSchemaForm
 
     def self._register_attribute(attribute_name, options)
       attributes[attribute_name] = options
-      define_getter_for(attribute_name)
-      define_setter_for(attribute_name)
+      # define_getter_for(attribute_name)
+      # define_setter_for(attribute_name)
 
       @subclasses.each { |klass| klass.attribute(attribute_name, options) } if defined? @subclasses
       self
@@ -55,22 +55,22 @@ module JsonSchemaForm
     end
 
     # define a getter for a attribute
-    private_class_method def self.define_getter_for(attribute_name)
-      prefixed_attribute_name = :"#{PREFIX}#{attribute_name}"
-      if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
-        raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
-      end
-      define_method(prefixed_attribute_name) { |&block| self.[](attribute_name, &block) }
-    end
+    # private_class_method def self.define_getter_for(attribute_name)
+    #   prefixed_attribute_name = :"#{PREFIX}#{attribute_name}"
+    #   if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
+    #     raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
+    #   end
+    #   define_method(prefixed_attribute_name) { |&block| self.[](attribute_name, &block) }
+    # end
 
     # define a setter for a attribute
-    private_class_method def self.define_setter_for(attribute_name)
-      prefixed_attribute_name = :"#{PREFIX}#{attribute_name}="
-      if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
-        raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
-      end
-      define_method(prefixed_attribute_name) { |value| self.[]=(attribute_name, value) }
-    end
+    # private_class_method def self.define_setter_for(attribute_name)
+    #   prefixed_attribute_name = :"#{PREFIX}#{attribute_name}="
+    #   if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
+    #     raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
+    #   end
+    #   define_method(prefixed_attribute_name) { |value| self.[]=(attribute_name, value) }
+    # end
 
     # Check to see if the specified attribute has already been
     # defined.

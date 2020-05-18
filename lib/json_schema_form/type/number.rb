@@ -2,6 +2,9 @@ module JsonSchemaForm
   module Type
     class Number < Base
 
+      attribute :type, {
+        type: Types::String.enum('number')
+      }
       attribute? :multipleOf
       attribute? :minimum
       attribute? :maximum

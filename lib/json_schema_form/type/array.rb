@@ -16,12 +16,15 @@ module JsonSchemaForm
         Builder.build_schema(value, instance) if value.present?
       }
 
+      attribute :type, {
+        type: Types::String.enum('array')
+      }
       attribute? :items, {
-        type: (Types::Array | Types::Hash),
+        # type: (Types::Array | Types::Hash),
         transform: ITEMS_PROC
       }
       attribute? :contains, {
-        type: (Types::Array | Types::Hash),
+        # type: (Types::Array | Types::Hash),
         transform: CONTAINS_PROC
       }
       attribute? :additionalItems, {
