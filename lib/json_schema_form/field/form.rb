@@ -47,9 +47,9 @@ module JsonSchemaForm
       }
 
       attribute :properties, type: Types::Hash.default({}.freeze), transform: FORM_PROPERTIES_PROC
-      attribute :sortable
-      attribute :score
-      attribute :allOf, type: Types::Array.default([].freeze)#, transform: All_OF_PROC
+      attribute? :sortable
+      attribute? :score
+      attribute? :allOf, type: Types::Array.default([].freeze)#, transform: All_OF_PROC
 
       ####property management
 
