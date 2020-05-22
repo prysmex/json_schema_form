@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class Header < ::JsonSchemaForm::Type::Null
+    class Info < ::JsonSchemaForm::Type::Null
       
       attribute :displayProperties, {
         type: Types::Hash.schema(
