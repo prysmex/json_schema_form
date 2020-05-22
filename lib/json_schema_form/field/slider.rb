@@ -14,7 +14,8 @@ module JsonSchemaForm
             label: Types::Bool
           ),
           sort: Types::Integer,
-          hidden: Types::Bool
+          hidden: Types::Bool,
+          useSlider: Types::Bool
         ).strict
       }
 
