@@ -13,13 +13,17 @@ module JsonSchemaForm
             JsonSchemaForm::Field::TextInput.new(obj, parent)
           end
         when 'number', :number, 'integer', :integer
-          JsonSchemaForm::Field::NumberInput.new(obj, parent)
+          if obj[:displayProperties].try(:[], :useSlider)
+            JsonSchemaForm::Field::Slider.new(obj, parent)
+          else
+            JsonSchemaForm::Field::NumberInput.new(obj, parent)
+          end
         when 'boolean', :boolean
           JsonSchemaForm::Field::Switch.new(obj, parent)
         when 'array', :array
           if true
             JsonSchemaForm::Field::Checkbox.new(obj, parent)
-          else
+          # else
             # JsonSchemaForm::Field::Hey.new(obj, parent)
           end
         # when 'object', :object
@@ -27,6 +31,8 @@ module JsonSchemaForm
         when 'null', :null
           if obj[:displayProperties].try(:[], :useHeader)
             JsonSchemaForm::Field::Header.new(obj, parent)
+          elsif obj[:displayProperties].try(:[], :useInfo)
+            JsonSchemaForm::Field::Info.new(obj, parent)
           elsif obj[:static]
             JsonSchemaForm::Field::Static.new(obj, parent)
           else
