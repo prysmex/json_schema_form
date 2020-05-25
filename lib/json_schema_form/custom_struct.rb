@@ -156,7 +156,7 @@ module JsonSchemaForm
     # Retrieve a value (will return the
     # attribute's default value if it hasn't been set).
     def [](attribute)
-      assert_attribute_exists! attribute
+      # assert_attribute_exists! attribute
       value = super(attribute)
       # If the value is a lambda, proc, or whatever answers to call, eval the thing!
       if value.is_a? Proc
