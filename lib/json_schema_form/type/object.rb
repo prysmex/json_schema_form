@@ -3,12 +3,21 @@ module JsonSchemaForm
     class Object < Base
 
       PROPERTIES_PROC = ->(instance, value) {
-        hash = {}
-        value.each do |name, definition|
-          property = BUILDER.call(definition, instance)
-          hash[name] = property
+        value.transform_values do |definition|
+          BUILDER.call(definition, instance)
         end
-        hash
+      }
+
+      All_OF_PROC = ->(instance, value) {
+        value.map do |obj|
+          schema_object = JsonSchemaForm::Type::Object.new(
+            obj[:then].merge(skip_required_attrs: [:type]), 
+            instance
+          )
+          obj.merge({
+            then: schema_object
+          })
+        end
       }
 
       attribute :type, {
@@ -16,6 +25,12 @@ module JsonSchemaForm
       }
       attribute :required, type: Types::Array.default([].freeze)
       attribute :properties, type: Types::Hash.default({}.freeze), transform: PROPERTIES_PROC
+      attribute? :allOf, type: Types::Array.default([].freeze).of(
+        Types::Hash.schema(
+          if: Types::Hash,
+          then: Types::Hash
+        )
+      ), transform: All_OF_PROC
 
       def validations
         hash = super

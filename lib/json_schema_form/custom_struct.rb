@@ -16,11 +16,26 @@ module JsonSchemaForm
     # as follows:
     #
     # * <tt>:type</tt> - Dry Type definition
-    # * <tt>:required</tt> - Validate presence of the attribute's key
     # * <tt>:default</tt> - Default value that can also be a proc evaluated at the instance level
     # * <tt>:transform</tt> - A proc that will be evaluated at the instance level
 
     # PREFIX = '_'.freeze
+
+    def self.deep_symbolize!(object)
+      case object
+      when Hash
+        object.each do |k, v|
+          if v.is_a?(::Hash)
+            deep_symbolize! v
+          end
+        end
+        object.transform_keys!(&:to_sym)
+      when Array
+        object.map { |val| deep_symbolize! val }
+      else
+        raise StandardError.new('error')
+      end
+    end
 
     def self.attribute?(attribute_name, options = {})
       options = options.merge({required: false})
@@ -34,13 +49,18 @@ module JsonSchemaForm
 
     def self._register_attribute(attribute_name, options)
       attributes[attribute_name] = options
-      # define_getter_for(attribute_name)
-      # define_setter_for(attribute_name)
 
-      @subclasses.each { |klass| klass.attribute(attribute_name, options) } if defined? @subclasses
+      if defined? @subclasses
+        if options[:required]
+          @subclasses.each{ |klass| klass.attribute(attribute_name, options) }
+        else
+          @subclasses.each{ |klass| klass.attribute?(attribute_name, options) }
+        end
+      end
       self
     end
 
+    #class level getter for attributes
     class << self
       attr_reader :attributes
     end
@@ -54,24 +74,6 @@ module JsonSchemaForm
       klass.instance_variable_set('@attributes', attributes.dup)
     end
 
-    # define a getter for a attribute
-    # private_class_method def self.define_getter_for(attribute_name)
-    #   prefixed_attribute_name = :"#{PREFIX}#{attribute_name}"
-    #   if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
-    #     raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
-    #   end
-    #   define_method(prefixed_attribute_name) { |&block| self.[](attribute_name, &block) }
-    # end
-
-    # define a setter for a attribute
-    # private_class_method def self.define_setter_for(attribute_name)
-    #   prefixed_attribute_name = :"#{PREFIX}#{attribute_name}="
-    #   if instance_methods.include?(prefixed_attribute_name) && !attributes.keys.include?(attribute_name)
-    #     raise StandardError.new('invalid attribute since it is an instance method of Hash' + attribute_name.to_s)
-    #   end
-    #   define_method(prefixed_attribute_name) { |value| self.[]=(attribute_name, value) }
-    # end
-
     # Check to see if the specified attribute has already been
     # defined.
     def self.has_attribute?(name)
@@ -84,9 +86,16 @@ module JsonSchemaForm
       !attributes.find{|prop, options| prop == name && options[:required]}.nil?
     end
 
-    # You may initialize a Dash with an attributes hash
+    attr_reader :skip_required_attrs
+
+    # You may initialize with an attributes hash
     # just like you would many other kinds of data objects.
     def initialize(attributes = {}, &block)
+
+      instance_variable_set('@skip_required_attrs',
+        attributes.delete(:skip_required_attrs) || []
+      )
+
       self.class.deep_symbolize!(attributes)
       super(&block)
 
@@ -135,7 +144,7 @@ module JsonSchemaForm
       prop = self.class.attributes.find{|prop, options| prop == name }
       name = prop[0]
       options = prop[1]
-      if options[:required] 
+      if options[:required]
         if self[name].nil? && attr_required?(name)
           raise ArgumentError, "The attribute '#{name}' is required"
         end
@@ -182,22 +191,6 @@ module JsonSchemaForm
       super(attribute, value)
     end
 
-    def self.deep_symbolize!(object)
-      case object
-      when Hash
-        object.each do |k, v|
-          if v.is_a?(::Hash)
-            deep_symbolize! v
-          end
-        end
-        object.transform_keys!(&:to_sym)
-      when Array
-        object.map { |val| deep_symbolize! val }
-      else
-        raise StandardError.new('error')
-      end
-    end
-
     private
 
     def assert_attribute_exists!(attribute)
@@ -207,6 +200,8 @@ module JsonSchemaForm
     end
 
     def attr_required?(attribute)
+
+      !skip_required_attrs.include?(attribute) &&
       self.class.attr_required?(attribute)
 
       # condition = self.class.required_attributes[attribute][:condition]

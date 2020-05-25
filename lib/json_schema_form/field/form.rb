@@ -21,10 +21,8 @@ module JsonSchemaForm
         when 'boolean', :boolean
           JsonSchemaForm::Field::Switch.new(obj, parent)
         when 'array', :array
-          if true
+          if true#obj[:displayProperties].try(:[], :items)
             JsonSchemaForm::Field::Checkbox.new(obj, parent)
-          # else
-            # JsonSchemaForm::Field::Hey.new(obj, parent)
           end
         # when 'object', :object
         #   JsonSchemaForm::Field::Object.new(obj, parent)
@@ -44,18 +42,32 @@ module JsonSchemaForm
       end
 
       FORM_PROPERTIES_PROC = ->(instance, value) {
-        hash = {}
-        value.each do |name, definition|
-          property = FORM_BUILDER_PROC.call(definition, instance)
-          hash[name] = property
+        value.transform_values do |definition|
+          FORM_BUILDER_PROC.call(definition, instance)
         end
-        hash
+      }
+
+      FORM_All_OF_PROC = ->(instance, value) {
+        value.map do |obj|
+          schema_object = JsonSchemaForm::Field::Form.new(
+            obj[:then].merge(skip_required_attrs: [:type]), 
+            instance
+          )
+          obj.merge({
+            then: schema_object
+          })
+        end
       }
 
       attribute :properties, type: Types::Hash.default({}.freeze), transform: FORM_PROPERTIES_PROC
       attribute? :sortable
       attribute? :score
-      attribute? :allOf, type: Types::Array.default([].freeze)#, transform: All_OF_PROC
+      attribute? :allOf, type: Types::Array.default([].freeze).of(
+        Types::Hash.schema(
+          if: Types::Hash,
+          then: Types::Hash
+        )
+      ), transform: FORM_All_OF_PROC
 
       ####property management
 
