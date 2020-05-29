@@ -92,13 +92,15 @@ module JsonSchemaForm
     # just like you would many other kinds of data objects.
     def initialize(attributes = {}, &block)
 
+      
       instance_variable_set('@skip_required_attrs',
         attributes.delete(:skip_required_attrs) || []
       )
-
-      self.class.deep_symbolize!(attributes)
+      
+      #handle ActiveSupport::HashWithIndifferentAccess
+      self.class.deep_symbolize!(attributes&.as_json)
       super(&block)
-
+      
       #set attributes
       attributes.each do |att, value|
         self[att] = value
