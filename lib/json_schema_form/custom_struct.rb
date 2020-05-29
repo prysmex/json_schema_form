@@ -95,7 +95,7 @@ module JsonSchemaForm
       #handle ActiveSupport::HashWithIndifferentAccess
       attributes = attributes&.as_json
       
-      self.class.deep_symbolize!(attributes&.as_json)
+      self.class.deep_symbolize!(attributes)
       super(&block)
 
       instance_variable_set('@skip_required_attrs',
