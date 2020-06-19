@@ -13,7 +13,7 @@ module JsonSchemaForm
             JsonSchemaForm::Field::TextInput.new(obj, parent)
           end
         when 'number', :number, 'integer', :integer
-          if obj[:displayProperties].try(:[], :useSlider)
+          if obj&.dig(:displayProperties, :useSlider)
             JsonSchemaForm::Field::Slider.new(obj, parent)
           else
             JsonSchemaForm::Field::NumberInput.new(obj, parent)
@@ -21,15 +21,15 @@ module JsonSchemaForm
         when 'boolean', :boolean
           JsonSchemaForm::Field::Switch.new(obj, parent)
         when 'array', :array
-          if true#obj[:displayProperties].try(:[], :items)
+          if true#obj&.dig(:displayProperties, :items)
             JsonSchemaForm::Field::Checkbox.new(obj, parent)
           end
         # when 'object', :object
         #   JsonSchemaForm::Field::Object.new(obj, parent)
         when 'null', :null
-          if obj[:displayProperties].try(:[], :useHeader)
+          if obj&.dig(:displayProperties, :useHeader)
             JsonSchemaForm::Field::Header.new(obj, parent)
-          elsif obj[:displayProperties].try(:[], :useInfo)
+          elsif obj&.dig(:displayProperties, :useInfo)
             JsonSchemaForm::Field::Info.new(obj, parent)
           elsif obj[:static]
             JsonSchemaForm::Field::Static.new(obj, parent)
@@ -111,15 +111,15 @@ module JsonSchemaForm
       ###sorting###
 
       def min_sort
-        self[:properties].map{|k,v| v[:displayProperties].try(:[], :sort) }&.min || 0
+        self[:properties].map{|k,v| v&.dig(:displayProperties, :sort) }&.min || 0
       end
   
       def max_sort
-        self[:properties].map{|k,v| v[:displayProperties].try(:[], :sort) }&.max || 0
+        self[:properties].map{|k,v| v&.dig(:displayProperties, :sort) }&.max || 0
       end
   
       def property_at_sort(i)
-        self[:properties].find{|k,v| v[:displayProperties].try(:[], :sort) == i}
+        self[:properties].find{|k,v| v&.dig(:displayProperties, :sort) == i}
       end
   
       def verify_sort_order
@@ -130,7 +130,7 @@ module JsonSchemaForm
       end
   
       def sorted_properties
-        self[:properties].values.sort_by{|v| v[:displayProperties].try(:[], :sort)}
+        self[:properties].values.sort_by{|v| v&.dig(:displayProperties, :sort)}
       end
   
       def resort!

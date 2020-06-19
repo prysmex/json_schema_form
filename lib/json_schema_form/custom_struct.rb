@@ -4,6 +4,25 @@ module Types
   include Dry.Types()
 end
 
+module SymbolizeHelper
+  def symbolize_recursive(hash)
+    {}.tap do |h|
+      hash.each { |key, value| h[key.to_sym] = map_value(value) }
+    end
+  end
+
+  def map_value(thing)
+    case thing
+    when Hash
+      symbolize_recursive(thing)
+    when Array
+      thing.map { |v| map_value(v) }
+    else
+      thing
+    end
+  end
+end
+
 module JsonSchemaForm
   # It is preferrable to a Struct because of the in-class
   # API for defining attributes as well as per-attribute defaults.
@@ -11,6 +30,7 @@ module JsonSchemaForm
   class CustomStruct < Hash
 
     include Types
+    include SymbolizeHelper
 
     # Defines a attribute. Options are
     # as follows:
@@ -20,22 +40,6 @@ module JsonSchemaForm
     # * <tt>:transform</tt> - A proc that will be evaluated at the instance level
 
     # PREFIX = '_'.freeze
-
-    def self.deep_symbolize!(object)
-      case object
-      when Hash
-        object.each do |k, v|
-          if v.is_a?(::Hash)
-            deep_symbolize! v
-          end
-        end
-        object.transform_keys!(&:to_sym)
-      when Array
-        object.map { |val| deep_symbolize! val }
-      else
-        raise StandardError.new('error')
-      end
-    end
 
     def self.attribute?(attribute_name, options = {})
       options = options.merge({required: false})
@@ -92,10 +96,7 @@ module JsonSchemaForm
     # just like you would many other kinds of data objects.
     def initialize(attributes = {}, &block)
 
-      #handle ActiveSupport::HashWithIndifferentAccess
-      attributes = attributes&.as_json
-      
-      self.class.deep_symbolize!(attributes)
+      attributes = self.symbolize_recursive(attributes)
       super(&block)
 
       instance_variable_set('@skip_required_attrs',

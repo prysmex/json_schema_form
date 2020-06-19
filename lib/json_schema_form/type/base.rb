@@ -7,8 +7,8 @@ module JsonSchemaForm
 
       BUILDER = Proc.new do |obj, parent|
 
-        klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.classify}"
-        klass = klass_name.constantize
+        klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.capitalize}"
+        klass = Object.const_get(klass_name)
         type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:parent]) }
         type[{obj: obj, parent: parent}]
         # case obj[:type]

@@ -46,9 +46,9 @@ module JsonSchemaForm
         new_definition = {}.merge(definition)
         new_definition[:'$id'] = "/properties/#{id}"
 
-        hash = self[:properties].as_json
+        hash = self[:properties]
         hash[id] = new_definition
-        self[:properties] = self.class.deep_symbolize!(hash)
+        self[:properties] = self.symbolize_recursive(hash)
       end
 
       ###required###
@@ -65,7 +65,7 @@ module JsonSchemaForm
       
       # Lists the names of the properties defined in the schema
       def property_names
-        self[:properties].try(:keys) || []
+        self&.dig(:properties, :keys) || []
       end
   
       # Returns a Hash with property names and types
@@ -79,12 +79,12 @@ module JsonSchemaForm
   
       # returns the property JSON definition inside the properties key
       def get_property(property)
-        self[:properties].try(:[], property.to_sym)
+        self&.dig(:properties, property.to_sym)
       end
 
       # returns the property JSON definition inside the properties key
       def has_property?(property)
-        self[:properties].try(:[], property.to_sym).present?
+        !self&.dig(:properties, property.to_sym).nil?
       end
 
       def remove_property(id)

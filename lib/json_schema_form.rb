@@ -1,4 +1,4 @@
-require "json_schema_form/version"
-require 'json_schema_form/type'
-require 'json_schema_form/field'
-require 'json_schema_form/custom_struct'
+require_relative "json_schema_form/version"
+require_relative 'json_schema_form/type'
+require_relative 'json_schema_form/field'
+require_relative 'json_schema_form/custom_struct'

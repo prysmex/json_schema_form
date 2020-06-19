@@ -40,8 +40,8 @@ module JsonSchemaForm
 
       def validations
         super.merge({
-          items: self[:items].try(:validations),
-          contains: self[:contains].try(:validations),
+          items: self&.[](:items)&.validations,
+          contains: self&.[](:contains)&.validations,
           additionalItems: self[:additionalItems],
           minItems: self[:minItems],
           maxItems: self[:maxItems],
