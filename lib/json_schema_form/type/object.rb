@@ -65,7 +65,7 @@ module JsonSchemaForm
       
       # Lists the names of the properties defined in the schema
       def property_names
-        self&.dig(:properties, :keys) || []
+        self&.[](:properties)&.keys || []
       end
   
       # Returns a Hash with property names and types
