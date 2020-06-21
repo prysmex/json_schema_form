@@ -8,6 +8,10 @@ module JsonSchemaForm
             label: Types::Hash.schema(
               es: Types::String,
               en: Types::String
+            ).strict,
+            enum: Types::Hash.schema(
+              es: Types::Hash,
+              en: Types::Hash
             ).strict
           ).strict,
           visibility: Types::Hash.schema(
