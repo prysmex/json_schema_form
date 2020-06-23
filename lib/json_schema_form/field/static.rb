@@ -5,7 +5,8 @@ module JsonSchemaForm
       attribute :static, type: Types::True
       attribute :displayProperties, {
         type: Types::Hash.schema(
-          sort: Types::Integer
+          sort: Types::Integer,
+          hidden?: Types::Bool
         ).strict
       }
 
