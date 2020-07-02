@@ -6,12 +6,12 @@ module JsonSchemaForm
         type: Types::Hash.schema(
           i18n: Types::Hash.schema(
             label: Types::Hash.schema(
-              es: Types::String,
-              en: Types::String
+              es: Types::String.optional,
+              en: Types::String.optional
             ).strict,
             enum: Types::Hash.schema(
-              es: Types::Hash,
-              en: Types::Hash
+              es: Types::Hash.optional,
+              en: Types::Hash.optional
             ).strict
           ).strict,
           visibility: Types::Hash.schema(
