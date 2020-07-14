@@ -51,6 +51,12 @@ module JsonSchemaForm
         self[:properties] = self.symbolize_recursive(hash)
       end
 
+      def remove_property(id)
+        self[:properties] = self[:properties].reject do |k, v| 
+          k == id
+        end
+      end
+
       ###required###
   
       def add_required_property(name)
@@ -62,12 +68,78 @@ module JsonSchemaForm
       end
 
       ###general###
+
+      # get properties
+      def properties
+        self[:properties]
+      end
+
+      # get dynamic properties
+      def dynamic_properties(levels=nil)
+        get_dynamic_forms(levels).map{|f| f[:properties]}.reduce({}, :merge)
+      end
+
+      # get own and dynamic properties
+      def merged_properties(levels=nil)
+        self[:properties].merge(
+          self.dynamic_properties(levels)
+        )
+      end
       
       # Lists the names of the properties defined in the schema
       def property_names
         self&.[](:properties)&.keys || []
       end
+
+      # Lists the names of the dynamic properties defined as sub-schemas
+      def dynamic_property_names(levels=nil)
+        self.dynamic_properties(levels)&.keys
+      end
+
+      # Lists the names of both dynamic and own properties
+      def merged_property_names(levels=nil)
+        self.merged_properties(levels)&.keys
+      end
   
+      # returns the property JSON definition inside the properties key
+      def get_property(property)
+        self&.dig(:properties, property.to_sym)
+      end
+
+      def get_dynamic_property(property, levels=nil)
+        dynamic_properties(levels).try(:[], property.to_sym)
+      end
+
+      def get_merged_property(property, levels=nil)
+        merged_properties(levels).try(:[], property.to_sym)
+      end
+
+      # returns the property JSON definition inside the properties key
+      def has_property?(property)
+        !self.get_property(property).nil?
+      end
+
+      def has_dynamic_property?(property, levels=nil)
+        !self.get_dynamic_property(property, levels).nil?
+      end
+
+      def has_merged_property?(property, levels=nil)
+        !self.get_merged_property(property, levels).nil?
+      end
+  
+      # returns the type of an property
+      def property_type(property)
+        get_property(property)[:type]
+      end
+
+      def dynamic_property_type(property, levels=nil)
+        get_dynamic_property(property, levels=nil)[:type]
+      end
+
+      def merged_property_type(property, levels=nil)
+        get_merged_property(property, levels=nil)[:type]
+      end
+
       # Returns a Hash with property names and types
       def properties_type_mapping
         hash = {}
@@ -76,30 +148,42 @@ module JsonSchemaForm
         end
         hash
       end
-  
-      # returns the property JSON definition inside the properties key
-      def get_property(property)
-        self&.dig(:properties, property.to_sym)
-      end
 
-      # returns the property JSON definition inside the properties key
-      def has_property?(property)
-        !self&.dig(:properties, property.to_sym).nil?
-      end
-
-      def remove_property(id)
-        self[:properties] = self[:properties].reject do |k, v| 
-          k == id
+      def dynamic_properties_type_mapping(levels=nil)
+        hash = {}
+        dynamic_property_names(levels).each do |attr|
+          hash[attr] = dynamic_property_type(attr, levels)
         end
+        hash
+      end
+
+      def merged_properties_type_mapping(levels=nil)
+        hash = {}
+        merged_property_names(levels).each do |attr|
+          hash[attr] = merged_property_type(attr, levels)
+        end
+        hash
       end
   
-      # returns the type of an property
-      def property_type(property)
-        get_property(property)[:type]
-      end
-  
-      def validations_for_property(property)
+      def get_validations_for_property(property)
         get_property(property).validations
+      end
+
+      #TODO
+      # def get_validations_for_dynamic_property(property, levels)
+      #   get_property(property).validations
+      # end
+
+      #todo make this private?
+      def get_dynamic_forms(levels=nil, level=0)
+        return [] if levels && level >= levels
+        forms_array=[]
+        self[:allOf].each do |condition_hash|
+          form = condition_hash[:then]
+          forms_array.push(form)
+          forms_array = forms_array.concat(form.get_dynamic_forms(levels, level + 1))
+        end
+        forms_array
       end
 
     end
