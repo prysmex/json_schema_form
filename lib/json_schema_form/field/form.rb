@@ -2,37 +2,37 @@ module JsonSchemaForm
   module Field
     class Form < ::JsonSchemaForm::Type::Object
 
-      FORM_BUILDER_PROC = Proc.new do |obj, parent|
+      FORM_BUILDER_PROC = Proc.new do |obj, meta|
         case obj[:type]
         when 'string', :string
           if obj[:format] == "date-time"
-            JsonSchemaForm::Field::DateInput.new(obj, parent)
+            JsonSchemaForm::Field::DateInput.new(obj, meta)
           elsif !obj[:enum].nil?
-            JsonSchemaForm::Field::Select.new(obj, parent)
+            JsonSchemaForm::Field::Select.new(obj, meta)
           else
-            JsonSchemaForm::Field::TextInput.new(obj, parent)
+            JsonSchemaForm::Field::TextInput.new(obj, meta)
           end
         when 'number', :number, 'integer', :integer
           if obj&.dig(:displayProperties, :useSlider)
-            JsonSchemaForm::Field::Slider.new(obj, parent)
+            JsonSchemaForm::Field::Slider.new(obj, meta)
           else
-            JsonSchemaForm::Field::NumberInput.new(obj, parent)
+            JsonSchemaForm::Field::NumberInput.new(obj, meta)
           end
         when 'boolean', :boolean
-          JsonSchemaForm::Field::Switch.new(obj, parent)
+          JsonSchemaForm::Field::Switch.new(obj, meta)
         when 'array', :array
           if true#obj&.dig(:displayProperties, :items)
-            JsonSchemaForm::Field::Checkbox.new(obj, parent)
+            JsonSchemaForm::Field::Checkbox.new(obj, meta)
           end
         # when 'object', :object
-        #   JsonSchemaForm::Field::Object.new(obj, parent)
+        #   JsonSchemaForm::Field::Object.new(obj, meta)
         when 'null', :null
           if obj&.dig(:displayProperties, :useHeader)
-            JsonSchemaForm::Field::Header.new(obj, parent)
+            JsonSchemaForm::Field::Header.new(obj, meta)
           elsif obj&.dig(:displayProperties, :useInfo)
-            JsonSchemaForm::Field::Info.new(obj, parent)
+            JsonSchemaForm::Field::Info.new(obj, meta)
           elsif obj[:static]
-            JsonSchemaForm::Field::Static.new(obj, parent)
+            JsonSchemaForm::Field::Static.new(obj, meta)
           else
             raise StandardError.new('null field is not valid')
           end
@@ -43,7 +43,7 @@ module JsonSchemaForm
 
       FORM_PROPERTIES_PROC = ->(instance, value) {
         value.transform_values do |definition|
-          FORM_BUILDER_PROC.call(definition, instance)
+          FORM_BUILDER_PROC.call(definition, {parent: instance})
         end
       }
 
@@ -51,7 +51,7 @@ module JsonSchemaForm
         value.map do |obj|
           schema_object = JsonSchemaForm::Field::Form.new(
             obj[:then].merge(skip_required_attrs: [:type]), 
-            instance
+            {parent: instance, is_subschema: true}
           )
           obj.merge({
             then: schema_object
@@ -59,15 +59,24 @@ module JsonSchemaForm
         end
       }
 
-      attribute :properties, type: Types::Hash.default({}.freeze), transform: FORM_PROPERTIES_PROC
+      attribute? :properties, default: ->(instance) { {}.freeze }, transform: FORM_PROPERTIES_PROC
       attribute? :sortable
-      attribute? :score
-      attribute? :allOf, type: Types::Array.default([].freeze).of(
-        Types::Hash.schema(
-          if: Types::Hash,
-          then: Types::Hash
+      # attribute? :score
+      attribute? :allOf, default: ->(instance) { [].freeze }, transform: FORM_All_OF_PROC
+
+      def validation_schema
+        is_subschema = meta[:is_subschema]
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            optional(:sortable).filled(:bool)
+            if !is_subschema
+              required(:required).value(:array?).array(:str?)
+            end
+            # optional(:score).filled(:integer)
+          end
         )
-      ), transform: FORM_All_OF_PROC
+      end
 
       ####property management
 

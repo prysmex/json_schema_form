@@ -2,21 +2,26 @@ module JsonSchemaForm
   module Field
     class DateInput < ::JsonSchemaForm::Type::String
       
-      attribute :displayProperties, {
-        type: Types::Hash.schema(
-          i18n: Types::Hash.schema(
-            label: Types::Hash.schema(
-              es: Types::String.optional,
-              en: Types::String.optional
-            ).strict
-          ).strict,
-          visibility: Types::Hash.schema(
-            label: Types::Bool
-          ),
-          sort: Types::Integer,
-          hidden: Types::Bool
-        ).strict
-      }
+      def validation_schema
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            required(:displayProperties).hash do
+              required(:i18n).hash do
+                required(:label).hash do
+                  optional(:es).maybe(:string)
+                  optional(:en).maybe(:string)
+                end
+              end
+              required(:visibility).hash do
+                required(:label).filled(:bool)
+              end
+              required(:sort).filled(:integer)
+              required(:hidden).filled(:bool)
+            end
+          end
+        )
+      end
 
     end
   end

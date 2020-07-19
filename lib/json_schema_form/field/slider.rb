@@ -1,27 +1,32 @@
 module JsonSchemaForm
   module Field
     class Slider < ::JsonSchemaForm::Type::Number
-      
-      attribute :displayProperties, {
-        type: Types::Hash.schema(
-          i18n: Types::Hash.schema(
-            label: Types::Hash.schema(
-              es: Types::String.optional,
-              en: Types::String.optional
-            ).strict,
-            enum: Types::Hash.schema(
-              es: Types::Hash.optional,
-              en: Types::Hash.optional
-            ).strict
-          ).strict,
-          visibility: Types::Hash.schema(
-            label: Types::Bool
-          ),
-          sort: Types::Integer,
-          hidden: Types::Bool,
-          useSlider: Types::Bool
-        ).strict
-      }
+
+      def validation_schema
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            required(:displayProperties).hash do
+              required(:i18n).hash do
+                required(:label).hash do
+                  optional(:es).maybe(:string)
+                  optional(:en).maybe(:string)
+                end
+                required(:enum).hash do
+                  optional(:es).maybe(:hash)
+                  optional(:en).maybe(:hash)
+                end
+              end
+              required(:visibility).hash do
+                required(:label).filled(:bool)
+              end
+              required(:sort).filled(:integer)
+              required(:hidden).filled(:bool)
+              required(:useSlider).filled(:bool)
+            end
+          end
+        )
+      end
 
     end
   end

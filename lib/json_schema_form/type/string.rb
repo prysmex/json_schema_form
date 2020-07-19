@@ -2,16 +2,23 @@ module JsonSchemaForm
   module Type
     class String < Base
 
-      attribute :type, {
-        type: Types::String.enum('string')
-      }
-      attribute? :minLength
-      attribute? :maxLength
-      attribute? :pattern
-      attribute? :format
-      attribute? :enum, {
-        type: Types::Array.optional#.of(Types::String)
-      }
+      # attribute :type, {
+      #   type: Types::String.enum('string')
+      # }
+
+      def validation_schema
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            required(:type).filled(:string).value(included_in?: ['string'])
+            optional(:minLength).filled(:integer)
+            optional(:maxLength).filled(:integer)
+            optional(:pattern).filled(:string)
+            optional(:format).filled(:string)
+            optional(:enum).array(:str?)
+          end
+        )
+      end
 
       def validations
         super.merge({

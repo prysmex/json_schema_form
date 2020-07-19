@@ -4,7 +4,7 @@ module JsonSchemaForm
 
       PROPERTIES_PROC = ->(instance, value) {
         value.transform_values do |definition|
-          BUILDER.call(definition, instance)
+          BUILDER.call(definition, {parent: instance})
         end
       }
 
@@ -12,7 +12,7 @@ module JsonSchemaForm
         value.map do |obj|
           schema_object = JsonSchemaForm::Type::Object.new(
             obj[:then].merge(skip_required_attrs: [:type]), 
-            instance
+            {parent: instance, is_subschema: true}
           )
           obj.merge({
             then: schema_object
@@ -20,17 +20,54 @@ module JsonSchemaForm
         end
       }
 
-      attribute :type, {
-        type: Types::String.enum('object')
-      }
-      attribute :required, type: Types::Array.default([].freeze)
-      attribute :properties, type: Types::Hash.default({}.freeze), transform: PROPERTIES_PROC
-      attribute? :allOf, type: Types::Array.default([].freeze).of(
-        Types::Hash.schema(
-          if: Types::Hash,
-          then: Types::Hash
+      # attribute :type, {
+      #   type: Types::String.enum('object')
+      # }
+      attribute? :required, default: ->(instance) { [].freeze }
+      attribute? :properties, default: ->(instance) { {}.freeze }, transform: PROPERTIES_PROC
+      attribute? :allOf, default: ->(instance) { [].freeze }, transform: All_OF_PROC
+
+      def validation_schema
+        instance = self
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            required(:type).filled(:string).value(included_in?: ['object'])
+            optional(:required).value(:array?).array(:str?)
+            optional(:properties).hash do
+              instance.properties.each do |name, prop|
+                optional(name.to_sym).hash(prop.validation_schema)
+              end
+            end
+            optional(:allOf).array(:hash) do
+              required(:if).hash do
+                required(:properties).value(:hash)
+              end
+              required(:then).value(:hash)
+            end
+            # instance._all_of_schemas(self)
+          end
         )
-      ), transform: All_OF_PROC
+      end
+
+      def validation_hash
+        json = self.as_json
+        json['properties']&.clear
+        json['allOf']&.each do |condition|
+          condition['then']&.clear
+          condition.dig('if', 'properties')&.clear
+        end
+        json
+      end
+
+      def errors
+        errors_hash = super
+        self.merged_properties.each do |name, prop|
+          errors = prop.errors
+          errors_hash[name] = errors unless errors.empty?
+        end
+        errors_hash
+      end
 
       def validations
         hash = super

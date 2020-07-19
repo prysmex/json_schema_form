@@ -2,15 +2,24 @@ module JsonSchemaForm
   module Type
     class Number < Base
 
-      attribute :type, {
-        type: Types::String.enum('number')
-      }
-      attribute? :multipleOf
-      attribute? :minimum
-      attribute? :maximum
-      attribute? :exclusiveMinimum
-      attribute? :exclusiveMaximum
-      attribute? :enum
+      # attribute :type, {
+      #   type: Types::String.enum('number')
+      # }
+
+      def validation_schema
+        super.merge(
+          Dry::Schema.JSON do
+            #config.validate_keys = true
+            required(:type).filled(:string).value(included_in?: ['number'])
+            optional(:multipleOf).filled(:integer)
+            optional(:minimum).filled(:integer)
+            optional(:maximum).filled(:integer)
+            optional(:exclusiveMinimum).filled(:integer)
+            optional(:exclusiveMaximum).filled(:integer)
+            optional(:enum) #todo value type
+          end
+        )
+      end
 
       def validations
         super.merge({
