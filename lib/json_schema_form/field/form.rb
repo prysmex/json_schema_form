@@ -66,16 +66,14 @@ module JsonSchemaForm
 
       def validation_schema
         is_subschema = meta[:is_subschema]
-        super.merge(
-          Dry::Schema.JSON do
-            #config.validate_keys = true
-            optional(:sortable).filled(:bool)
-            if !is_subschema
-              required(:required).value(:array?).array(:str?)
-            end
-            # optional(:score).filled(:integer)
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          optional(:sortable).filled(:bool)
+          if !is_subschema
+            required(:required).value(:array?).array(:str?)
           end
-        )
+          # optional(:score).filled(:integer)
+        end
       end
 
       ####property management

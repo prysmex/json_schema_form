@@ -8,9 +8,9 @@ module JsonSchemaForm
 
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta
-
+      
+      #Builder proc, receives hash and returns a JsonSchemaForm::Type::? class
       BUILDER = Proc.new do |obj, meta|
-
         klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
         klass = Object.const_get(klass_name)
         type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
@@ -32,7 +32,7 @@ module JsonSchemaForm
         #   raise StandardError.new('schema type is not valid')
         # end
       end
-
+      
       def initialize(obj, meta={}, &block)
         @meta = meta
         super(obj, &block)
@@ -45,9 +45,10 @@ module JsonSchemaForm
         default: ->(instance) { 'http://json-schema.org/draft-07/schema#' }
       }
 
+      #dry-schema instance to validate data with
       def validation_schema
         Dry::Schema.JSON do
-          #config.validate_keys = true
+          # config.validate_keys = true
           required(:type).filled(:string).value(included_in?: [
             'array','boolean','null','number','object','string'
           ])
@@ -60,28 +61,41 @@ module JsonSchemaForm
         end
       end
 
-      def valid?
+      # JSON to be validated with 'validation_schema'
+      # This is required because Dry::Schema.JSON has
+      # no way to implement a validation for dynamic keys in arrays
+      def schema_validation_hash
+        Marshal.load(Marshal.dump(self))# new reference
+      end
+
+      # True when no errors returned from schema of no schema is present
+      def valid_with_schema?
         errors.empty?
       end
 
-      def errors
-        validation_schema.(validation_hash).errors.to_h
-      end
-
-      def validation_hash
-        self.as_json
+      #Returns a hash of errors if a validation_schema is present
+      def schema_errors
+        schema = validation_schema
+        if schema
+          schema.(schema_validation_hash).errors.to_h
+        else
+          {}
+        end
       end
 
       def key_name
         self[:'$id']&.gsub(/^(.*[\\\/])/, '')
       end
 
+      # used for properties, returns true if it is required
+      # by a parent object
       def required?
         if meta.dig(:parent, :type) == 'object'
           meta.dig(:parent, :required).include?(key_name)
         end
       end
 
+      # Hash of validations to be runned on a JSON-SCHEMA checker
       def validations
         {
           required: required?

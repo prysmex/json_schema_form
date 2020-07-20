@@ -20,55 +20,54 @@ module JsonSchemaForm
         end
       }
 
-      # attribute :type, {
-      #   type: Types::String.enum('object')
-      # }
+      attribute :type, {
+        type: Types::String.enum('object')
+      }
       attribute? :required, default: ->(instance) { [].freeze }
       attribute? :properties, default: ->(instance) { {}.freeze }, transform: PROPERTIES_PROC
       attribute? :allOf, default: ->(instance) { [].freeze }, transform: All_OF_PROC
 
       def validation_schema
         instance = self
-        super.merge(
-          Dry::Schema.JSON do
-            #config.validate_keys = true
-            required(:type).filled(:string).value(included_in?: ['object'])
-            optional(:required).value(:array?).array(:str?)
-            optional(:properties).hash do
-              instance.properties.each do |name, prop|
-                optional(name.to_sym).hash(prop.validation_schema)
-              end
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:type).filled(:string).value(included_in?: ['object'])
+          optional(:required).value(:array?).array(:str?)
+          optional(:properties).value(:hash)
+          # optional(:properties).hash do
+          #   instance.properties.each do |name, prop|
+          #     optional(name.to_sym).hash(prop.validation_schema)
+          #   end
+          # end
+          optional(:allOf).array(:hash) do
+            required(:if).hash do
+              required(:properties).value(:hash)
             end
-            optional(:allOf).array(:hash) do
-              required(:if).hash do
-                required(:properties).value(:hash)
-              end
-              required(:then).value(:hash)
-            end
-            # instance._all_of_schemas(self)
+            required(:then).value(:hash)
           end
-        )
+        end
       end
 
-      def validation_hash
-        json = self.as_json
-        json['properties']&.clear
-        json['allOf']&.each do |condition|
-          condition['then']&.clear
-          condition.dig('if', 'properties')&.clear
+      def schema_validation_hash
+        json = super
+        json[:properties]&.clear
+        json[:allOf]&.each do |condition|
+          condition[:then]&.clear
+          condition.dig(:if, :properties)&.clear
         end
         json
       end
 
-      def errors
-        errors_hash = super
+      def schema_errors
+        errors_hash = Marshal.load(Marshal.dump(super)) #new reference
         self.merged_properties.each do |name, prop|
-          errors = prop.errors
-          errors_hash[name] = errors unless errors.empty?
+          prop_errors = prop.schema_errors
+          errors_hash[name] = prop_errors unless prop_errors.empty?
         end
         errors_hash
       end
 
+      #TODO should this include dynamic properties?
       def validations
         hash = super
         self[:properties].each do|k,v|
@@ -215,7 +214,7 @@ module JsonSchemaForm
       def get_dynamic_forms(levels=nil, level=0)
         return [] if levels && level >= levels
         forms_array=[]
-        self[:allOf].each do |condition_hash|
+        self[:allOf]&.each do |condition_hash|
           form = condition_hash[:then]
           forms_array.push(form)
           forms_array = forms_array.concat(form.get_dynamic_forms(levels, level + 1))

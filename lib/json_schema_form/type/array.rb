@@ -16,9 +16,9 @@ module JsonSchemaForm
         BUILDER.call(value, {parent: instance}) if value.present?
       }
 
-      # attribute :type, {
-      #   type: Types::String.enum('array')
-      # }
+      attribute :type, {
+        type: Types::String.enum('array')
+      }
       attribute? :items, {
         # type: (Types::Array | Types::Hash),
         transform: ITEMS_PROC
@@ -29,18 +29,16 @@ module JsonSchemaForm
       }
 
       def validation_schema
-        super.merge(
-          Dry::Schema.JSON do
-            #config.validate_keys = true
-            required(:type).filled(:string).value(included_in?: ['array'])
-            optional(:items)# todo value type
-            optional(:contains)# todo value type
-            optional(:additionalItems) { bool? | hash? }
-            optional(:minItems).filled(:integer)
-            optional(:maxItems).filled(:integer)
-            optional(:uniqueItems).filled(:bool)
-          end
-        )
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:type).filled(:string).value(included_in?: ['array'])
+          optional(:items)# todo value type
+          optional(:contains)# todo value type
+          optional(:additionalItems) { bool? | hash? }
+          optional(:minItems).filled(:integer)
+          optional(:maxItems).filled(:integer)
+          optional(:uniqueItems).filled(:bool)
+        end
       end
 
       def validations

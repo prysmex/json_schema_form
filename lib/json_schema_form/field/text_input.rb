@@ -3,25 +3,23 @@ module JsonSchemaForm
     class TextInput < ::JsonSchemaForm::Type::String
 
       def validation_schema
-        super.merge(
-          Dry::Schema.JSON do
-            #config.validate_keys = true
-            required(:displayProperties).hash do
-              required(:i18n).hash do
-                required(:label).hash do
-                  optional(:es).maybe(:string)
-                  optional(:en).maybe(:string)
-                end
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:displayProperties).hash do
+            required(:i18n).hash do
+              required(:label).hash do
+                optional(:es).maybe(:string)
+                optional(:en).maybe(:string)
               end
-              required(:visibility).hash do
-                required(:label).filled(:bool)
-              end
-              required(:sort).filled(:integer)
-              required(:hidden).filled(:bool)
-              required(:textarea).filled(:bool)
             end
+            required(:visibility).hash do
+              required(:label).filled(:bool)
+            end
+            required(:sort).filled(:integer)
+            required(:hidden).filled(:bool)
+            required(:textarea).filled(:bool)
           end
-        )
+        end
       end
 
     end
