@@ -1,5 +1,3 @@
-require 'dry-schema'
-
 module JsonSchemaForm
   module Field
     class Select < ::JsonSchemaForm::Type::String

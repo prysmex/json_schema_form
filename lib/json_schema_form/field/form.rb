@@ -60,15 +60,13 @@ module JsonSchemaForm
       }
 
       attribute? :properties, default: ->(instance) { {}.freeze }, transform: FORM_PROPERTIES_PROC
-      attribute? :sortable
-      # attribute? :score
       attribute? :allOf, default: ->(instance) { [].freeze }, transform: FORM_All_OF_PROC
 
       def validation_schema
         is_subschema = meta[:is_subschema]
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
-          optional(:sortable).filled(:bool)
+          # optional(:sortable).filled(:bool)
           if !is_subschema
             required(:required).value(:array?).array(:str?)
           end
