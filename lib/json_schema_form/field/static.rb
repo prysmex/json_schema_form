@@ -1,14 +1,16 @@
 module JsonSchemaForm
   module Field
     class Static < ::JsonSchemaForm::Type::Null
-      
-      attribute :static, type: Types::True
-      attribute :displayProperties, {
-        type: Types::Hash.schema(
-          sort: Types::Integer,
-          hidden?: Types::Bool
-        ).strict
-      }
+
+      def validation_schema
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:static).filled(Types::True)
+          required(:displayProperties).hash do
+            required(:sort).filled(:integer)
+          end
+        end
+      end
 
     end
   end

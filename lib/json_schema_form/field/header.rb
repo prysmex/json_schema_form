@@ -2,23 +2,26 @@ module JsonSchemaForm
   module Field
     class Header < ::JsonSchemaForm::Type::Null
       
-      attribute :displayProperties, {
-        type: Types::Hash.schema(
-          i18n: Types::Hash.schema(
-            label: Types::Hash.schema(
-              es: Types::String.optional,
-              en: Types::String.optional
-            ).strict
-          ).strict,
-          visibility: Types::Hash.schema(
-            label: Types::Bool
-          ),
-          sort: Types::Integer,
-          hidden: Types::Bool,
-          useHeader: Types::Bool,
-          level: Types::Integer.constrained(lteq: 2)
-        ).strict
-      }
+      def validation_schema
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:displayProperties).hash do
+            required(:i18n).hash do
+              required(:label).hash do
+                optional(:es).maybe(:string)
+                optional(:en).maybe(:string)
+              end
+            end
+            required(:visibility).hash do
+              required(:label).filled(:bool)
+            end
+            required(:sort).filled(:integer)
+            required(:hidden).filled(:bool)
+            required(:useHeader).filled(:bool)
+            required(:level).filled(Types::Integer.constrained(lteq: 2))
+          end
+        end
+      end
 
     end
   end

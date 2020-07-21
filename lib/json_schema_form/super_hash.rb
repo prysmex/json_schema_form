@@ -1,9 +1,20 @@
 require 'dry-types'
+require 'dry-schema'
 
+#include support for DryTypes
 module Types
   include Dry.Types()
 end
 
+module SuperHashExceptions
+  class PropertyError < StandardError
+    def initialize(msg='')
+      super(msg)
+    end
+  end
+end
+
+#module for symbolizing hash keys recursively
 module SymbolizeHelper
   def symbolize_recursive(hash)
     {}.tap do |h|
@@ -24,36 +35,72 @@ module SymbolizeHelper
 end
 
 module JsonSchemaForm
-  # It is preferrable to a Struct because of the in-class
-  # API for defining attributes as well as per-attribute defaults.
 
-  class CustomStruct < Hash
+  class SuperHash < Hash
 
     include Types
     include SymbolizeHelper
+    # include SuperHashExceptions
 
-    # Defines a attribute. Options are
-    # as follows:
+    # The idea of the SuperHash is to have hashes with extended
+    # functionality by adding the concept of 'attributes'.
+    # Attributes allow to have a powerful API for controlling
+    # what data can be set and more control over how the data
+    # is managed. Here is a list of all the features that the
+    # SuperHash provides:
+
+    # = all the power of dry-types gem for each attribute!
+    # = requiring some keys to be present with error raising
+    # = setting a default value to a key
+    # = setting transforms for specific keys
+    # = ensuring all keys are symbolized
+    # = accepting only whitelisted keys
+    #   - This is the default behavior, if dynamic attributes are
+    #     required set @allow_dynamic_attributes to true in class
+
+    # There are two basic class methods to define an attribute
+    #   - attribute, defines a required attribute
+    #   - attribute?, defines an optional attribute
+    # Both attribute and attribute? support the following options in the options hash
+
+    # * type - DryType definition for value validation, see gem docs
+    # * default - Default value that can also be a proc evaluated at the instance level
+    # * transform - A proc that will be evaluated at the instance level
+
+    # == required and type example
     #
-    # * <tt>:type</tt> - Dry Type definition
-    # * <tt>:default</tt> - Default value that can also be a proc evaluated at the instance level
-    # * <tt>:transform</tt> - A proc that will be evaluated at the instance level
+    #   attribute :key_name, type: Types::Hash.default({}.freeze)
+    #   attribute :key_name, type: Types::String.optional
+    #
+    # == required with instance level Proc
+    #
+    #   attribute :key_name, default: ->(instance) { instance[:other_attribute] }
+    #
+    # == optional with instance level Proc
+    #
+    #   attribute? :key_name, transform: All_OF_PROC
+    #
 
-    # PREFIX = '_'.freeze
+    # def validation_schema
+    #   Dry::Schema.JSON
+    # end
 
+    #registers an none required attribute
     def self.attribute?(attribute_name, options = {})
       options = options.merge({required: false})
       _register_attribute(attribute_name, options)
     end
 
+    #registers a required attribute
     def self.attribute(attribute_name, options = {})
       options = options.merge({required: true})
       _register_attribute(attribute_name, options)
     end
 
+    #The actual attribute registration method.
     def self._register_attribute(attribute_name, options)
       attributes[attribute_name] = options
-
+      #Ensure subclasses also register the attribute
       if defined? @subclasses
         if options[:required]
           @subclasses.each{ |klass| klass.attribute(attribute_name, options) }
@@ -67,8 +114,10 @@ module JsonSchemaForm
     #class level getter for attributes
     class << self
       attr_reader :attributes
+      attr_reader :allow_dynamic_attributes
     end
     instance_variable_set('@attributes', {})
+    instance_variable_set('@allow_dynamic_attributes', false)
 
     # when a class in inherited from this one, add it to subclasses and
     # set instance variables
@@ -76,29 +125,28 @@ module JsonSchemaForm
       super
       (@subclasses ||= Set.new) << klass
       klass.instance_variable_set('@attributes', attributes.dup)
+      klass.instance_variable_set('@allow_dynamic_attributes', allow_dynamic_attributes)
     end
 
-    # Check to see if the specified attribute has already been
-    # defined.
+    # Check to see if the specified attribute has been defined.
     def self.has_attribute?(name)
       !attributes.find{|prop, options| prop == name}.nil?
     end
 
-    # Check to see if the specified attribute is
-    # required.
+    # Check to see if the specified attribute is required.
     def self.attr_required?(name)
       !attributes.find{|prop, options| prop == name && options[:required]}.nil?
     end
 
+    #allow a specific instance not to require a set of attributes
     attr_reader :skip_required_attrs
 
     # You may initialize with an attributes hash
-    # just like you would many other kinds of data objects.
     def initialize(attributes = {}, &block)
 
       attributes = self.symbolize_recursive(attributes)
       super(&block)
-
+      
       instance_variable_set('@skip_required_attrs',
         attributes.delete(:skip_required_attrs) || []
       )
@@ -133,32 +181,29 @@ module JsonSchemaForm
         end
       end
 
-      # validate all attributes
       validate_all_attributes!
     end
-
+    
     def validate_all_attributes!
       self.class.attributes.each do |name, options|
         validate_attribute!(name)
       end
     end
 
-    #validate all defined attributes
-    def validate_attribute!(name)
+    #run the following validations to an attribute:
+    # TODO maybe other validations may apply?
+    # 1) required
+    def validate_attribute!(name, value=nil)
       prop = self.class.attributes.find{|prop, options| prop == name }
       name = prop[0]
-      options = prop[1]
-      if options[:required]
-        if self[name].nil? && attr_required?(name)
-          raise ArgumentError, "The attribute '#{name}' is required"
-        end
-      else
-        # TODO maybe other validations are required?
+      value = value || self[name]
+      # options = prop[1]
+      if value.nil? && attr_required?(name)
+        raise SuperHashExceptions::PropertyError, "The attribute '#{name}' is required"
       end
     end
 
-    # Retrieve a value (will return the
-    # attribute's default value if it hasn't been set).
+    # Retrieve a value
     def [](attribute)
       # assert_attribute_exists! attribute
       value = super(attribute)
@@ -171,27 +216,37 @@ module JsonSchemaForm
       end
     end
 
-    # Set a value on the Dash in a Hash-like way. Only works
-    # on pre-existing attributes.
+    # Set a value. Only works on pre-existing attributes,
+    # unlesss @allow_dynamic_attributes is true.
     def []=(attribute, value)
-      assert_attribute_exists! attribute
-
-      if attr_required?(attribute) && value.nil?
-        raise ArgumentError, "The attribute '#{attribute}' is required"
+      if !attribute.is_a? ::Symbol
+        raise ArgumentError.new('only symbols are supported as attributes')
       end
 
-      #transform value with transform
-      transform = self.class.attributes[attribute][:transform]
-      if !transform.nil?
-        if transform.is_a?(Proc)
-          value = transform.call(self, value)
+      should_run_logic = if self.class.allow_dynamic_attributes
+        self.class.has_attribute?(attribute)
+      else
+        true
+      end
+
+      if should_run_logic
+        assert_attribute_exists! attribute
+        validate_attribute!(attribute, value)
+
+        #transform value with transform
+        transform = self.class.attributes[attribute][:transform]
+        if !transform.nil?
+          if transform.is_a?(Proc)
+            value = transform.call(self, value)
+          end
+        end
+        #transform value with type
+        type = self.class.attributes[attribute][:type]
+        if !type.nil?
+          value = type[value]
         end
       end
-      #transform value with type
-      type = self.class.attributes[attribute][:type]
-      if !type.nil?
-        value = type[value]
-      end
+
       super(attribute, value)
     end
 
@@ -199,7 +254,7 @@ module JsonSchemaForm
 
     def assert_attribute_exists!(attribute)
       unless self.class.has_attribute?(attribute)
-        raise NoMethodError, "The attribute '#{attribute}' is not defined for #{self.class.name}."
+        raise SuperHashExceptions::PropertyError, "The attribute '#{attribute}' is not defined for #{self.class.name}."
       end
     end
 

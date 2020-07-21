@@ -4,16 +4,16 @@ module JsonSchemaForm
 
       ITEMS_PROC = ->(instance, value) {
         if value.is_a?(::Array)
-          value.map{|i| BUILDER.call(i, instance) }
+          value.map{|i| BUILDER.call(i, {parent: instance}) }
         elsif value.is_a?(::Hash)
-          BUILDER.call(value, instance)
+          BUILDER.call(value, {parent: instance})
         else
           raise StandardError.new('invalid items')
         end
       }
 
       CONTAINS_PROC = ->(instance, value) {
-        BUILDER.call(value, instance) if value.present?
+        BUILDER.call(value, {parent: instance}) if value.present?
       }
 
       attribute :type, {
@@ -27,16 +27,19 @@ module JsonSchemaForm
         # type: (Types::Array | Types::Hash),
         transform: CONTAINS_PROC
       }
-      attribute? :additionalItems, {
-        type: (Types::Bool | Types::Hash)
-      }
-      attribute? :minItems, {
-        type: Types::Integer
-      }
-      attribute? :maxItems, {
-        type: Types::Integer
-      }
-      attribute? :uniqueItems, type: Types::Bool.optional
+
+      def validation_schema
+        Dry::Schema.define(parent: super) do
+          config.validate_keys = true
+          required(:type).filled(:string).value(included_in?: ['array'])
+          optional(:items)# todo value type
+          optional(:contains)# todo value type
+          optional(:additionalItems) { bool? | hash? }
+          optional(:minItems).filled(:integer)
+          optional(:maxItems).filled(:integer)
+          optional(:uniqueItems).filled(:bool)
+        end
+      end
 
       def validations
         super.merge({

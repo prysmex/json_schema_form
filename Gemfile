@@ -4,5 +4,5 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in json_schema_form.gemspec
 gemspec
 
-# gem 'dry-struct'
+# gem 'dry-schema'
 # gem 'dry-types'
