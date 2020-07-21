@@ -70,7 +70,7 @@ module JsonSchemaForm
 
       # True when no errors returned from schema of no schema is present
       def valid_with_schema?
-        errors.empty?
+        schema_errors.empty?
       end
 
       #Returns a hash of errors if a validation_schema is present
