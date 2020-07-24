@@ -47,6 +47,14 @@ module JsonSchemaForm
         end
       }
 
+      FORM_RESPONSE_SETS_PROC = ->(instance, value) {
+        value.transform_values do |definition|
+          JsonSchemaForm::Field::ResponseSet.new(
+            definition, {parent: instance}
+          )
+        end
+      }
+
       FORM_All_OF_PROC = ->(instance, value) {
         value.map do |obj|
           schema_object = JsonSchemaForm::Field::Form.new(
@@ -60,6 +68,7 @@ module JsonSchemaForm
       }
 
       attribute? :properties, default: ->(instance) { {}.freeze }, transform: FORM_PROPERTIES_PROC
+      attribute? :response_sets, default: ->(instance) { {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
       attribute? :allOf, default: ->(instance) { [].freeze }, transform: FORM_All_OF_PROC
 
       def validation_schema
@@ -72,6 +81,32 @@ module JsonSchemaForm
           end
           # optional(:score).filled(:integer)
         end
+      end
+
+      def schema_validation_hash
+        json = super
+        json[:response_sets]&.clear
+        json
+      end
+
+      def schema_errors
+        errors_hash = super
+        errors_hash = Marshal.load(Marshal.dump(super)) #new reference
+        self.merged_properties.each do |name, prop|
+          prop_errors = prop.schema_errors
+          errors_hash[name] = prop_errors unless prop_errors.empty?
+        end
+        errors_hash
+      end
+
+      # get response_sets
+      def response_sets
+        self[:response_sets]
+      end
+
+      # returns the response set definition with specified id
+      def get_response_set(id)
+        self&.dig(:response_sets, id.to_sym)
       end
 
       ####property management
