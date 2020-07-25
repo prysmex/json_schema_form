@@ -28,22 +28,22 @@ module JsonSchemaForm
       end
       
       def validation_schema
+        is_inspection = self.meta[:is_inspection]
         Dry::Schema.JSON do
           config.validate_keys = true
-
           required(:id).filled(:integer)
           optional(:responses).array(:hash) do
             required(:value).value(:string)
-            optional(:score).value(:integer)
-            optional(:failed).value(:bool)
-
+            if is_inspection
+              optional(:score).value(:integer)
+              optional(:failed).value(:bool)
+            end
             required(:displayProperties).hash do
               required(:i18n).hash do
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
               end
             end
-
           end
         end
       end

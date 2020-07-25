@@ -1,25 +1,63 @@
+class Hash
+  
+  def bury *args
+    if args.count < 2
+      raise ArgumentError.new("2 or more arguments required")
+    elsif args.count == 2
+      self[args[0]] = args[1]
+    else
+      arg = args.shift
+      self[arg] = {} unless self[arg]
+      self[arg].bury(*args) unless args.empty?
+    end
+    self
+  end
+end
+
 module JsonSchemaForm
   module Type
     class Object < Base
 
-      PROPERTIES_PROC = ->(instance, value) {
-        value.transform_values do |definition|
-          BUILDER.call(definition, {parent: instance})
-        end
-      }
-
-      All_OF_PROC = ->(instance, value) {
-        value.map do |obj|
-          schema_object = JsonSchemaForm::Type::Object.new(
-            obj[:then].merge(skip_required_attrs: [:type]), 
-            {parent: instance, is_subschema: true}
-          )
-          obj.merge({
-            then: schema_object
+      # instantiate object classes when setting
+      # a property on the properties key
+      PROPERTIES_PROC = ->(instance, obj) {
+        obj.each do |name, definition|
+          path = if instance&.meta&.dig(:path)
+            instance.meta[:path].concat([:properties, name])
+          else
+           [:properties, name]
+          end
+          obj[name] = instance.class::BUILDER.call(definition, {
+            parent: instance,
+            path: path
           })
         end
       }
 
+      # instantiate object classes when setting
+      # a property on the allOf[:then] key
+      All_OF_PROC = ->(instance, allOfArray) {
+        allOfArray.map.with_index do |condition_hash, index|
+          condition_hash.each do |key, object_schema|
+            path = if instance&.meta&.dig(:path)
+              instance.meta[:path].concat([:allOf, index, :then])
+            else
+              [:allOf, index, :then]
+            end
+            condition_hash[:then] = instance.class::BUILDER.call(
+              condition_hash[:then].merge(__skip_required_attrs: [:type]),
+              {
+                parent: instance,
+                is_subschema: true,
+                path: path
+              }
+            )
+          end
+        end
+      }
+
+      # set attribute methods for defaults and transforms.
+      # Also validate 'type' key with raisable error
       attribute :type, {
         type: Types::String.enum('object')
       }
@@ -34,11 +72,6 @@ module JsonSchemaForm
           required(:type).filled(:string).value(included_in?: ['object'])
           optional(:required).value(:array?).array(:str?)
           optional(:properties).value(:hash)
-          # optional(:properties).hash do
-          #   instance.properties.each do |name, prop|
-          #     optional(name.to_sym).hash(prop.validation_schema)
-          #   end
-          # end
           optional(:allOf).array(:hash) do
             required(:if).hash do
               required(:properties).value(:hash)
@@ -62,7 +95,12 @@ module JsonSchemaForm
         errors_hash = Marshal.load(Marshal.dump(super)) #new reference
         self.merged_properties.each do |name, prop|
           prop_errors = prop.schema_errors
-          errors_hash[name] = prop_errors unless prop_errors.empty?
+          unless prop_errors.empty?
+            prop_errors.flatten_to_root.each do |k,v|
+              array = prop.meta[:path].dup.concat(k.to_s.split('.')).push(v)
+              errors_hash.bury(*array)
+            end
+          end
         end
         errors_hash
       end

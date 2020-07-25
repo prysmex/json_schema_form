@@ -11,26 +11,33 @@ module JsonSchemaForm
       
       #Builder proc, receives hash and returns a JsonSchemaForm::Type::? class
       BUILDER = Proc.new do |obj, meta|
-        klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
-        klass = Object.const_get(klass_name)
-        type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
-        type[{obj: obj, meta: meta}]
-        # case obj[:type]
-        # when 'string', :string
-        #   JsonSchemaForm::Type::String.new(obj, meta)
-        # when 'number', :number, 'integer', :integer
-        #   JsonSchemaForm::Type::Number.new(obj, meta)
-        # when 'boolean', :boolean
-        #   JsonSchemaForm::Type::Boolean.new(obj, meta)
-        # when 'array', :array
-        #   JsonSchemaForm::Type::Array.new(obj, meta)
-        # when 'object', :object
-        #   JsonSchemaForm::Type::Object.new(obj, meta)
-        # when 'null', :null
-        #   JsonSchemaForm::Type::Null.new(obj, meta)
-        # else
-        #   raise StandardError.new('schema type is not valid')
-        # end
+        # klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
+        # klass = Object.const_get(klass_name)
+        # type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
+        # type[{obj: obj, meta: meta}]
+        klass = case obj[:type]
+        when 'string', :string
+          JsonSchemaForm::Type::String
+        when 'number', :number, 'integer', :integer
+          JsonSchemaForm::Type::Number
+        when 'boolean', :boolean
+          JsonSchemaForm::Type::Boolean
+        when 'array', :array
+          JsonSchemaForm::Type::Array
+        when 'object', :object
+          JsonSchemaForm::Type::Object
+        when 'null', :null
+          JsonSchemaForm::Type::Null
+        end
+
+        #detect by other ways than 'type' property
+        if klass.nil?
+          if obj.has_key?(:properties)
+            klass = JsonSchemaForm::Type::Object
+          end
+        end
+
+        klass.new(obj, meta)
       end
       
       def initialize(obj, meta={}, &block)
