@@ -37,6 +37,8 @@ module JsonSchemaForm
           end
         end
 
+        raise StandardError.new('builder conditions not met') if klass.nil?
+
         klass.new(obj, meta)
       end
       
