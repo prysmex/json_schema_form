@@ -32,16 +32,19 @@ module JsonSchemaForm
         Dry::Schema.JSON do
           config.validate_keys = true
           required(:id).filled(:integer)
-          optional(:responses).array(:hash) do
+          required(:responses).array(:hash) do
             required(:value).value(:string)
             if is_inspection
-              optional(:score).value(:integer)
-              optional(:failed).value(:bool)
+              required(:score).value(:integer)
+              required(:failed).value(:bool)
             end
             required(:displayProperties).hash do
               required(:i18n).hash do
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
+                if is_inspection
+                  required(:color).value(:string)
+                end
               end
             end
           end

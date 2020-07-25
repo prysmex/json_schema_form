@@ -71,7 +71,7 @@ module JsonSchemaForm
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
           if !is_subschema
-            optional(:response_sets).value(:hash)
+            required(:response_sets).value(:hash)
             required(:required).value(:array?).array(:str?)
           end
         end
