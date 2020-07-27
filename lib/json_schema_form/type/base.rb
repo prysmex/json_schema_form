@@ -47,6 +47,9 @@ module JsonSchemaForm
         super(obj, &block)
       end
 
+      attribute :type, {
+        type: Types::String.enum('array','boolean','null','number','object','string')
+      }
       attribute? :'$id', {
         default: ->(instance) { 'http://example.com/example.json' }
       }
@@ -54,7 +57,7 @@ module JsonSchemaForm
         default: ->(instance) { 'http://json-schema.org/draft-07/schema#' }
       }
 
-      #dry-schema instance to validate data with
+      # Base dry-schema instance to validate data with.
       def validation_schema
         Dry::Schema.JSON do
           # config.validate_keys = true

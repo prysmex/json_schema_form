@@ -79,17 +79,21 @@ module JsonSchemaForm
 
       def schema_validation_hash
         json = super
-        json[:response_sets]&.clear
+        if !meta[:is_subschema]
+          json[:response_sets]&.clear
+        end
         json
       end
 
-      def schema_errors
-        errors_hash = Marshal.load(Marshal.dump(super)) #new reference
-        self[:response_sets].each do |id, resp_set|
-          resp_set_errors = resp_set.schema_errors
-          unless resp_set_errors.empty?
-            errors_hash[:response_sets] ||= {}
-            errors_hash[:response_sets][id] = resp_set_errors
+      def schema_errors(is_inspection=false)
+        errors_hash = Marshal.load(Marshal.dump(super())) #new reference
+        if !meta[:is_subschema]
+          self[:response_sets].each do |id, resp_set|
+            resp_set_errors = resp_set.schema_errors(is_inspection)
+            unless resp_set_errors.empty?
+              errors_hash[:response_sets] ||= {}
+              errors_hash[:response_sets][id] = resp_set_errors
+            end
           end
         end
         errors_hash

@@ -27,8 +27,8 @@ module JsonSchemaForm
         end
       end
       
-      def validation_schema
-        is_inspection = self.meta[:is_inspection]
+      def validation_schema(is_inspection)
+        # is_inspection = self.meta[:is_inspection]
         Dry::Schema.JSON do
           config.validate_keys = true
           required(:id).filled(:integer)
