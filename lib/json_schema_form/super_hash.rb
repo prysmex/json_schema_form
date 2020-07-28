@@ -81,9 +81,19 @@ module JsonSchemaForm
     #   attribute? :key_name, transform: All_OF_PROC
     #
 
-    # def validation_schema
-    #   Dry::Schema.JSON
-    # end
+    def validation_schema
+      Dry::Schema.JSON
+    end
+
+    #Returns a hash of errors if a validation_schema is present
+    def schema_errors
+      schema = validation_schema
+      if schema
+        schema.(self).errors.to_h
+      else
+        {}
+      end
+    end
 
     #registers an none required attribute
     def self.attribute?(attribute_name, options = {})
@@ -139,7 +149,7 @@ module JsonSchemaForm
     end
 
     #allow a specific instance not to require a set of attributes
-    attr_reader :skip_required_attrs
+    attr_reader :__skip_required_attrs
 
     # You may initialize with an attributes hash
     def initialize(attributes = {}, &block)
@@ -147,8 +157,8 @@ module JsonSchemaForm
       attributes = self.symbolize_recursive(attributes)
       super(&block)
       
-      instance_variable_set('@skip_required_attrs',
-        attributes.delete(:skip_required_attrs) || []
+      instance_variable_set('@__skip_required_attrs',
+        attributes.delete(:__skip_required_attrs) || []
       )
       
       #set attributes
@@ -260,7 +270,7 @@ module JsonSchemaForm
 
     def attr_required?(attribute)
 
-      !skip_required_attrs.include?(attribute) &&
+      !__skip_required_attrs.include?(attribute) &&
       self.class.attr_required?(attribute)
 
       # condition = self.class.required_attributes[attribute][:condition]

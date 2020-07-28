@@ -2,76 +2,111 @@ module JsonSchemaForm
   module Field
     class Form < ::JsonSchemaForm::Type::Object
 
-      FORM_BUILDER_PROC = Proc.new do |obj, meta|
-        case obj[:type]
+      BUILDER = Proc.new do |obj, meta|
+        klass = case obj[:type]
         when 'string', :string
           if obj[:format] == "date-time"
-            JsonSchemaForm::Field::DateInput.new(obj, meta)
+            JsonSchemaForm::Field::DateInput
           elsif !obj[:enum].nil?
-            JsonSchemaForm::Field::Select.new(obj, meta)
+            JsonSchemaForm::Field::Select
           else
-            JsonSchemaForm::Field::TextInput.new(obj, meta)
+            JsonSchemaForm::Field::TextInput
           end
         when 'number', :number, 'integer', :integer
           if obj&.dig(:displayProperties, :useSlider)
-            JsonSchemaForm::Field::Slider.new(obj, meta)
+            JsonSchemaForm::Field::Slider
           else
-            JsonSchemaForm::Field::NumberInput.new(obj, meta)
+            JsonSchemaForm::Field::NumberInput
           end
         when 'boolean', :boolean
-          JsonSchemaForm::Field::Switch.new(obj, meta)
+          JsonSchemaForm::Field::Switch
         when 'array', :array
           if true#obj&.dig(:displayProperties, :items)
-            JsonSchemaForm::Field::Checkbox.new(obj, meta)
+            JsonSchemaForm::Field::Checkbox
           end
         # when 'object', :object
-        #   JsonSchemaForm::Field::Object.new(obj, meta)
+        #   JsonSchemaForm::Field::Object
         when 'null', :null
           if obj&.dig(:displayProperties, :useHeader)
-            JsonSchemaForm::Field::Header.new(obj, meta)
+            JsonSchemaForm::Field::Header
           elsif obj&.dig(:displayProperties, :useInfo)
-            JsonSchemaForm::Field::Info.new(obj, meta)
+            JsonSchemaForm::Field::Info
           elsif obj[:static]
-            JsonSchemaForm::Field::Static.new(obj, meta)
+            JsonSchemaForm::Field::Static
           else
             raise StandardError.new('null field is not valid')
           end
-        else
-          raise StandardError.new('schema type is not valid')
         end
+
+        #detect by other ways than 'type' property
+        if klass.nil?
+          if obj.has_key?(:properties)
+            klass = JsonSchemaForm::Field::Form
+          end
+        end
+
+        raise StandardError.new('builder conditions not met') if klass.nil?
+
+        klass.new(obj, meta)
       end
 
-      FORM_PROPERTIES_PROC = ->(instance, value) {
-        value.transform_values do |definition|
-          FORM_BUILDER_PROC.call(definition, {parent: instance})
-        end
-      }
-
-      FORM_All_OF_PROC = ->(instance, value) {
-        value.map do |obj|
-          schema_object = JsonSchemaForm::Field::Form.new(
-            obj[:then].merge(skip_required_attrs: [:type]), 
-            {parent: instance, is_subschema: true}
-          )
-          obj.merge({
-            then: schema_object
+      FORM_RESPONSE_SETS_PROC = ->(instance, value) {
+        value.each do |id, obj|
+          path = if instance&.meta&.dig(:path)
+            instance.meta[:path].concat([:responseSets, id])
+          else
+           [:responseSets, id]
+          end
+          value[id] = JsonSchemaForm::Field::ResponseSet.new(obj, {
+            parent: instance,
+            path: path
           })
         end
       }
 
-      attribute? :properties, default: ->(instance) { {}.freeze }, transform: FORM_PROPERTIES_PROC
-      attribute? :allOf, default: ->(instance) { [].freeze }, transform: FORM_All_OF_PROC
+      attribute? :responseSets, default: ->(instance) { {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
 
       def validation_schema
         is_subschema = meta[:is_subschema]
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
-          # optional(:sortable).filled(:bool)
           if !is_subschema
+            required(:responseSets).value(:hash)
             required(:required).value(:array?).array(:str?)
           end
-          # optional(:score).filled(:integer)
         end
+      end
+
+      def schema_validation_hash
+        json = super
+        if !meta[:is_subschema]
+          json[:responseSets]&.clear
+        end
+        json
+      end
+
+      def schema_errors(is_inspection=false)
+        errors_hash = Marshal.load(Marshal.dump(super())) #new reference
+        if !meta[:is_subschema]
+          self[:responseSets].each do |id, resp_set|
+            resp_set_errors = resp_set.schema_errors(is_inspection)
+            unless resp_set_errors.empty?
+              errors_hash[:responseSets] ||= {}
+              errors_hash[:responseSets][id] = resp_set_errors
+            end
+          end
+        end
+        errors_hash
+      end
+
+      # get responseSets
+      def response_sets
+        self[:responseSets]
+      end
+
+      # returns the response set definition with specified id
+      def get_response_set(id)
+        self&.dig(:responseSets, id.to_sym)
       end
 
       ####property management
