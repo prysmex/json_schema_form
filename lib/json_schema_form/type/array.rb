@@ -41,6 +41,14 @@ module JsonSchemaForm
         end
       end
 
+      def schema_validation_hash
+        json = super
+        if json[:items].is_a? ::Hash
+          json[:items]&.clear
+        end
+        json
+      end
+
       def validations
         super.merge({
           items: self&.[](:items)&.validations,

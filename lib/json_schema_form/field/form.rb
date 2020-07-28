@@ -53,9 +53,9 @@ module JsonSchemaForm
       FORM_RESPONSE_SETS_PROC = ->(instance, value) {
         value.each do |id, obj|
           path = if instance&.meta&.dig(:path)
-            instance.meta[:path].concat([:response_sets, id])
+            instance.meta[:path].concat([:responseSets, id])
           else
-           [:response_sets, id]
+           [:responseSets, id]
           end
           value[id] = JsonSchemaForm::Field::ResponseSet.new(obj, {
             parent: instance,
@@ -64,14 +64,14 @@ module JsonSchemaForm
         end
       }
 
-      attribute? :response_sets, default: ->(instance) { {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
+      attribute? :responseSets, default: ->(instance) { {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
 
       def validation_schema
         is_subschema = meta[:is_subschema]
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
           if !is_subschema
-            required(:response_sets).value(:hash)
+            required(:responseSets).value(:hash)
             required(:required).value(:array?).array(:str?)
           end
         end
@@ -80,7 +80,7 @@ module JsonSchemaForm
       def schema_validation_hash
         json = super
         if !meta[:is_subschema]
-          json[:response_sets]&.clear
+          json[:responseSets]&.clear
         end
         json
       end
@@ -88,25 +88,25 @@ module JsonSchemaForm
       def schema_errors(is_inspection=false)
         errors_hash = Marshal.load(Marshal.dump(super())) #new reference
         if !meta[:is_subschema]
-          self[:response_sets].each do |id, resp_set|
+          self[:responseSets].each do |id, resp_set|
             resp_set_errors = resp_set.schema_errors(is_inspection)
             unless resp_set_errors.empty?
-              errors_hash[:response_sets] ||= {}
-              errors_hash[:response_sets][id] = resp_set_errors
+              errors_hash[:responseSets] ||= {}
+              errors_hash[:responseSets][id] = resp_set_errors
             end
           end
         end
         errors_hash
       end
 
-      # get response_sets
+      # get responseSets
       def response_sets
-        self[:response_sets]
+        self[:responseSets]
       end
 
       # returns the response set definition with specified id
       def get_response_set(id)
-        self&.dig(:response_sets, id.to_sym)
+        self&.dig(:responseSets, id.to_sym)
       end
 
       ####property management

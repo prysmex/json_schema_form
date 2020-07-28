@@ -21,37 +21,41 @@ module JsonSchemaForm
       # instantiate object classes when setting
       # a property on the properties key
       PROPERTIES_PROC = ->(instance, obj) {
-        obj.each do |name, definition|
-          path = if instance&.meta&.dig(:path)
-            instance.meta[:path].concat([:properties, name])
-          else
-           [:properties, name]
+        if obj.is_a? ::Hash
+          obj.each do |name, definition|
+            path = if instance&.meta&.dig(:path)
+              instance.meta[:path].concat([:properties, name])
+            else
+            [:properties, name]
+            end
+            obj[name] = instance.class::BUILDER.call(definition, {
+              parent: instance,
+              path: path
+            })
           end
-          obj[name] = instance.class::BUILDER.call(definition, {
-            parent: instance,
-            path: path
-          })
         end
       }
 
       # instantiate object classes when setting
       # a property on the allOf[:then] key
       All_OF_PROC = ->(instance, allOfArray) {
-        allOfArray.map.with_index do |condition_hash, index|
-          condition_hash.each do |key, object_schema|
-            path = if instance&.meta&.dig(:path)
-              instance.meta[:path].concat([:allOf, index, :then])
-            else
-              [:allOf, index, :then]
+        if allOfArray.is_a? ::Array
+          allOfArray.map.with_index do |condition_hash, index|
+            condition_hash.each do |key, object_schema|
+              path = if instance&.meta&.dig(:path)
+                instance.meta[:path].concat([:allOf, index, :then])
+              else
+                [:allOf, index, :then]
+              end
+              condition_hash[:then] = instance.class::BUILDER.call(
+                condition_hash[:then].merge(__skip_required_attrs: [:type]),
+                {
+                  parent: instance,
+                  is_subschema: true,
+                  path: path
+                }
+              )
             end
-            condition_hash[:then] = instance.class::BUILDER.call(
-              condition_hash[:then].merge(__skip_required_attrs: [:type]),
-              {
-                parent: instance,
-                is_subschema: true,
-                path: path
-              }
-            )
           end
         end
       }
@@ -61,8 +65,8 @@ module JsonSchemaForm
       attribute :type, {
         type: Types::String.enum('object')
       }
-      attribute? :required, default: ->(instance) { [].freeze }
-      attribute? :properties, default: ->(instance) { {}.freeze }, transform: PROPERTIES_PROC
+      attribute? :required, default: ->(instance) { [].freeze }#, type: Types::Array
+      attribute? :properties, default: ->(instance) { {}.freeze }, transform: PROPERTIES_PROC#, type: Types::Hash
       attribute? :allOf, default: ->(instance) { [].freeze }, transform: All_OF_PROC
 
       def validation_schema
@@ -254,8 +258,10 @@ module JsonSchemaForm
         forms_array=[]
         self[:allOf]&.each do |condition_hash|
           form = condition_hash[:then]
-          forms_array.push(form)
-          forms_array = forms_array.concat(form.get_dynamic_forms(levels, level + 1))
+          if form
+            forms_array.push(form)
+            forms_array = forms_array.concat(form.get_dynamic_forms(levels, level + 1))
+          end
         end
         forms_array
       end
