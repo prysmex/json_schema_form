@@ -114,6 +114,11 @@ module JsonSchemaForm
         }
       end
 
+      # Text to display of the property
+      def label(locale = :es)
+        self.dig(:displayProperties, :i18n, :label, locale)
+      end
+
       private
 
     end
