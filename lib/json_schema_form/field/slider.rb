@@ -2,6 +2,8 @@ module JsonSchemaForm
   module Field
     class Slider < ::JsonSchemaForm::Type::Number
 
+      include ::JsonSchemaForm::Field::FieldMethods
+
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true

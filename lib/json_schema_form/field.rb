@@ -1,3 +1,4 @@
+require_relative 'field/field_methods'
 require_relative 'field/checkbox'
 require_relative 'field/date_input'
 require_relative 'field/form'

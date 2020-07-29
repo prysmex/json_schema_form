@@ -4,10 +4,6 @@ require 'dry-schema'
 #include support for DryTypes
 module Types
   include Dry.Types()
-
-  def label(locale = :es)
-    self.dig(:displayProperties, :i18n, :label, locale)
-  end
 end
 
 module SuperHashExceptions
