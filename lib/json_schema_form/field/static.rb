@@ -2,6 +2,8 @@ module JsonSchemaForm
   module Field
     class Static < ::JsonSchemaForm::Type::Null
 
+      include ::JsonSchemaForm::Field::FieldMethods
+
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true

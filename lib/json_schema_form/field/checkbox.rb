@@ -1,6 +1,8 @@
 module JsonSchemaForm
   module Field
     class Checkbox < ::JsonSchemaForm::Type::Array
+
+      include ::JsonSchemaForm::Field::FieldMethods
       
       def validation_schema
         Dry::Schema.define(parent: super) do
