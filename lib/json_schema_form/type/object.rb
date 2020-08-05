@@ -124,9 +124,9 @@ module JsonSchemaForm
         new_definition = {}.merge(definition)
         new_definition[:'$id'] = "/properties/#{id}"
 
-        hash = self[:properties]
-        hash[id] = new_definition
-        self[:properties] = self.symbolize_recursive(hash)
+        properties_hash = self[:properties]
+        properties_hash[id] = new_definition
+        self[:properties] = self.symbolize_recursive(properties_hash)
       end
 
       def remove_property(id)

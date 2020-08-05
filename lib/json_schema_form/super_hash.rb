@@ -152,23 +152,23 @@ module JsonSchemaForm
     attr_reader :__skip_required_attrs
 
     # You may initialize with an attributes hash
-    def initialize(attributes = {}, &block)
+    def initialize(init_attributes = {}, &block)
 
-      attributes = self.symbolize_recursive(attributes)
+      init_attributes = self.symbolize_recursive(init_attributes)
       super(&block)
       
       instance_variable_set('@__skip_required_attrs',
-        attributes.delete(:__skip_required_attrs) || []
+        init_attributes.delete(:__skip_required_attrs) || []
       )
       
-      #set attributes
-      attributes.each do |att, value|
+      #set init_attributes
+      init_attributes.each do |att, value|
         self[att] = value
       end
 
       #set defaults
       self.class.attributes.each do |name, options|
-        next if attributes.key?(name)
+        next if init_attributes.key?(name)
         if !options[:default].nil? && (options[:type] && options[:type].default?)
           raise ArgumentError.new('having both default and type default is not supported')
         end
@@ -184,10 +184,11 @@ module JsonSchemaForm
           rescue TypeError
             options[:default]
           end
-          self[name] = value
+          self[name] = value unless value.nil? && !attr_required?(name)
         #set from options[:type]
         elsif !options[:type].nil? && options[:type].default?
-          self[name] = options[:type][Dry::Types::Undefined]
+          value = options[:type][Dry::Types::Undefined]
+          self[name] = value unless value.nil? && !attr_required?(name)
         end
       end
 

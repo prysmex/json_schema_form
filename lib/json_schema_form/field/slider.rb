@@ -7,13 +7,14 @@ module JsonSchemaForm
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
-          optional(:responseSetId).filled(:integer)
+          # required(:responseSetId).filled(:integer)
           required(:displayProperties).hash do
             required(:i18n).hash do
               required(:label).hash do
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
               end
+              # ToDo create two types of sliders and remove this when only numbers
               required(:enum).hash do
                 optional(:es).maybe(:hash)
                 optional(:en).maybe(:hash)

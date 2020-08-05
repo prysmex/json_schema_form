@@ -7,16 +7,12 @@ module JsonSchemaForm
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
-          optional(:responseSetId).filled(:integer)
+          required(:responseSetId).filled(:integer)
           required(:displayProperties).hash do
             required(:i18n).hash do
               required(:label).hash do
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
-              end
-              required(:enum).hash do
-                optional(:es).maybe(:hash)
-                optional(:en).maybe(:hash)
               end
             end
             required(:visibility).hash do

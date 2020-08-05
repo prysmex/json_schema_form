@@ -51,7 +51,7 @@ module JsonSchemaForm
       end
 
       FORM_RESPONSE_SETS_PROC = ->(instance, value) {
-        value.each do |id, obj|
+        value&.each do |id, obj|
           path = if instance&.meta&.dig(:path)
             instance.meta[:path].concat([:responseSets, id])
           else
@@ -64,7 +64,8 @@ module JsonSchemaForm
         end
       }
 
-      attribute? :responseSets, default: ->(instance) { {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
+      # attribute? :prysmexSchemaVersion, default: ->(instance) { instance.meta[:is_subschema] ? nil : '1.0.0' }
+      attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
 
       def validation_schema
         is_subschema = meta[:is_subschema]
@@ -99,6 +100,24 @@ module JsonSchemaForm
         errors_hash
       end
 
+      def migrate!
+        # migrate form object
+        # TODO
+
+        # migrate response sets
+        self[:responseSets]&.each do |id, definition|
+          definition.migrate! if definition&.respond_to?(:migrate!)
+        end
+
+        # migrate properties
+        self[:properties]&.each do |id, definition|
+          definition.migrate! if definition&.respond_to?(:migrate!)
+        end
+        
+        #migrate dynamic forms
+        self.get_dynamic_forms.each{|form| form.migrate!}
+      end
+
       # get responseSets
       def response_sets
         self[:responseSets]
@@ -107,6 +126,17 @@ module JsonSchemaForm
       # returns the response set definition with specified id
       def get_response_set(id)
         self&.dig(:responseSets, id.to_sym)
+      end
+
+      ####response set management
+      def add_response_set(id, definition)
+        new_definition = definition.merge({
+          id: id
+        })
+
+        response_sets_hash = self[:responseSets]
+        response_sets_hash[id] = new_definition
+        self[:responseSets] = self.symbolize_recursive(response_sets_hash)
       end
 
       ####property management

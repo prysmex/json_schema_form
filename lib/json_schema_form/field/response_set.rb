@@ -18,8 +18,8 @@ module JsonSchemaForm
         schema_errors.empty?
       end
 
-      def schema_errors
-        schema = validation_schema
+      def schema_errors(is_inspection=false)
+        schema = validation_schema(is_inspection)
         if schema
           schema.(schema_validation_hash).errors.to_h
         else
@@ -31,7 +31,8 @@ module JsonSchemaForm
         # is_inspection = self.meta[:is_inspection]
         Dry::Schema.JSON do
           config.validate_keys = true
-          required(:id).filled(:integer)
+          # required(:id).filled(:integer)
+          required(:id) { int? | str? }
           required(:responses).array(:hash) do
             required(:value).value(:string)
             if is_inspection
@@ -42,9 +43,9 @@ module JsonSchemaForm
               required(:i18n).hash do
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
-                if is_inspection
-                  required(:color).value(:string)
-                end
+              end
+              if is_inspection
+                required(:color).value(:string)
               end
             end
           end
