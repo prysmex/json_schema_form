@@ -36,7 +36,7 @@ module JsonSchemaForm
           required(:responses).array(:hash) do
             required(:value).value(:string)
             if is_inspection
-              required(:score).value(:integer)
+              required(:score).maybe(:integer)
               required(:failed).value(:bool)
             end
             required(:displayProperties).hash do
@@ -45,12 +45,15 @@ module JsonSchemaForm
                 optional(:en).maybe(:string)
               end
               if is_inspection
-                required(:color).value(:string)
+                required(:color).maybe(:string)
               end
             end
           end
         end
       end
+
+      # def properties
+      # end
 
     end
   end

@@ -101,14 +101,6 @@ module JsonSchemaForm
       end
 
       def migrate!
-        # migrate form object
-        # TODO
-
-        # migrate response sets
-        self[:responseSets]&.each do |id, definition|
-          definition.migrate! if definition&.respond_to?(:migrate!)
-        end
-
         # migrate properties
         self[:properties]&.each do |id, definition|
           definition.migrate! if definition&.respond_to?(:migrate!)
@@ -116,6 +108,14 @@ module JsonSchemaForm
         
         #migrate dynamic forms
         self.get_dynamic_forms.each{|form| form.migrate!}
+
+        # migrate response sets
+        self[:responseSets]&.each do |id, definition|
+          definition.migrate! if definition&.respond_to?(:migrate!)
+        end
+
+        # migrate form object
+        # TODO
       end
 
       # get responseSets
@@ -134,7 +134,7 @@ module JsonSchemaForm
           id: id
         })
 
-        response_sets_hash = self[:responseSets]
+        response_sets_hash = {}.merge(self[:responseSets])
         response_sets_hash[id] = new_definition
         self[:responseSets] = self.symbolize_recursive(response_sets_hash)
       end

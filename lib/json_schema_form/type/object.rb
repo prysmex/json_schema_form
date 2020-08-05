@@ -122,9 +122,9 @@ module JsonSchemaForm
   
       def add_property(id, definition)
         new_definition = {}.merge(definition)
-        new_definition[:'$id'] = "/properties/#{id}"
+        new_definition[:'$id'] = "/properties/#{id}" #TODO this currently only works for main form
 
-        properties_hash = self[:properties]
+        properties_hash = {}.merge(self[:properties])
         properties_hash[id] = new_definition
         self[:properties] = self.symbolize_recursive(properties_hash)
       end
