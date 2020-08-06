@@ -59,7 +59,7 @@ module JsonSchemaForm
 
               if root_form.is_inspection
                 current_response_set[:score] = nil
-                current_response_set[:failed] = nil
+                current_response_set[:failed] = false
                 current_response_set[:displayProperties][:color] = nil
               end
 
