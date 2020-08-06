@@ -1,17 +1,13 @@
 module JsonSchemaForm
   module Document
+
+    # lightweight class used for storing data dynamic forms
     class Document < ::SuperHash::Hasher
 
-      attr_reader :has_initialized
+      attr_reader :is_inspection
       instance_variable_set('@allow_dynamic_attributes', true)
-
-      def initialize(init_attributes = {}, &block)
-        super
-        set_missing_extras
-        set_missing_meta
-        @has_initialized = true
-      end
-  
+      
+      #map to class for validating attributes, defaults
       EXTRAS_PROC = ->(instance, obj) {
         if obj.is_a? ::Hash
           obj.each do |name, definition|
@@ -19,7 +15,8 @@ module JsonSchemaForm
           end
         end
       }
-  
+      
+      #map to class for validating attributes, defaults
       META_PROC = ->(instance, obj) {
         if obj.is_a? ::Hash
           obj.each do |name, definition|
@@ -51,9 +48,11 @@ module JsonSchemaForm
       def property_keys
         self.keys.reject{|k| [:extras, :meta].include?(k)}
       end
-  
+      
+      # when a new propery is added at the root label, add a corresponding
+      # hash for extras and meta
       after_set ->(attr_name, value) {
-        if has_initialized && ![:extras, :meta].include?(attr_name)
+        if is_inspection && ![:extras, :meta].include?(attr_name)
           if !self[:extras]&.key?(attr_name)
             hash = {}
             hash[attr_name] = {}

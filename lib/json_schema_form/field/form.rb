@@ -2,6 +2,8 @@ module JsonSchemaForm
   module Field
     class Form < ::JsonSchemaForm::Type::Object
 
+      attr_reader :is_inspection
+
       BUILDER = Proc.new do |obj, meta|
         klass = case obj[:type]
         when 'string', :string
@@ -86,11 +88,11 @@ module JsonSchemaForm
         json
       end
 
-      def schema_errors(is_inspection=false)
+      def schema_errors
         errors_hash = Marshal.load(Marshal.dump(super())) #new reference
         if !meta[:is_subschema]
           self[:responseSets].each do |id, resp_set|
-            resp_set_errors = resp_set.schema_errors(is_inspection)
+            resp_set_errors = resp_set.schema_errors
             unless resp_set_errors.empty?
               errors_hash[:responseSets] ||= {}
               errors_hash[:responseSets][id] = resp_set_errors
