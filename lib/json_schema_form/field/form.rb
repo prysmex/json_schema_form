@@ -9,7 +9,7 @@ module JsonSchemaForm
         when 'string', :string
           if obj[:format] == "date-time"
             JsonSchemaForm::Field::DateInput
-          elsif !obj[:enum].nil?
+          elsif !obj[:responseSetId].nil? || !obj[:enum].nil? # enum is for v2.11.0 compatibility
             JsonSchemaForm::Field::Select
           else
             JsonSchemaForm::Field::TextInput
