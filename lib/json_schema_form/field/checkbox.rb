@@ -37,51 +37,38 @@ module JsonSchemaForm
       def migrate!
         if self[:responseSetId].nil?
 
-          # this would require updating all document values so they match the response_set values
-          # equivalent_response_set = root_form.response_sets.find do |id, definition|
-          #   [:en, :es].each do |locale|
-          #     response_set_i18n_values = definition[:responses].map do |obj|
-          #       i18n_value = obj.dig(:displayProperties, :i18n, locale)
-          #     end.compact
-          #     enum_i18n_values = self[:enum].map do |value|
-          #       #TODO
-          #     end.compact
-          #     return response_set_i18n_values.length == (response_set_i18n_values & enum_i18n_values).length
-          #   end
-          # end
-
-          if false
-            # puts 'using existing response set'
-            # self[:responseSetId] = equivalent_response_set[0].to_s
-          else
-            puts 'creating new response set'
-            id = SecureRandom.uuid
-            new_response_set = {
-              responses: []
-            }
-            
-            options = self.dig(:items, :enum)
-            unless options.nil?
-              options.each do |opt|
-                new_response_set[:responses].push(
-                  {
-                    value: opt,
-                    score: nil,
-                    failed: false,
-                    displayProperties: {
-                      i18n: {
-                        en: self.dig(:displayProperties, :i18n, :enum, :en, opt.to_sym),
-                        es: self.dig(:displayProperties, :i18n, :enum, :es, opt.to_sym)
-                      },
-                      color: nil
-                    }
+          puts 'creating new response set'
+          id = SecureRandom.uuid
+          new_response_set = {
+            responses: []
+          }
+          
+          options = self.dig(:items, :enum)
+          unless options.nil?
+            options.each do |opt|
+              
+              current_response_set = {
+                value: opt,
+                displayProperties: {
+                  i18n: {
+                    en: self.dig(:displayProperties, :i18n, :enum, :en, opt.to_sym),
+                    es: self.dig(:displayProperties, :i18n, :enum, :es, opt.to_sym)
                   }
-                )
+                }
+              }
+
+              if root_form.is_inspection
+                current_response_set[:score] = nil
+                current_response_set[:failed] = nil
+                current_response_set[:displayProperties][:color] = nil
               end
+
+              new_response_set[:responses].push(current_response_set)
             end
-            root_form.add_response_set(id, new_response_set)
-            self[:responseSetId] = id
           end
+          root_form.add_response_set(id, new_response_set)
+          self[:responseSetId] = id
+
           self.dig(:displayProperties, :i18n).delete(:enum)
           self.delete(:items)
         end
