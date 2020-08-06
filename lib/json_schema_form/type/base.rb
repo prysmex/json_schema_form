@@ -1,10 +1,10 @@
-require_relative '../super_hash'
-# require 'dry-schema'
+require 'super_hash'
+require 'dry-schema'
 
 module JsonSchemaForm
   module Type
 
-    class Base < JsonSchemaForm::SuperHash
+    class Base < ::SuperHash::Hasher
 
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta

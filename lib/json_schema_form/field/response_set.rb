@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class ResponseSet < JsonSchemaForm::SuperHash
+    class ResponseSet < ::SuperHash::Hasher
 
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta
