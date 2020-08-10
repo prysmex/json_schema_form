@@ -36,6 +36,7 @@ module JsonSchemaForm
           required(:responses).array(:hash) do
             required(:value).value(:string)
             if is_inspection
+              required(:enableScore).value(Types::True)
               required(:score).maybe(:integer)
               required(:failed).value(:bool)
             end
