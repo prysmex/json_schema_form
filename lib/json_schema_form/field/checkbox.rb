@@ -3,6 +3,10 @@ module JsonSchemaForm
     class Checkbox < ::JsonSchemaForm::Type::Array
 
       include ::JsonSchemaForm::Field::FieldMethods
+
+      ##################
+      ###VALIDATIONS####
+      ##################
       
       def validation_schema
         #TODO find a way to prevent enum from being valid
@@ -34,6 +38,16 @@ module JsonSchemaForm
         json
       end
 
+      ##############
+      ###METHODS####
+      ##############
+
+      # def i18n_value(value, locale = :es)
+      #   response = self.respond_set.get_response_from_value(value)
+      #   response.dig(:displayProperties, :i18n, locale)
+      # end
+
+      #V2.11.O => V2.12.0 migration
       def migrate!
         if self[:responseSetId].nil?
 
@@ -58,6 +72,7 @@ module JsonSchemaForm
               }
 
               if root_form.is_inspection
+                current_response_set[:enableScore] = true
                 current_response_set[:score] = nil
                 current_response_set[:failed] = false
                 current_response_set[:displayProperties][:color] = nil
