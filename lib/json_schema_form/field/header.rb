@@ -3,6 +3,10 @@ module JsonSchemaForm
     class Header < ::JsonSchemaForm::Type::Null
 
       include ::JsonSchemaForm::Field::FieldMethods
+
+      ##################
+      ###VALIDATIONS####
+      ##################
       
       def validation_schema
         Dry::Schema.define(parent: super) do

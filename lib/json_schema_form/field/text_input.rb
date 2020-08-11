@@ -4,6 +4,10 @@ module JsonSchemaForm
 
       include ::JsonSchemaForm::Field::FieldMethods
 
+      ##################
+      ###VALIDATIONS####
+      ##################
+
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true

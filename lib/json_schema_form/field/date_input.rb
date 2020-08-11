@@ -3,6 +3,10 @@ module JsonSchemaForm
     class DateInput < ::JsonSchemaForm::Type::String
 
       include ::JsonSchemaForm::Field::FieldMethods
+
+      ##################
+      ###VALIDATIONS####
+      ##################
       
       def validation_schema
         Dry::Schema.define(parent: super) do
@@ -22,6 +26,10 @@ module JsonSchemaForm
           end
         end
       end
+
+      ##############
+      ###METHODS####
+      ##############
 
     end
   end

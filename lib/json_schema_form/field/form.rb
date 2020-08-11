@@ -69,6 +69,10 @@ module JsonSchemaForm
       # attribute? :prysmexSchemaVersion, default: ->(instance) { instance.meta[:is_subschema] ? nil : '1.0.0' }
       attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
 
+      ##################
+      ###VALIDATIONS####
+      ##################
+
       def validation_schema
         is_subschema = meta[:is_subschema]
         Dry::Schema.define(parent: super) do
@@ -102,6 +106,10 @@ module JsonSchemaForm
         errors_hash
       end
 
+      ##############
+      ###METHODS####
+      ##############
+
       def migrate!
         # migrate properties
         self[:properties]&.each do |id, definition|
@@ -120,6 +128,10 @@ module JsonSchemaForm
         # TODO
       end
 
+      ##############################
+      ###RESPONSE SET MANAGEMENT####
+      ##############################
+
       # get responseSets
       def response_sets
         self[:responseSets]
@@ -130,7 +142,6 @@ module JsonSchemaForm
         self&.dig(:responseSets, id.to_sym)
       end
 
-      ####response set management
       def add_response_set(id, definition)
         new_definition = definition.merge({
           id: id
@@ -141,7 +152,9 @@ module JsonSchemaForm
         self[:responseSets] = self.symbolize_recursive(response_sets_hash)
       end
 
-      ####property management
+      ##########################
+      ###PROPERTY MANAGEMENT####
+      ##########################
 
       def prepend_property(id, definition)
         new_definition = {}.merge(definition)
@@ -213,23 +226,6 @@ module JsonSchemaForm
           property[:displayProperties][:sort] = i
         end
       end
-
-      ###locale###
-
-      # def get_i18n_label
-      # end
-
-      # def translate_enum_option
-      # end
-
-      # def translate_enum_options
-      # end
-
-      # def get_true_label
-      # end
-
-      # def get_false_label
-      # end
 
     end
   end
