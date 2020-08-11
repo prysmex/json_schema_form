@@ -2,7 +2,15 @@ module JsonSchemaForm
   module Field
     class Slider < ::JsonSchemaForm::Type::Number
 
+      ##################
+      #####METHODS######
+      ##################
+
       include ::JsonSchemaForm::Field::FieldMethods
+
+      def max_score
+        10
+      end
 
       ##################
       ###VALIDATIONS####
