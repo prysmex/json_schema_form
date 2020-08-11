@@ -9,7 +9,7 @@ module JsonSchemaForm
       include ::JsonSchemaForm::Field::FieldMethods
 
       def max_score
-        self.response_set[:responses].max_by {|property| property[:score] }
+        self.response_set[:responses].reduce(0){|sum,response| sum + response[:score] }
       end
 
       ##################
