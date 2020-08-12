@@ -89,7 +89,7 @@ module JsonSchemaForm
       def schema_errors
         schema = validation_schema
         if schema
-          schema.(schema_validation_hash).errors.to_h
+          schema.(schema_validation_hash).errors.to_h.merge({})
         else
           {}
         end

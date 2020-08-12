@@ -10,19 +10,22 @@ module JsonSchemaForm
         super(obj, &block)
       end
 
-      # FORM_RESPONSE_PROC = ->(instance, value) {
-      #   value&.each do |id, obj|
-      #     path = if instance&.meta&.dig(:path)
-      #       instance.meta[:path].concat([:responseSets, id])
-      #     else
-      #      [:responseSets, id]
-      #     end
-      #     value[id] = JsonSchemaForm::Field::ResponseSet.new(obj, {
-      #       parent: instance,
-      #       path: path
-      #     })
-      #   end
-      # }
+      FORM_RESPONSE_PROC = ->(instance, responsesArray) {
+        if responsesArray.is_a? ::Array
+          responsesArray.map.with_index do |response, index|
+            path = instance.meta[:path] + [:responses, index]
+            JsonSchemaForm::Field::Response.new(
+              response,
+              {
+                parent: instance,
+                path: path
+              }
+            )
+          end
+        end
+      }
+
+      attribute? :responses, default: ->(instance) { [].freeze }, transform: FORM_RESPONSE_PROC
 
       ##################
       ###VALIDATIONS####
@@ -34,27 +37,14 @@ module JsonSchemaForm
           config.validate_keys = true
           required(:id) { int? | str? }
           required(:responses).array(:hash) do
-            required(:value).value(:string)
-            if is_inspection
-              required(:enableScore).value(Types::True)
-              required(:score).maybe(:integer)
-              required(:failed).value(:bool)
-            end
-            required(:displayProperties).hash do
-              required(:i18n).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
-              end
-              if is_inspection
-                required(:color).maybe(:string)
-              end
-            end
           end
         end
       end
 
       def schema_validation_hash
-        Marshal.load(Marshal.dump(self))# new reference
+        json = Marshal.load(Marshal.dump(self)) # new reference
+        json[:responses]&.clear
+        json
       end
 
       def valid_with_schema?
@@ -62,12 +52,15 @@ module JsonSchemaForm
       end
 
       def schema_errors
-        schema = validation_schema
-        if schema
-          schema.(schema_validation_hash).errors.to_h
-        else
-          {}
+        errors_hash = validation_schema.(schema_validation_hash).errors.to_h.merge({})
+        self[:responses]&.each.with_index do |response, index|
+          response_errors = response.schema_errors
+          unless response_errors.empty?
+            errors_hash[:responses] ||= {}
+            errors_hash[:responses][index] = response_errors
+          end
         end
+        errors_hash
       end
 
       ##############

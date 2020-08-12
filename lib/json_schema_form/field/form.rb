@@ -55,7 +55,7 @@ module JsonSchemaForm
       FORM_RESPONSE_SETS_PROC = ->(instance, value) {
         value&.each do |id, obj|
           path = if instance&.meta&.dig(:path)
-            instance.meta[:path].concat([:responseSets, id])
+            instance.meta[:path] + [:responseSets, id]
           else
            [:responseSets, id]
           end
