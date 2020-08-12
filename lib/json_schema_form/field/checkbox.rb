@@ -44,9 +44,9 @@ module JsonSchemaForm
       ##############
 
       def max_score
-        self
-          .response_set[:responses]
-          .reduce(0){|sum,response| sum + response[:score] }
+        self.response_set
+            .try(:[], :responses)
+            .reduce(0){|sum,response| sum + (response[:score] || 0) }
       end
 
       #V2.11.O => V2.12.0 migration
