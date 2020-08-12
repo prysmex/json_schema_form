@@ -2,7 +2,7 @@ module JsonSchemaForm
   module Field
     class TextInput < ::JsonSchemaForm::Type::String
 
-      include ::JsonSchemaForm::Field::FieldMethods
+      include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####

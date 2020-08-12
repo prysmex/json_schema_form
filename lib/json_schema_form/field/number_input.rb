@@ -2,7 +2,7 @@ module JsonSchemaForm
   module Field
     class NumberInput < ::JsonSchemaForm::Type::Number
 
-      include ::JsonSchemaForm::Field::FieldMethods
+      include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####

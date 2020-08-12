@@ -74,11 +74,15 @@ module JsonSchemaForm
 
     def validation_schema
       is_subschema = meta[:is_subschema]
+      is_inspection = meta[:is_inspection]
       Dry::Schema.define(parent: super) do
         config.validate_keys = true
         if !is_subschema
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
+          if is_inspection
+            optional(:maxScore).maybe(:integer)
+          end
         end
       end
     end
@@ -123,6 +127,7 @@ module JsonSchemaForm
         definition.migrate! if definition&.respond_to?(:migrate!)
       end
 
+      # V2.11.O => V2.12.0 migration
       # migrate form object
       # TODO
     end

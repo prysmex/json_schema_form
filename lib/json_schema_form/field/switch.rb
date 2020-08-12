@@ -2,7 +2,7 @@ module JsonSchemaForm
   module Field
     class Switch < ::JsonSchemaForm::Type::Boolean
 
-      include ::JsonSchemaForm::Field::FieldMethods
+      include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####

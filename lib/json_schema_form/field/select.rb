@@ -2,7 +2,8 @@ module JsonSchemaForm
   module Field
     class Select < ::JsonSchemaForm::Type::String
 
-      include ::JsonSchemaForm::Field::FieldMethods
+      include ::JsonSchemaForm::Field::InstanceMethods
+      include ::JsonSchemaForm::Field::ResponseSettable
 
       ##################
       ###VALIDATIONS####
@@ -46,6 +47,7 @@ module JsonSchemaForm
         self.response_set[:responses].max_by {|property| property[:score] }
       end
 
+      #V2.11.O => V2.12.0 migration
       def migrate!
         if self[:responseSetId].nil?
 
