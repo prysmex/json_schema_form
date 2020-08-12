@@ -44,7 +44,7 @@ module JsonSchemaForm
       ##############
 
       def max_score
-        self.response_set[:responses].max_by {|property| property[:score] }
+        self.response_set[:responses].max_by {|property| property[:score] }[:score]
       end
 
       #V2.11.O => V2.12.0 migration
