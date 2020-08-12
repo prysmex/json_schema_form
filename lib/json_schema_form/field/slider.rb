@@ -2,15 +2,7 @@ module JsonSchemaForm
   module Field
     class Slider < ::JsonSchemaForm::Type::Number
 
-      ##################
-      #####METHODS######
-      ##################
-
       include ::JsonSchemaForm::Field::FieldMethods
-
-      def max_score
-        10
-      end
 
       ##################
       ###VALIDATIONS####
@@ -49,6 +41,14 @@ module JsonSchemaForm
           locales&.clear
         end
         json
+      end
+
+      ##################
+      #####METHODS######
+      ##################
+
+      def max_score
+        self[:enum]&.max || 0
       end
 
     end

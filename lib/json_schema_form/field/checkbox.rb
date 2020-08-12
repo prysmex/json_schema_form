@@ -2,15 +2,7 @@ module JsonSchemaForm
   module Field
     class Checkbox < ::JsonSchemaForm::Type::Array
 
-      ##################
-      #####METHODS######
-      ##################
-
       include ::JsonSchemaForm::Field::FieldMethods
-
-      def max_score
-        self.response_set[:responses].reduce(0){|sum,response| sum + response[:score] }
-      end
 
       ##################
       ###VALIDATIONS####
@@ -54,6 +46,10 @@ module JsonSchemaForm
       #   response = self.respond_set.get_response_from_value(value)
       #   response.dig(:displayProperties, :i18n, locale)
       # end
+
+      def max_score
+        self.response_set[:responses].reduce(0){|sum,response| sum + response[:score] }
+      end
 
       #V2.11.O => V2.12.0 migration
       def migrate!

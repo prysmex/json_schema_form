@@ -66,6 +66,7 @@ module JsonSchemaForm
             end
             required(:then).value(:hash)
           end
+          optional(:max_score).maybe(:integer)
         end
       end
 

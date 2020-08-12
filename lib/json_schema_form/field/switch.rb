@@ -2,15 +2,7 @@ module JsonSchemaForm
   module Field
     class Switch < ::JsonSchemaForm::Type::Boolean
 
-      ##################
-      #####METHODS######
-      ##################
-
       include ::JsonSchemaForm::Field::FieldMethods
-
-      def max_score
-        1
-      end
 
       ##################
       ###VALIDATIONS####
@@ -42,6 +34,14 @@ module JsonSchemaForm
             required(:useToggle).filled(:bool)
           end
         end
+      end
+
+      ##################
+      #####METHODS######
+      ##################
+
+      def max_score
+        1
       end
 
     end
