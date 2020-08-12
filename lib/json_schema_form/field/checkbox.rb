@@ -47,6 +47,10 @@ module JsonSchemaForm
       #   response.dig(:displayProperties, :i18n, locale)
       # end
 
+      def max_score
+        self.response_set[:responses].reduce(0){|sum,response| sum + response[:score] }
+      end
+
       #V2.11.O => V2.12.0 migration
       def migrate!
         if self[:responseSetId].nil?

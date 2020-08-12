@@ -8,7 +8,7 @@ module JsonSchemaForm
         if obj.is_a? ::Hash
           obj.each do |name, definition|
             path = if instance&.meta&.dig(:path)
-              instance.meta[:path].concat([:properties, name])
+              instance.meta[:path] + [:properties, name]
             else
             [:properties, name]
             end
@@ -27,7 +27,7 @@ module JsonSchemaForm
           allOfArray.map.with_index do |condition_hash, index|
             condition_hash.each do |key, object_schema|
               path = if instance&.meta&.dig(:path)
-                instance.meta[:path].concat([:allOf, index, :then])
+                instance.meta[:path] + [:allOf, index, :then]
               else
                 [:allOf, index, :then]
               end
@@ -66,6 +66,7 @@ module JsonSchemaForm
             end
             required(:then).value(:hash)
           end
+          optional(:max_score).maybe(:integer)
         end
       end
 
@@ -85,7 +86,7 @@ module JsonSchemaForm
           prop_errors = prop.schema_errors
           unless prop_errors.empty?
             prop_errors.flatten_to_root.each do |k,v|
-              array = prop.meta[:path].dup.concat(k.to_s.split('.')).push(v)
+              array = (prop.meta[:path] + k.to_s.split('.')).push(v)
               errors_hash.bury(*array)
             end
           end
@@ -244,7 +245,7 @@ module JsonSchemaForm
           form = condition_hash[:then]
           if form
             forms_array.push(form)
-            forms_array = forms_array.concat(form.get_dynamic_forms(levels, level + 1))
+            forms_array.concat(form.get_dynamic_forms(levels, level + 1))
           end
         end
         forms_array

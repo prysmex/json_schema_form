@@ -42,6 +42,10 @@ module JsonSchemaForm
       ###METHODS####
       ##############
 
+      def max_score
+        self.response_set[:responses].max_by {|property| property[:score] }
+      end
+
       def migrate!
         if self[:responseSetId].nil?
 

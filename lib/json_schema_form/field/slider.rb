@@ -43,6 +43,14 @@ module JsonSchemaForm
         json
       end
 
+      ##################
+      #####METHODS######
+      ##################
+
+      def max_score
+        self[:enum]&.max || 0
+      end
+
     end
   end
 end

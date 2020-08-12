@@ -36,6 +36,14 @@ module JsonSchemaForm
         end
       end
 
+      ##################
+      #####METHODS######
+      ##################
+
+      def max_score
+        1
+      end
+
     end
   end
 end
