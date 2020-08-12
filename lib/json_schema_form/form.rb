@@ -81,7 +81,7 @@ module JsonSchemaForm
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
           if is_inspection
-            optional(:maxScore).maybe(:integer)
+            required(:maxScore).maybe(:integer)
           end
         end
       end
