@@ -70,6 +70,7 @@ module JsonSchemaForm
           optional(:description).maybe(:string)
           optional(:default)
           optional(:examples)
+          optional(:max_score).maybe(:integer)
         end
       end
 

@@ -2,7 +2,15 @@ module JsonSchemaForm
   module Field
     class Select < ::JsonSchemaForm::Type::String
 
+      ##################
+      #####METHODS######
+      ##################
+
       include ::JsonSchemaForm::Field::FieldMethods
+
+      def max_score
+        self.response_set[:responses].max_by {|property| property[:score] }
+      end
 
       ##################
       ###VALIDATIONS####
