@@ -26,7 +26,7 @@ module JsonSchemaForm
       }
 
       def set_missing_extras
-        extras = self[:extras].merge({})
+        extras = (self[:extras] || {}).merge({})
         self.property_keys.each do |k|
           if !extras.key?(k)
             extras[k] = {}
@@ -36,7 +36,7 @@ module JsonSchemaForm
       end
 
       def set_missing_meta
-        meta = self[:meta].merge({})
+        meta = (self[:meta] || {}).merge({})
         self.property_keys.each do |k|
           if !meta.key?(k)
             meta[k] = {}
@@ -66,8 +66,8 @@ module JsonSchemaForm
         end
       }
   
-      attribute? :extras, default: ->(instance) { {}.freeze }, transform: EXTRAS_PROC
-      attribute? :meta, default: ->(instance) { {}.freeze }, transform: META_PROC
+      attribute? :extras, transform: EXTRAS_PROC
+      attribute? :meta, transform: META_PROC
   
     end
   end
