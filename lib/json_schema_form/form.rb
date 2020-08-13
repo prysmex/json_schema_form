@@ -74,7 +74,7 @@ module JsonSchemaForm
 
     def validation_schema
       is_subschema = meta[:is_subschema]
-      is_inspection = meta[:is_inspection]
+      is_inspection = self.is_inspection
       Dry::Schema.define(parent: super) do
         config.validate_keys = true
         if !is_subschema
