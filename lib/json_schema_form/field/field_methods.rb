@@ -5,8 +5,9 @@ module JsonSchemaForm
       # get the translation for a value in the field's response set
       def i18n_value(value, locale = :es)
         self
-          .response_set.get_response_from_value(value)
-          .dig(:displayProperties, :i18n, locale)
+          .response_set
+          .get_response_from_value(value)
+          &.dig(:displayProperties, :i18n, locale)
       end
 
       #get the field's response set, only applies to certain fields
