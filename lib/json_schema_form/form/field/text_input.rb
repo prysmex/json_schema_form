@@ -34,7 +34,7 @@ module JsonSchemaForm
       ##################
 
       def migrate!
-        if self.root_form[:schemaFormVersion].nil?
+        if self.dig(:displayProperties, :pictures).nil?
           self.bury(:displayProperties, :pictures, [])
         end
       end

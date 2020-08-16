@@ -56,11 +56,12 @@ module JsonSchemaForm
       end
 
       def migrate!
-        if self.root_form[:schemaFormVersion].nil?
 
+        if self.dig(:displayProperties, :pictures).nil?
           self.bury(:displayProperties, :pictures, [])
+        end
 
-          puts 'creating new response set'
+        if self[:responseSetId].nil?
           id = SecureRandom.uuid
           new_response_set = {
             responses: []
@@ -96,6 +97,7 @@ module JsonSchemaForm
           self.dig(:displayProperties, :i18n).delete(:enum)
           self.delete(:enum)
         end
+
       end
 
     end
