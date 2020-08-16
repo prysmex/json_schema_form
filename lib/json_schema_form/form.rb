@@ -113,6 +113,19 @@ module JsonSchemaForm
     ###METHODS####
     ##############
 
+    def compile!
+      #compile root level properties
+      self[:properties]&.each do |id, definition|
+        definition.compile! if definition&.respond_to?(:compile!)
+      end
+
+      #compile dynamic properties
+      self.get_dynamic_forms.each{|form| form.compile!}
+
+      #remove json schema none-compliant properties
+      self.delete(:responseSets)
+    end
+
     def migrate!
       # migrate properties
       self[:properties]&.each do |id, definition|

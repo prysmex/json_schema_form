@@ -15,6 +15,7 @@ module JsonSchemaForm
           config.validate_keys = true
           required(:responseSetId) { int? | str? }
           required(:displayProperties).hash do
+            required(:pictures).array(:string)
             required(:i18n).hash do
               required(:label).hash do
                 optional(:es).maybe(:string)
@@ -47,6 +48,15 @@ module JsonSchemaForm
         self.response_set
             .try(:[], :responses)
             .reduce(0){|sum,response| sum + (response[:score] || 0) }
+      end
+
+      def compile!
+        self[:items] = {
+          :"$id" => '/properties/checkbox4738/items',
+          type: 'string',
+          enum: self.response_set.try(:[], :responses)&.map{|r| r[:value]} || [],
+          :'$schema' => 'http://json-schema.org/draft-07/schema#'
+        }
       end
 
       #V2.11.O => V2.12.0 migration

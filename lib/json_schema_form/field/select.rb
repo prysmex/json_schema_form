@@ -15,6 +15,7 @@ module JsonSchemaForm
           config.validate_keys = true
           required(:responseSetId) { int? | str? }
           required(:displayProperties).hash do
+            required(:pictures).array(:string)
             required(:i18n).hash do
               required(:label).hash do
                 optional(:es).maybe(:string)
@@ -48,6 +49,10 @@ module JsonSchemaForm
             .try(:[], :responses)
             &.max_by {|property| property[:score] || 0 }
             .try(:[], :score) || 0
+      end
+
+      def compile!
+        self[:enum] = self.response_set.try(:[], :responses)&.map{|r| r[:value]} || []
       end
 
       #V2.11.O => V2.12.0 migration
