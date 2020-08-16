@@ -14,7 +14,7 @@ module JsonSchemaForm
     ##################
     
     def validation_schema
-      is_inspection = self.meta[:parent].meta[:parent].is_a? JsonSchemaForm::InspectionForm
+      is_inspection = self.meta[:parent].meta[:parent].is_inspection
       Dry::Schema.JSON do
         config.validate_keys = true
         required(:value).value(:string)

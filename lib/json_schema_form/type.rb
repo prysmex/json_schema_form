@@ -1,7 +1,0 @@
-require_relative 'type/base'
-require_relative 'type/array'
-require_relative 'type/boolean'
-require_relative 'type/null'
-require_relative 'type/number'
-require_relative 'type/object'
-require_relative 'type/string'

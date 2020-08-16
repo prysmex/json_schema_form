@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class Static < ::JsonSchemaForm::Type::Null
+    class Static < ::JsonSchemaForm::JsonSchema::Null
 
       include ::JsonSchemaForm::Field::InstanceMethods
 

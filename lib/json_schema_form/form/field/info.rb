@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class Info < ::JsonSchemaForm::Type::Null
+    class Info < ::JsonSchemaForm::JsonSchema::Null
 
       include ::JsonSchemaForm::Field::InstanceMethods
 

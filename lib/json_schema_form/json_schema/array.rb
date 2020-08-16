@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module Type
+  module JsonSchema
     class Array < Base
 
       ITEMS_PROC = ->(instance, value) {

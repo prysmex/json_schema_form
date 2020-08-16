@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module Type
+  module JsonSchema
     class Object < Base
 
       # instantiate object classes when setting

@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class Checkbox < ::JsonSchemaForm::Type::Array
+    class Select < ::JsonSchemaForm::JsonSchema::String
 
       include ::JsonSchemaForm::Field::InstanceMethods
       include ::JsonSchemaForm::Field::ResponseSettable
@@ -47,16 +47,12 @@ module JsonSchemaForm
       def max_score
         self.response_set
             .try(:[], :responses)
-            .reduce(0){|sum,response| sum + (response[:score] || 0) }
+            &.max_by {|property| property[:score] || 0 }
+            .try(:[], :score) || 0
       end
 
       def compile!
-        self[:items] = {
-          :"$id" => '/properties/checkbox4738/items',
-          type: 'string',
-          enum: self.response_set.try(:[], :responses)&.map{|r| r[:value]} || [],
-          :'$schema' => 'http://json-schema.org/draft-07/schema#'
-        }
+        self[:enum] = self.response_set.try(:[], :responses)&.map{|r| r[:value]} || []
       end
 
       #V2.11.O => V2.12.0 migration
@@ -69,10 +65,10 @@ module JsonSchemaForm
             responses: []
           }
           
-          options = self.dig(:items, :enum)
+          options = self.dig(:enum)
           unless options.nil?
             options.each do |opt|
-              
+
               current_response_set = {
                 value: opt,
                 displayProperties: {
@@ -83,7 +79,7 @@ module JsonSchemaForm
                 }
               }
 
-              if root_form.is_a? JsonSchemaForm::InspectionForm
+              if root_form.is_inspection
                 current_response_set[:enableScore] = true
                 current_response_set[:score] = nil
                 current_response_set[:failed] = false
@@ -95,9 +91,9 @@ module JsonSchemaForm
           end
           root_form.add_response_set(id, new_response_set)
           self[:responseSetId] = id
-
+          
           self.dig(:displayProperties, :i18n).delete(:enum)
-          self.delete(:items)
+          self.delete(:enum)
         end
       end
 

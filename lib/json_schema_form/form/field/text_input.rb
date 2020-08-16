@@ -1,13 +1,13 @@
 module JsonSchemaForm
   module Field
-    class Header < ::JsonSchemaForm::Type::Null
+    class TextInput < ::JsonSchemaForm::JsonSchema::String
 
       include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####
       ##################
-      
+
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
@@ -24,8 +24,7 @@ module JsonSchemaForm
             end
             required(:sort).filled(:integer)
             required(:hidden).filled(:bool)
-            required(:useHeader).filled(:bool)
-            required(:level).filled(Types::Integer.constrained(lteq: 2))
+            required(:textarea).filled(:bool)
           end
         end
       end

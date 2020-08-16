@@ -1,13 +1,13 @@
 module JsonSchemaForm
   module Field
-    class Switch < ::JsonSchemaForm::Type::Boolean
+    class Header < ::JsonSchemaForm::JsonSchema::Null
 
       include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####
       ##################
-
+      
       def validation_schema
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
@@ -18,31 +18,16 @@ module JsonSchemaForm
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
               end
-              required(:trueLabel).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
-              end
-              required(:falseLabel).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
-              end
             end
             required(:visibility).hash do
               required(:label).filled(:bool)
             end
             required(:sort).filled(:integer)
             required(:hidden).filled(:bool)
-            required(:useToggle).filled(:bool)
+            required(:useHeader).filled(:bool)
+            required(:level).filled(Types::Integer.constrained(lteq: 2))
           end
         end
-      end
-
-      ##################
-      #####METHODS######
-      ##################
-
-      def max_score
-        1
       end
 
     end

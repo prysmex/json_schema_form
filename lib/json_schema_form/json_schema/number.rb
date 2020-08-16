@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module Type
+  module JsonSchema
     class Number < Base
 
       attribute :type, {

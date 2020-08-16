@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class TextInput < ::JsonSchemaForm::Type::String
+    class Switch < ::JsonSchemaForm::JsonSchema::Boolean
 
       include ::JsonSchemaForm::Field::InstanceMethods
 
@@ -18,15 +18,31 @@ module JsonSchemaForm
                 optional(:es).maybe(:string)
                 optional(:en).maybe(:string)
               end
+              required(:trueLabel).hash do
+                optional(:es).maybe(:string)
+                optional(:en).maybe(:string)
+              end
+              required(:falseLabel).hash do
+                optional(:es).maybe(:string)
+                optional(:en).maybe(:string)
+              end
             end
             required(:visibility).hash do
               required(:label).filled(:bool)
             end
             required(:sort).filled(:integer)
             required(:hidden).filled(:bool)
-            required(:textarea).filled(:bool)
+            required(:useToggle).filled(:bool)
           end
         end
+      end
+
+      ##################
+      #####METHODS######
+      ##################
+
+      def max_score
+        1
       end
 
     end

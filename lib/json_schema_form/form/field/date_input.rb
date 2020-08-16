@@ -1,6 +1,6 @@
 module JsonSchemaForm
   module Field
-    class DateInput < ::JsonSchemaForm::Type::String
+    class DateInput < ::JsonSchemaForm::JsonSchema::String
 
       include ::JsonSchemaForm::Field::InstanceMethods
 

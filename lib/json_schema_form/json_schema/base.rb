@@ -2,7 +2,7 @@ require 'super_hash'
 require 'dry-schema'
 
 module JsonSchemaForm
-  module Type
+  module JsonSchema
 
     class Base < ::SuperHash::Hasher
 
