@@ -30,6 +30,16 @@ module JsonSchemaForm
         end
       end
 
+      ##############
+      ###METHODS####
+      ##############
+
+      def migrate!
+        if self.root_form[:schemaFormVersion].nil?
+          self[:pictures] = []
+        end
+      end
+
     end
   end
 end

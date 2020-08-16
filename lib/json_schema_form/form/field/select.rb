@@ -55,9 +55,10 @@ module JsonSchemaForm
         self[:enum] = self.response_set.try(:[], :responses)&.map{|r| r[:value]} || []
       end
 
-      #V2.11.O => V2.12.0 migration
       def migrate!
-        if self[:responseSetId].nil?
+        if self.root_form[:schemaFormVersion].nil?
+
+          self[:pictures] = []
 
           puts 'creating new response set'
           id = SecureRandom.uuid

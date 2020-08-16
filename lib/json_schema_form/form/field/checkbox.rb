@@ -61,9 +61,10 @@ module JsonSchemaForm
 
       #V2.11.O => V2.12.0 migration
       def migrate!
-        if self[:responseSetId].nil?
+        if self.root_form[:schemaFormVersion].nil?
 
-          puts 'creating new response set'
+          self[:pictures] = []
+
           id = SecureRandom.uuid
           new_response_set = {
             responses: []

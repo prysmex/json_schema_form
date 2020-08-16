@@ -65,7 +65,6 @@ module JsonSchemaForm
       end
     }
 
-    # attribute? :prysmexSchemaVersion, default: ->(instance) { instance.meta[:is_subschema] ? nil : '1.0.0' }
     attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
 
     ##################
@@ -78,6 +77,7 @@ module JsonSchemaForm
       Dry::Schema.define(parent: super) do
         config.validate_keys = true
         if !is_subschema
+          required(:schemaFormVersion).value(:string)
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
           if is_inspection	
@@ -129,7 +129,9 @@ module JsonSchemaForm
     def migrate!
       # migrate properties
       self[:properties]&.each do |id, definition|
-        definition.migrate! if definition&.respond_to?(:migrate!)
+        if definition&.respond_to?(:migrate!)
+          puts 'migrating ' + definition.class.to_s.demodulize
+        end
       end
       
       #migrate dynamic forms
@@ -137,12 +139,16 @@ module JsonSchemaForm
 
       # migrate response sets
       self[:responseSets]&.each do |id, definition|
-        definition.migrate! if definition&.respond_to?(:migrate!)
+        if definition&.respond_to?(:migrate!)
+          puts 'migrating response set'
+          definition.migrate!
+        end
       end
 
-      # V2.11.O => V2.12.0 migration
       # migrate form object
-      # TODO
+      if !meta[:is_subschema]
+        self[:schemaFormVersion] = '1.0.0'
+      end
     end
 
     ##############################
