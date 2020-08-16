@@ -1,8 +1,6 @@
 module JsonSchemaForm
   class Form < ::JsonSchemaForm::Type::Object
 
-    attr_reader :is_inspection
-
     BUILDER = Proc.new do |obj, meta|
       klass = case obj[:type]
       when 'string', :string
@@ -74,15 +72,11 @@ module JsonSchemaForm
 
     def validation_schema
       is_subschema = meta[:is_subschema]
-      is_inspection = self.is_inspection
       Dry::Schema.define(parent: super) do
         config.validate_keys = true
         if !is_subschema
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
-          if is_inspection
-            optional(:maxScore).maybe(:integer)
-          end
         end
       end
     end

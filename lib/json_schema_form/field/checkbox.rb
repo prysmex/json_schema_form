@@ -83,7 +83,7 @@ module JsonSchemaForm
                 }
               }
 
-              if root_form.is_inspection
+              if root_form.is_a? JsonSchemaForm::InspectionForm
                 current_response_set[:enableScore] = true
                 current_response_set[:score] = nil
                 current_response_set[:failed] = false
