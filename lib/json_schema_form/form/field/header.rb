@@ -12,7 +12,7 @@ module JsonSchemaForm
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
           required(:displayProperties).hash do
-            required(:pictures).array(:string)
+            required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
                 optional(:es).maybe(:string)
@@ -36,7 +36,7 @@ module JsonSchemaForm
 
       def migrate!
         if self.root_form[:schemaFormVersion].nil?
-          self[:pictures] = []
+          self.bury(:displayProperties, :pictures, [])
         end
       end
 

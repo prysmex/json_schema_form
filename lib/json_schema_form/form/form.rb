@@ -131,6 +131,7 @@ module JsonSchemaForm
       self[:properties]&.each do |id, definition|
         if definition&.respond_to?(:migrate!)
           puts 'migrating ' + definition.class.to_s.demodulize
+          definition.migrate!
         end
       end
       
