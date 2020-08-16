@@ -9,31 +9,31 @@ module JsonSchemaForm
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta
       
-      #Builder proc, receives hash and returns a JsonSchemaForm::Type::? class
+      #Builder proc, receives hash and returns a JsonSchemaForm::JsonSchema::? class
       BUILDER = Proc.new do |obj, meta|
-        # klass_name = "JsonSchemaForm::Type::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
+        # klass_name = "JsonSchemaForm::JsonSchema::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
         # klass = Object.const_get(klass_name)
         # type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
         # type[{obj: obj, meta: meta}]
         klass = case obj[:type]
         when 'string', :string
-          JsonSchemaForm::Type::String
+          JsonSchemaForm::JsonSchema::String
         when 'number', :number, 'integer', :integer
-          JsonSchemaForm::Type::Number
+          JsonSchemaForm::JsonSchema::Number
         when 'boolean', :boolean
-          JsonSchemaForm::Type::Boolean
+          JsonSchemaForm::JsonSchema::Boolean
         when 'array', :array
-          JsonSchemaForm::Type::Array
+          JsonSchemaForm::JsonSchema::Array
         when 'object', :object
-          JsonSchemaForm::Type::Object
+          JsonSchemaForm::JsonSchema::Object
         when 'null', :null
-          JsonSchemaForm::Type::Null
+          JsonSchemaForm::JsonSchema::Null
         end
 
         #detect by other ways than 'type' property
         if klass.nil?
           if obj.has_key?(:properties)
-            klass = JsonSchemaForm::Type::Object
+            klass = JsonSchemaForm::JsonSchema::Object
           end
         end
 
