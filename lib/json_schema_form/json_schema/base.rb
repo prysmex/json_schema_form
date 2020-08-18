@@ -42,9 +42,9 @@ module JsonSchemaForm
         klass.new(obj, meta)
       end
       
-      def initialize(obj, meta={}, &block)
+      def initialize(obj, meta={}, options={}, &block)
         @meta = meta
-        super(obj, &block)
+        super(obj, options, &block)
       end
 
       attribute :type, {

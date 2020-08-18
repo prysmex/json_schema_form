@@ -4,9 +4,9 @@ module JsonSchemaForm
     instance_variable_set('@allow_dynamic_attributes', true)
     attr_reader :meta
 
-    def initialize(obj, meta={}, &block)
+    def initialize(obj, meta={}, options={}, &block)
       @meta = meta
-      super(obj, &block)
+      super(obj, options, &block)
     end
 
     FORM_RESPONSE_PROC = ->(instance, responsesArray) {

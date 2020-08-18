@@ -32,12 +32,13 @@ module JsonSchemaForm
                 [:allOf, index, :then]
               end
               condition_hash[:then] = instance.class::BUILDER.call(
-                condition_hash[:then].merge(__skip_required_attrs: [:type]),
+                condition_hash[:then],
                 {
                   parent: instance,
                   is_subschema: true,
                   path: path
-                }
+                },
+                {skip_required_attrs: [:type]}
               )
             end
           end
