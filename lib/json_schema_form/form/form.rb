@@ -3,7 +3,7 @@ module JsonSchemaForm
 
     attr_reader :is_inspection
 
-    BUILDER = Proc.new do |obj, meta|
+    BUILDER = Proc.new do |obj, meta, options|
       klass = case obj[:type]
       when 'string', :string
         if obj[:format] == "date-time"
@@ -48,7 +48,7 @@ module JsonSchemaForm
 
       raise StandardError.new('builder conditions not met') if klass.nil?
 
-      klass.new(obj, meta)
+      klass.new(obj, meta, options)
     end
 
     FORM_RESPONSE_SETS_PROC = ->(instance, value) {

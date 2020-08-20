@@ -10,7 +10,7 @@ module JsonSchemaForm
       attr_reader :meta
       
       #Builder proc, receives hash and returns a JsonSchemaForm::JsonSchema::? class
-      BUILDER = Proc.new do |obj, meta|
+      BUILDER = Proc.new do |obj, meta, options|
         # klass_name = "JsonSchemaForm::JsonSchema::#{obj[:type].to_s.split('_').collect(&:capitalize).join}"
         # klass = Object.const_get(klass_name)
         # type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
@@ -39,7 +39,7 @@ module JsonSchemaForm
 
         raise StandardError.new('builder conditions not met') if klass.nil?
 
-        klass.new(obj, meta)
+        klass.new(obj, meta, options)
       end
       
       def initialize(obj, meta={}, options={}, &block)
