@@ -20,7 +20,7 @@ module JsonSchemaForm
         required(:value).value(:string)
         if is_inspection
           required(:enableScore).value(Types::True)
-          required(:score).maybe(:integer)
+          required(:score) { int? | float? | nil? }
           required(:failed).value(:bool)
         end
         required(:displayProperties).hash do
