@@ -124,6 +124,8 @@ module JsonSchemaForm
 
       #remove json schema none-compliant properties
       self.delete(:responseSets)
+
+      self
     end
 
     def migrate!
