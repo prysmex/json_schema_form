@@ -35,7 +35,12 @@ module JsonSchemaForm
       end
       
       def valid_for_locale?(locale = :es)
-        i18n_label(locale).present?
+        case self
+        when JsonSchemaForm::Field::Static
+          true
+        else
+          i18n_label(locale).present?
+        end
       end
 
     end
