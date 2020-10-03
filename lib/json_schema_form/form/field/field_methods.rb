@@ -33,6 +33,10 @@ module JsonSchemaForm
       def i18n_label(locale = :es)
         self.dig(:displayProperties, :i18n, :label, locale)
       end
+      
+      def valid_for_locale?(locale = :es)
+        i18n_label(locale).present?
+      end
 
     end
   end

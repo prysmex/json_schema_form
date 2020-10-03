@@ -66,6 +66,7 @@ module JsonSchemaForm
     }
 
     attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
+    attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
 
     ##################
     ###VALIDATIONS####
@@ -74,14 +75,16 @@ module JsonSchemaForm
     def validation_schema
       is_subschema = meta[:is_subschema]
       is_inspection = self.is_inspection
+      debugger
       Dry::Schema.define(parent: super) do
         config.validate_keys = true
         if !is_subschema
           required(:schemaFormVersion).value(:string)
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
+          required(:availableLocales).value(:array?).array(:str?)
           if is_inspection	
-            optional(:maxScore).maybe(:integer)	
+            optional(:maxScore).maybe(:float)	
           end
         end
       end
@@ -126,6 +129,11 @@ module JsonSchemaForm
       self.delete(:responseSets)
 
       self
+    end
+
+    def valid_for_locale?(locale = :es)
+      self.merged_properties.find{|k,v| v.valid_for_locale?(locale) == false}.nil? &&
+      self.response_sets.find{|k,v| v.valid_for_locale?(locale) == false}.nil?
     end
 
     def migrate!

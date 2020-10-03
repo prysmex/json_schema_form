@@ -58,6 +58,16 @@ module JsonSchemaForm
         end
       end
 
+      def valid_for_locale?(locale = :es)
+        label_is_valid = super
+
+        any_translation_missing = self[:enum].find do |value|
+          self.dig(:displayProperties, :i18n, :enum, locale).nil?
+        end.present?
+        
+        label_is_valid && !any_translation_missing
+      end
+
     end
   end
 end

@@ -51,6 +51,12 @@ module JsonSchemaForm
         end
       end
 
+      def valid_for_locale?(locale = :es)
+        super &&
+          !self.dig(:displayProperties, :i18n, :trueLabel, locale).nil? &&
+          !self.dig(:displayProperties, :i18n, :falseLabel, locale).nil?
+      end
+
     end
   end
 end

@@ -75,6 +75,10 @@ module JsonSchemaForm
       self[:responses].find{|r| r[:value] == value }
     end
 
+    def valid_for_locale?(locale = :es)
+      self[:responses].find{|r| r.valid_for_locale?(locale) == false }.nil?
+    end
+
     # def get_failing_responses
     # end
 

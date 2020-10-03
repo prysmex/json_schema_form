@@ -51,5 +51,9 @@ module JsonSchemaForm
     ###METHODS####
     ##############
 
+    def valid_for_locale?(locale = :es)
+      self.dig(:displayProperties, :i18n, locale).present?
+    end
+
   end
 end
