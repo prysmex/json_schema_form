@@ -5,39 +5,44 @@ JsonSchemaForm gem is designed to contain the backing classes for form definitio
  - Display properties
  - schemaFormVersion (versioning)
  
-The classes can be divided into the following 'categories':
-- json_schema: Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas.
-    - JsonSchemaForm::JsonSchema::Base (abstract)
-    - JsonSchemaForm::JsonSchema::Array
-    - JsonSchemaForm::JsonSchema::Boolean
-    - JsonSchemaForm::JsonSchema::Null
-    - JsonSchemaForm::JsonSchema::Number
-    - JsonSchemaForm::JsonSchema::Object
-    - JsonSchemaForm::JsonSchema::String
+This gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might need to get familiar with it before starting.
+ 
+The classes can be divided into the following 'modules':
+#### json_schema:
+Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
+ - JsonSchemaForm::JsonSchema::Array
+ - JsonSchemaForm::JsonSchema::Boolean
+ - JsonSchemaForm::JsonSchema::Null
+ - JsonSchemaForm::JsonSchema::Number
+ - JsonSchemaForm::JsonSchema::Object
+ - JsonSchemaForm::JsonSchema::String
     
-- form:
-    - JsonSchemaForm::Form
+#### form:
+Inherits from `JsonSchemaForm::JsonSchema::Object`, but adds some features used by forms and validations powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
+ - JsonSchemaForm::Form
     
-- field:
-    - JsonSchemaForm::Field::Checkbox
-    - JsonSchemaForm::Field::DateInput
-    - JsonSchemaForm::Field::Header
-    - JsonSchemaForm::Field::Info
-    - JsonSchemaForm::Field::NumberInput
-    - JsonSchemaForm::Field::Select
-    - JsonSchemaForm::Field::Slider
-    - JsonSchemaForm::Field::Static
-    - JsonSchemaForm::Field::Switch
-    - JsonSchemaForm::Field::TextInput
+#### field:
+These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
+ - JsonSchemaForm::Field::Checkbox
+ - JsonSchemaForm::Field::DateInput
+ - JsonSchemaForm::Field::Header
+ - JsonSchemaForm::Field::Info
+ - JsonSchemaForm::Field::NumberInput
+ - JsonSchemaForm::Field::Select
+ - JsonSchemaForm::Field::Slider
+ - JsonSchemaForm::Field::Static
+ - JsonSchemaForm::Field::Switch
+ - JsonSchemaForm::Field::TextInput
+
+#### document:
+Used by Prysmex as the 'raw data' that is created when a form is filled.
+ - JsonSchemaForm::Document::Document => Main class for storing 'raw data'
+ - JsonSchemaForm::Document::Extras => used by Inspection only
+ - JsonSchemaForm::Document::Meta => used by Inspection only
     
-- document:
-    - JsonSchemaForm::Document::Document ()
-    - JsonSchemaForm::Document::Extras ()
-    - JsonSchemaForm::Document::Meta ()
-    
-- responses:
-    - JsonSchemaForm::ResponseSet
-    - JsonSchemaForm::Response
+#### response:
+ - JsonSchemaForm::ResponseSet => a ::ResponseSet contains many ::Response
+ - JsonSchemaForm::Response
 
 ## Installation
 
