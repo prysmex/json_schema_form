@@ -1,13 +1,16 @@
 # JsonSchemaForm
 
+This gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might need to get familiar with it before starting.
+
+Validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
+
 JsonSchemaForm gem is designed to contain the backing classes for form definitions that are based on json schema standard [json_schema](https://json-schema.org/). There are some differences between the standard schemas and the ones defined by JsonSchemaForm::Form::Form, mainly to support:
  - Response sets
  - Display properties
- - schemaFormVersion (versioning)
- 
-This gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might need to get familiar with it before starting.
+ - versioning and version migration
  
 The classes can be divided into the following 'modules':
+
 #### json_schema:
 Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
  - JsonSchemaForm::JsonSchema::Array
@@ -17,12 +20,8 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
  - JsonSchemaForm::JsonSchema::Object
  - JsonSchemaForm::JsonSchema::String
     
-#### form:
-Inherits from `JsonSchemaForm::JsonSchema::Object`, but adds some features used by forms and validations powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
- - JsonSchemaForm::Form
-    
 #### field:
-These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
+These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::... classes.
  - JsonSchemaForm::Field::Checkbox
  - JsonSchemaForm::Field::DateInput
  - JsonSchemaForm::Field::Header
@@ -33,6 +32,10 @@ These classes are used by JsonSchemaForm::Form to define its properties or 'fiel
  - JsonSchemaForm::Field::Static
  - JsonSchemaForm::Field::Switch
  - JsonSchemaForm::Field::TextInput
+ 
+#### form:
+Inherits from `JsonSchemaForm::JsonSchema::Object`, but adds some features used by forms.
+ - JsonSchemaForm::Form
 
 #### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
@@ -62,7 +65,48 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+#### json_schema:
+
+Let's create a simple number schema by using it's backing class.
+
+```ruby
+JsonSchemaForm::JsonSchema::... classes provide the following methods
+[:validations, :validation_schema, :schema_validation_hash, :valid_with_schema?, :schema_errors, :required?, :key_name, :meta]
+
+schema = JsonSchemaForm::JsonSchema::Number.new({type: 'number', some_invalid_key: ""})
+schema # => {
+ :type=>"number",
+ :some_invalid_key=>"",
+ :$id=>"http://example.com/example.json",
+ :$schema=>"http://json-schema.org/draft-07/schema#"
+}
+
+schema.validations # => {}
+
+schema.validation_schema # => #<Dry::Schema::Processor keys=[:type, ....
+
+schema.schema_validation_hash # => {:type=>"number", :some_dynamic_key=>"", :$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#"}
+
+schema.valid_with_schema? # => false
+
+schema.schema_errors # => {:some_dynamic_key=>["is not allowed"]}
+
+schema.required? # => nil
+
+schema.key_name # => "example.json"
+
+schema.meta # => {}
+```
+    
+#### field:
+
+
+
+#### form:
+
+#### document:
+    
+#### response:
 
 ## Development
 
