@@ -23,28 +23,28 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
 ### field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::* classes.
  - `JsonSchemaForm::Field::Checkbox` `< JsonSchemaForm::JsonSchema::Array`
- - JsonSchemaForm::Field::DateInput `< JsonSchemaForm::JsonSchema::String`
- - JsonSchemaForm::Field::Header `< JsonSchemaForm::JsonSchema::Null`
- - JsonSchemaForm::Field::Info `< JsonSchemaForm::JsonSchema::Null`
- - JsonSchemaForm::Field::NumberInput `< JsonSchemaForm::JsonSchema::Number`
- - JsonSchemaForm::Field::Select `< JsonSchemaForm::JsonSchema::String`
- - JsonSchemaForm::Field::Slider `< JsonSchemaForm::JsonSchema::Number`
- - JsonSchemaForm::Field::Static `< JsonSchemaForm::JsonSchema::Null`
- - JsonSchemaForm::Field::Switch `< JsonSchemaForm::JsonSchema::Boolean`
- - JsonSchemaForm::Field::TextInput `< JsonSchemaForm::JsonSchema::String`
+ - `JsonSchemaForm::Field::DateInput` `< JsonSchemaForm::JsonSchema::String`
+ - `JsonSchemaForm::Field::Header` `< JsonSchemaForm::JsonSchema::Null`
+ - `JsonSchemaForm::Field::Info` `< JsonSchemaForm::JsonSchema::Null`
+ - `JsonSchemaForm::Field::NumberInput` `< JsonSchemaForm::JsonSchema::Number`
+ - `JsonSchemaForm::Field::Select` `< JsonSchemaForm::JsonSchema::String`
+ - `JsonSchemaForm::Field::Slider` `< JsonSchemaForm::JsonSchema::Number`
+ - `JsonSchemaForm::Field::Static` `< JsonSchemaForm::JsonSchema::Null`
+ - `JsonSchemaForm::Field::Switch` `< JsonSchemaForm::JsonSchema::Boolean`
+ - `JsonSchemaForm::Field::TextInput` `< JsonSchemaForm::JsonSchema::String`
  
 ### form:
  - JsonSchemaForm::Form `< JsonSchemaForm::JsonSchema::Object`
 
 ### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
- - JsonSchemaForm::Document::Document, main class for storing 'raw data'
- - JsonSchemaForm::Document::Extras, used by Inspection only
- - JsonSchemaForm::Document::Meta, used by Inspection only
+ - `JsonSchemaForm::Document::Document` main class for storing 'raw data'
+ - `JsonSchemaForm::Document::Extras` used by Inspection only
+ - `JsonSchemaForm::Document::Meta` used by Inspection only
     
 ### response:
- - JsonSchemaForm::ResponseSet => ::ResponseSet contains many ::Response
- - JsonSchemaForm::Response
+ - `JsonSchemaForm::ResponseSet`
+ - `JsonSchemaForm::Response` is contained by `::ResponseSet`
 
 ## Installation
 
