@@ -14,15 +14,15 @@ The classes can be divided into the following 'modules':
 ### json_schema:
 Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
  - `JsonSchemaForm::JsonSchema::Array`
- - JsonSchemaForm::JsonSchema::Boolean
- - JsonSchemaForm::JsonSchema::Null
- - JsonSchemaForm::JsonSchema::Number
- - JsonSchemaForm::JsonSchema::String
- - JsonSchemaForm::JsonSchema::Object
+ - `JsonSchemaForm::JsonSchema::Boolean`
+ - `JsonSchemaForm::JsonSchema::Null`
+ - `JsonSchemaForm::JsonSchema::Number`
+ - `JsonSchemaForm::JsonSchema::String`
+ - `JsonSchemaForm::JsonSchema::Object`
     
 ### field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::* classes.
- - JsonSchemaForm::Field::Checkbox `< JsonSchemaForm::JsonSchema::Array`
+ - `JsonSchemaForm::Field::Checkbox` `< JsonSchemaForm::JsonSchema::Array`
  - JsonSchemaForm::Field::DateInput `< JsonSchemaForm::JsonSchema::String`
  - JsonSchemaForm::Field::Header `< JsonSchemaForm::JsonSchema::Null`
  - JsonSchemaForm::Field::Info `< JsonSchemaForm::JsonSchema::Null`
