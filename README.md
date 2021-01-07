@@ -13,7 +13,7 @@ The classes can be divided into the following 'modules':
 
 ### json_schema:
 Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
- - JsonSchemaForm::JsonSchema::Array
+ - `JsonSchemaForm::JsonSchema::Array`
  - JsonSchemaForm::JsonSchema::Boolean
  - JsonSchemaForm::JsonSchema::Null
  - JsonSchemaForm::JsonSchema::Number
