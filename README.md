@@ -22,8 +22,8 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
     
 ### field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::* classes.
- - `JsonSchemaForm::Field::Checkbox`    a`< JsonSchemaForm::JsonSchema::Array`
- - `JsonSchemaForm::Field::DateInput`   `< JsonSchemaForm::JsonSchema::String`
+ - `JsonSchemaForm::Field::Checkbox`-----`< JsonSchemaForm::JsonSchema::Array`
+ - `JsonSchemaForm::Field::DateInput`----`< JsonSchemaForm::JsonSchema::String`
  - `JsonSchemaForm::Field::Header`      `< JsonSchemaForm::JsonSchema::Null`
  - `JsonSchemaForm::Field::Info`        `< JsonSchemaForm::JsonSchema::Null`
  - `JsonSchemaForm::Field::NumberInput` `< JsonSchemaForm::JsonSchema::Number`
