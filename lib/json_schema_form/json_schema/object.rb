@@ -48,6 +48,7 @@ module JsonSchemaForm
       # set attribute methods for defaults and transforms.
       # Also validate 'type' key with raisable error
       attribute :type, {
+        default: ->(instance) { 'object' },
         type: Types::String.enum('object')
       }
       attribute? :required, default: ->(instance) { [].freeze }#, type: Types::Array
@@ -227,15 +228,6 @@ module JsonSchemaForm
         end
         hash
       end
-  
-      def get_validations_for_property(property)
-        get_property(property).validations
-      end
-
-      #TODO
-      # def get_validations_for_dynamic_property(property, levels)
-      #   get_property(property).validations
-      # end
 
       #todo make this private?
       def get_dynamic_forms(levels=nil, level=0)

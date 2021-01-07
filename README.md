@@ -20,21 +20,21 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
  - `JsonSchemaForm::JsonSchema::String`
  - `JsonSchemaForm::JsonSchema::Object`
     
-### field:
-These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::* classes.
- - `JsonSchemaForm::Field::Checkbox`-----`< JsonSchemaForm::JsonSchema::Array`
- - `JsonSchemaForm::Field::DateInput`----`< JsonSchemaForm::JsonSchema::String`
- - `JsonSchemaForm::Field::Header`      `< JsonSchemaForm::JsonSchema::Null`
- - `JsonSchemaForm::Field::Info`        `< JsonSchemaForm::JsonSchema::Null`
- - `JsonSchemaForm::Field::NumberInput` `< JsonSchemaForm::JsonSchema::Number`
- - `JsonSchemaForm::Field::Select`      `< JsonSchemaForm::JsonSchema::String`
- - `JsonSchemaForm::Field::Slider`      `< JsonSchemaForm::JsonSchema::Number`
- - `JsonSchemaForm::Field::Static`      `< JsonSchemaForm::JsonSchema::Null`
- - `JsonSchemaForm::Field::Switch`      `< JsonSchemaForm::JsonSchema::Boolean`
- - `JsonSchemaForm::Field::TextInput`   `< JsonSchemaForm::JsonSchema::String`
- 
-### form:
- - JsonSchemaForm::Form `< JsonSchemaForm::JsonSchema::Object`
+### form/field:
+These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
+| Name                                  | Parent class                      |
+| ------------------------------------- |:---------------------------------:|
+|`JsonSchemaForm::Field::Checkbox`      |`< JsonSchemaForm::JsonSchema::Array`|
+|`JsonSchemaForm::Field::DateInput`     |`< JsonSchemaForm::JsonSchema::String`|
+|`JsonSchemaForm::Field::Header`        |`< JsonSchemaForm::JsonSchema::Null`|
+|`JsonSchemaForm::Field::Info`          |`< JsonSchemaForm::JsonSchema::Null`|
+|`JsonSchemaForm::Field::NumberInput`   |`< JsonSchemaForm::JsonSchema::Number`|
+|`JsonSchemaForm::Field::Select`        |`< JsonSchemaForm::JsonSchema::String`|
+|`JsonSchemaForm::Field::Slider`        |`< JsonSchemaForm::JsonSchema::Number`|
+|`JsonSchemaForm::Field::Static`        |`< JsonSchemaForm::JsonSchema::Null`|
+|`JsonSchemaForm::Field::Switch`        |`< JsonSchemaForm::JsonSchema::Boolean`|
+|`JsonSchemaForm::Field::TextInput`     |`< JsonSchemaForm::JsonSchema::String`|
+|`JsonSchemaForm::Form`                 |`< JsonSchemaForm::JsonSchema::Object`|
 
 ### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
@@ -66,8 +66,6 @@ Or install it yourself as:
 
 ### json_schema:
 
-Let's create a simple number schema by using it's backing class.
-
 These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
 - `validations` returns any json schema validations
 - `validation_schema` returns the instance of Dry::Schema::Processor used to validate the schema
@@ -78,44 +76,49 @@ These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
 - `key_name` returns extracts the last part of the $id value
 - `meta` returns a hash with metadata (parent object, object path, ...)
 
-In addition to the previous methods, `JsonSchemaForm::JsonSchema::Object` has the following methods:
-- `add_property`(id, definition)
-- `remove_property`(id)
-- `add_required_property`(name)
-- `remove_required_property`(name)
+In addition to the previous methods, the `JsonSchemaForm::JsonSchema::Object` class has the following methods:
+property management:
+- `add_property(id, definition)`
+- `remove_property(id)`
+validation management:
+- `add_required_property(name)`
+- `remove_required_property(name)`
+getters:
 - `properties`
-- `dynamic_properties`(levels=nil)
-- `merged_properties`(levels=nil)
+- `dynamic_properties(levels=nil)`
+- `merged_properties(levels=nil)`
 - `property_names`
-- `dynamic_property_names`(levels=nil)
-- `merged_property_names`(levels=nil)
-- `get_property`(property)
-- `get_dynamic_property`(property, levels=nil)
-- `get_merged_property`(property, levels=nil)
-- `has_property?`(property)
-- `has_dynamic_property?`(property, levels=nil)
-- `has_merged_property?`(property, levels=nil)
-- `property_type`(property)
-- `dynamic_property_type`(property, levels=nil)
-- `merged_property_type`(property, levels=nil)
+- `dynamic_property_names(levels=nil)`
+- `merged_property_names(levels=nil)`
+- `get_property(property)`
+- `get_dynamic_property(property, levels=nil)`
+- `get_merged_property(property, levels=nil)`
+- `has_property?(property)`
+- `has_dynamic_property?(property, levels=nil)`
+- `has_merged_property?(property, levels=nil)`
+- `property_type(property)`
+- `dynamic_property_type(property, levels=nil)`
+- `merged_property_type(property, levels=nil)`
 - `properties_type_mapping`
-- `dynamic_properties_type_mapping`(levels=nil)
-- `merged_properties_type_mapping`(levels=nil)
-- `get_validations_for_property`(property)
+- `dynamic_properties_type_mapping(levels=nil)`
+- `merged_properties_type_mapping(levels=nil)`
+
+Let's create a simple number schema by using it's backing class.
 
 ```ruby
-# lets create a very simple schema of type number
 number_schema = JsonSchemaForm::JsonSchema::Number.new({
  type: 'number'
 })
-number_schema # => {
- :type=>"number",
- :$id=>"http://example.com/example.json",
- :$schema=>"http://json-schema.org/draft-07/schema#"
-}
+number_schema
+# => {
+# :type=>"number",
+# :$id=>"http://example.com/example.json",
+# :$schema=>"http://json-schema.org/draft-07/schema#"
+#}
+```
 
-
-# now lets create a more interesting object schema containing a null and a number schema as properties
+Now lets create a more interesting object schema containing a null and a number schema as properties
+```ruby
 object_schema = JsonSchemaForm::JsonSchema::Object.new({
   "$id": "http://example.com/example.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -190,8 +193,8 @@ property.meta
 #  :path=>[:properties, :size]
 #}
 ```
-    
-### field:
+
+### form/field:
 
 #### TextInput
 
@@ -227,7 +230,6 @@ text_input.schema_errors
 # => {:some_invalid_property=>["is not allowed"]}
 ```
 
-### form:
 ```ruby
 JsonSchemaForm::Form.new(
   {

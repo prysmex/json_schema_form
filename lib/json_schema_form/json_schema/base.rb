@@ -4,6 +4,47 @@ require 'dry-schema'
 module JsonSchemaForm
   module JsonSchema
 
+    module ConditionalMethods
+      
+      # https://json-schema.org/understanding-json-schema/reference/conditionals.html
+      def dependent_conditions
+        if self.meta.dig(:parent, :allOf)
+          (self.meta.dig(:parent, :allOf) || []).select do |condition|
+            condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
+          end
+        # ToDo consider simple condition when 'if' is at same level as properties
+        elsif self.meta.dig(:parent, :if)
+          []
+        else
+          []
+        end
+      end
+
+      def has_dependent_conditions?
+        dependent_conditions.length > 0
+      end
+
+      def dependent_conditions_for_value(value)
+        dependent_conditions.select do |condition|
+          negated = !condition.dig(:if, :properties, self.key_name.to_sym, :not).nil?
+          condition_type = if negated
+            condition.dig(:if, :properties, self.key_name.to_sym, :not)
+          else
+            condition.dig(:if, :properties, self.key_name.to_sym)
+          end
+
+          match = case condition_type.keys[0]
+          when :const
+            condition_type[:const] == value
+          when :enum
+            condition_type[:enum].include?(value)
+          end
+          negated ? !match : match
+        end
+      end
+      
+    end
+
     class Base < ::SuperHash::Hasher
 
       instance_variable_set('@allow_dynamic_attributes', true)
@@ -41,8 +82,21 @@ module JsonSchemaForm
 
         klass.new(obj, meta, options)
       end
+
+      def self.inherited(klass)
+        if [
+            'JsonSchemaForm::JsonSchema::Array',
+            'JsonSchemaForm::JsonSchema::Boolean',
+            'JsonSchemaForm::JsonSchema::Null',
+            'JsonSchemaForm::JsonSchema::Number',
+            'JsonSchemaForm::JsonSchema::String'
+        ].include?(klass.name)
+          klass.include(ConditionalMethods)
+        end
+        super
+      end
       
-      def initialize(obj, meta={}, options={}, &block)
+      def initialize(obj={}, meta={}, options={}, &block)
         @meta = meta
         super(obj, options, &block)
       end
@@ -97,6 +151,17 @@ module JsonSchemaForm
 
       def key_name
         self[:'$id']&.gsub(/^(.*[\\\/])/, '')
+      end
+
+      # get the uppermost parent
+      def root_parent
+        parent = meta[:parent]
+        loop do
+          next_parent = parent.meta[:parent]
+          break if next_parent.nil?
+          parent = next_parent
+        end
+        parent
       end
 
       # used for properties, returns true if it is required

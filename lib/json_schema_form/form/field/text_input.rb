@@ -34,9 +34,6 @@ module JsonSchemaForm
       ##################
 
       def migrate!
-        if self.dig(:displayProperties, :pictures).nil?
-          self.bury(:displayProperties, :pictures, [])
-        end
       end
 
     end

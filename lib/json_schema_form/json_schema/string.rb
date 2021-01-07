@@ -3,6 +3,7 @@ module JsonSchemaForm
     class String < Base
 
       attribute :type, {
+        default: ->(instance) { 'string' },
         type: Types::String.enum('string')
       }
 

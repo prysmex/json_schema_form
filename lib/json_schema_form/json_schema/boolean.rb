@@ -3,6 +3,7 @@ module JsonSchemaForm
     class Boolean < Base
 
       attribute :type, {
+        default: ->(instance) { 'boolean' },
         type: Types::String.enum('boolean')
       }
 

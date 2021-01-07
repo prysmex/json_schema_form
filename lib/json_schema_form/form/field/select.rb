@@ -56,48 +56,6 @@ module JsonSchemaForm
       end
 
       def migrate!
-
-        if self.dig(:displayProperties, :pictures).nil?
-          self.bury(:displayProperties, :pictures, [])
-        end
-
-        if self[:responseSetId].nil?
-          id = SecureRandom.uuid
-          new_response_set = {
-            responses: []
-          }
-          
-          options = self.dig(:enum)
-          unless options.nil?
-            options.each do |opt|
-
-              current_response_set = {
-                value: opt,
-                displayProperties: {
-                  i18n: {
-                    en: self.dig(:displayProperties, :i18n, :enum, :en, opt.to_sym),
-                    es: self.dig(:displayProperties, :i18n, :enum, :es, opt.to_sym)
-                  }
-                }
-              }
-
-              if root_form.is_inspection
-                current_response_set[:enableScore] = true
-                current_response_set[:score] = nil
-                current_response_set[:failed] = false
-                current_response_set[:displayProperties][:color] = nil
-              end
-
-              new_response_set[:responses].push(current_response_set)
-            end
-          end
-          root_form.add_response_set(id, new_response_set)
-          self[:responseSetId] = id
-          
-          self.dig(:displayProperties, :i18n).delete(:enum)
-          self.delete(:enum)
-        end
-
       end
 
     end

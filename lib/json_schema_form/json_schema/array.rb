@@ -17,6 +17,7 @@ module JsonSchemaForm
       }
 
       attribute :type, {
+        default: ->(instance) { 'array' },
         type: Types::String.enum('array')
       }
       attribute? :items, {

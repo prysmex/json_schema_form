@@ -3,6 +3,7 @@ module JsonSchemaForm
     class Null < Base
 
       attribute :type, {
+        default: ->(instance) { 'null' },
         type: Types::String.enum('null')
       }
 
