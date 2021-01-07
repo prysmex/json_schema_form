@@ -77,25 +77,34 @@ These methods are available in all JsonSchemaForm::JsonSchema::* classes:
 - valid_with_schema? => returns true if no errors
 - required? => returns true if validations include required
 - key_name => returns extracts the last part of the $id value
-- meta => returns a hash with metadata (parent object, etc...)
+- meta => returns a hash with metadata (parent object, object path, etc...)
 
 ```ruby
-schema = JsonSchemaForm::JsonSchema::Number.new({type: 'number', some_invalid_key: ""})
-schema # => {
+
+number_schema = JsonSchemaForm::JsonSchema::Number.new({type: 'number'})
+number_schema # => {
  :type=>"number",
- :some_invalid_key=>"",
  :$id=>"http://example.com/example.json",
  :$schema=>"http://json-schema.org/draft-07/schema#"
 }
 
-schema.validations # => {}
-schema.validation_schema # => #<Dry::Schema::Processor keys=[:type, ....
-schema.schema_validation_hash # => {:type=>"number", :some_dynamic_key=>"", :$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#"}
-schema.schema_errors # => {:some_dynamic_key=>["is not allowed"]}
-schema.valid_with_schema? # => false
-schema.required? # => nil
-schema.key_name # => "example.json"
-schema.meta # => {}
+
+# now lets create a more interesting schema
+
+object_schema = JsonSchemaForm::JsonSchema::Object.new({ "$id": "http://example.com/example.json", "$schema": "http://json-schema.org/draft-07/schema#", "type": "object", "title": "Test", "some_invalid_key": 1, "required": [ "size" ], "properties": { "empty": { "$id": "/properties/empty", "type": "null", "title": "empty", "another_invalid_key": "oh oh" }, "size": { "$id": "/properties/size", "type": "number", "title": "size" } } })
+
+object_schema.validations # => {:empty=>{:required=>false}, :size=>{:required=>true}}
+object_schema.schema_validation_hash # => {:$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#", :type=>"object", :title=>"Test", :some_invalid_key=>1, :required=>["size"], :properties=>{}, :allOf=>[]}
+object_schema.schema_errors # => {:some_invalid_key=>["is not allowed"], :properties=>{:empty=>{"another_invalid_key"=>["is not allowed"]}}}
+object_schema.valid_with_schema? # => false
+
+prop = object_schema[:properties][:size]
+prop.required? # => true
+prop.key_name # => "size"
+object_schema.meta # => {
+  :parent=>{:$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#", :type=>"object", :title=>"Test", :some_invalid_key=>1, :required=>["size"], :properties=>{:empty=>{:$id=>"/properties/empty", :type=>"null", :title=>"empty", :another_invalid_key=>"oh oh", :$schema=>"http://json-schema.org/draft-07/schema#"}, :size=>{:$id=>"/properties/size", :type=>"number", :title=>"size", :$schema=>"http://json-schema.org/draft-07/schema#"}}, :allOf=>[]},
+  :path=>[:properties, :size]
+}
 
 ```
     
