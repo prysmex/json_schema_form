@@ -1,0 +1,21 @@
+{
+  "$id": "/properties/dropdown5353",
+  "title": "dropdown5353",
+  "type": "string",
+  "displayProperties": {
+    "pictures": [],
+    "i18n": {
+      "label": {
+        "es": "Seleccion",
+        "en": "Dropdown"
+      }
+    },
+    "visibility": {
+      "label": true
+    },
+    "sort": 15,
+    "hidden": false
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "responseSetId": "0560d75a-ada1-40d4-a40c-40000f6cf616"
+}

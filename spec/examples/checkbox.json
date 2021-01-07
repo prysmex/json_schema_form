@@ -1,0 +1,21 @@
+{
+  "$id": "/properties/checkbox",
+  "title": "checkbox",
+  "type": "array",
+  "displayProperties": {
+    "pictures": [],
+    "i18n": {
+      "label": {
+        "es": "opciones",
+        "en": "checkbox"
+      }
+    },
+    "visibility": {
+      "label": true
+    },
+    "sort": 19,
+    "hidden": false
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "responseSetId": "1c5738ed-df44-4d31-81a6-1ef042c5a133"
+}
