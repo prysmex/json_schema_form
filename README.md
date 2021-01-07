@@ -11,7 +11,7 @@ JsonSchemaForm gem is designed to contain the backing classes for form definitio
  
 The classes can be divided into the following 'modules':
 
-#### json_schema:
+### json_schema:
 Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
  - JsonSchemaForm::JsonSchema::Array
  - JsonSchemaForm::JsonSchema::Boolean
@@ -20,7 +20,7 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
  - JsonSchemaForm::JsonSchema::Object
  - JsonSchemaForm::JsonSchema::String
     
-#### field:
+### field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields', they inherit from JsonSchemaForm::JsonSchema::... classes.
  - JsonSchemaForm::Field::Checkbox
  - JsonSchemaForm::Field::DateInput
@@ -33,17 +33,17 @@ These classes are used by JsonSchemaForm::Form to define its properties or 'fiel
  - JsonSchemaForm::Field::Switch
  - JsonSchemaForm::Field::TextInput
  
-#### form:
+### form:
 Inherits from `JsonSchemaForm::JsonSchema::Object`, but adds some features used by forms.
  - JsonSchemaForm::Form
 
-#### document:
+### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
  - JsonSchemaForm::Document::Document => Main class for storing 'raw data'
  - JsonSchemaForm::Document::Extras => used by Inspection only
  - JsonSchemaForm::Document::Meta => used by Inspection only
     
-#### response:
+### response:
  - JsonSchemaForm::ResponseSet => a ::ResponseSet contains many ::Response
  - JsonSchemaForm::Response
 
@@ -65,14 +65,21 @@ Or install it yourself as:
 
 ## Usage
 
-#### json_schema:
+### json_schema:
 
 Let's create a simple number schema by using it's backing class.
 
-```ruby
-JsonSchemaForm::JsonSchema::... classes provide the following methods
-[:validations, :validation_schema, :schema_validation_hash, :valid_with_schema?, :schema_errors, :required?, :key_name, :meta]
+These methods are available in all JsonSchemaForm::JsonSchema::* classes:
+- validations => returns any json schema validations
+- validation_schema => returns the instance of Dry::Schema::Processor used to validate the schema
+- schema_validation_hash => returns a the hash that will be used by the validation_schema, it may be a subset of the schema object
+- schema_errors => returns a hash with the errors found
+- valid_with_schema? => returns true if no errors
+- required? => returns true if validations include required
+- key_name => returns extracts the last part of the $id value
+- meta => returns a hash with metadata (parent object, etc...)
 
+```ruby
 schema = JsonSchemaForm::JsonSchema::Number.new({type: 'number', some_invalid_key: ""})
 schema # => {
  :type=>"number",
@@ -82,31 +89,25 @@ schema # => {
 }
 
 schema.validations # => {}
-
 schema.validation_schema # => #<Dry::Schema::Processor keys=[:type, ....
-
 schema.schema_validation_hash # => {:type=>"number", :some_dynamic_key=>"", :$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#"}
-
-schema.valid_with_schema? # => false
-
 schema.schema_errors # => {:some_dynamic_key=>["is not allowed"]}
-
+schema.valid_with_schema? # => false
 schema.required? # => nil
-
 schema.key_name # => "example.json"
-
 schema.meta # => {}
+
 ```
     
-#### field:
+### field:
 
 
 
-#### form:
+### form:
 
-#### document:
+### document:
     
-#### response:
+### response:
 
 ## Development
 
