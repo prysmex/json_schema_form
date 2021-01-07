@@ -22,8 +22,8 @@ Can be used to back plain and standard [json_schema](https://json-schema.org/) s
     
 ### form/field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
-| Name                                  | Parent class                      |
-| ------------------------------------- |:---------------------------------:|
+| Name                                  | Parent class                          |
+| ------------------------------------- |:-------------------------------------:|
 |`JsonSchemaForm::Field::Checkbox`      |`< JsonSchemaForm::JsonSchema::Array`|
 |`JsonSchemaForm::Field::DateInput`     |`< JsonSchemaForm::JsonSchema::String`|
 |`JsonSchemaForm::Field::Header`        |`< JsonSchemaForm::JsonSchema::Null`|
@@ -35,6 +35,8 @@ These classes are used by JsonSchemaForm::Form to define its properties or 'fiel
 |`JsonSchemaForm::Field::Switch`        |`< JsonSchemaForm::JsonSchema::Boolean`|
 |`JsonSchemaForm::Field::TextInput`     |`< JsonSchemaForm::JsonSchema::String`|
 |`JsonSchemaForm::Form`                 |`< JsonSchemaForm::JsonSchema::Object`|
+
+To view some examples, check `spec/examples`
 
 ### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
@@ -75,6 +77,11 @@ These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
 - `required?` returns true if validations include required
 - `key_name` returns extracts the last part of the $id value
 - `meta` returns a hash with metadata (parent object, object path, ...)
+- `root_parent`
+only: (Array, Boolean, Null, Number, String)
+- `dependent_conditions`
+- `has_dependent_conditions?`
+- `dependent_conditions_for_value(value)`
 
 In addition to the previous methods, the `JsonSchemaForm::JsonSchema::Object` class has the following methods:
 property management:
