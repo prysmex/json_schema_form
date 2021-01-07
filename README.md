@@ -34,16 +34,16 @@ These classes are used by JsonSchemaForm::Form to define its properties or 'fiel
  - JsonSchemaForm::Field::TextInput `< JsonSchemaForm::JsonSchema::String`
  
 ### form:
- - JsonSchemaForm::Form, `< JsonSchemaForm::JsonSchema::Object`
+ - JsonSchemaForm::Form `< JsonSchemaForm::JsonSchema::Object`
 
 ### document:
 Used by Prysmex as the 'raw data' that is created when a form is filled.
- - JsonSchemaForm::Document::Document => Main class for storing 'raw data'
- - JsonSchemaForm::Document::Extras => used by Inspection only
- - JsonSchemaForm::Document::Meta => used by Inspection only
+ - JsonSchemaForm::Document::Document, main class for storing 'raw data'
+ - JsonSchemaForm::Document::Extras, used by Inspection only
+ - JsonSchemaForm::Document::Meta, used by Inspection only
     
 ### response:
- - JsonSchemaForm::ResponseSet => a ::ResponseSet contains many ::Response
+ - JsonSchemaForm::ResponseSet => ::ResponseSet contains many ::Response
  - JsonSchemaForm::Response
 
 ## Installation
@@ -69,39 +69,39 @@ Or install it yourself as:
 Let's create a simple number schema by using it's backing class.
 
 These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
-- validations => returns any json schema validations
-- validation_schema => returns the instance of Dry::Schema::Processor used to validate the schema
-- schema_validation_hash => returns a the hash that will be used by the validation_schema, it may be a subset of the schema object
-- schema_errors => returns a hash with the errors found
-- valid_with_schema? => returns true if no errors
-- required? => returns true if validations include required
-- key_name => returns extracts the last part of the $id value
-- meta => returns a hash with metadata (parent object, object path, ...)
+- `validations` returns any json schema validations
+- `validation_schema` returns the instance of Dry::Schema::Processor used to validate the schema
+- `schema_validation_hash` returns a the hash that will be used by the validation_schema, it may be a subset of the schema object
+- `schema_errors` returns a hash with the errors found
+- `valid_with_schema?` returns true if no errors
+- `required?` returns true if validations include required
+- `key_name` returns extracts the last part of the $id value
+- `meta` returns a hash with metadata (parent object, object path, ...)
 
 In addition to the previous methods, `JsonSchemaForm::JsonSchema::Object` has the following methods:
-- add_property(id, definition)
-- remove_property(id)
-- add_required_property(name)
-- remove_required_property(name)
-- properties
-- dynamic_properties(levels=nil)
-- merged_properties(levels=nil)
-- property_names
-- dynamic_property_names(levels=nil)
-- merged_property_names(levels=nil)
-- get_property(property)
-- get_dynamic_property(property, levels=nil)
-- get_merged_property(property, levels=nil)
-- has_property?(property)
-- has_dynamic_property?(property, levels=nil)
-- has_merged_property?(property, levels=nil)
-- property_type(property)
-- dynamic_property_type(property, levels=nil)
-- merged_property_type(property, levels=nil)
-- properties_type_mapping
-- dynamic_properties_type_mapping(levels=nil)
-- merged_properties_type_mapping(levels=nil)
-- get_validations_for_property(property)
+- `add_property`(id, definition)
+- `remove_property`(id)
+- `add_required_property`(name)
+- `remove_required_property`(name)
+- `properties`
+- `dynamic_properties`(levels=nil)
+- `merged_properties`(levels=nil)
+- `property_names`
+- `dynamic_property_names`(levels=nil)
+- `merged_property_names`(levels=nil)
+- `get_property`(property)
+- `get_dynamic_property`(property, levels=nil)
+- `get_merged_property`(property, levels=nil)
+- `has_property?`(property)
+- `has_dynamic_property?`(property, levels=nil)
+- `has_merged_property?`(property, levels=nil)
+- `property_type`(property)
+- `dynamic_property_type`(property, levels=nil)
+- `merged_property_type`(property, levels=nil)
+- `properties_type_mapping`
+- `dynamic_properties_type_mapping`(levels=nil)
+- `merged_properties_type_mapping`(levels=nil)
+- `get_validations_for_property`(property)
 
 ```ruby
 # lets create a very simple schema of type number
