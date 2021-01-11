@@ -35,9 +35,17 @@ module JsonSchemaForm
 
           match = case condition_type.keys[0]
           when :const
-            condition_type[:const] == value
+            if self.is_a?(JsonSchemaForm::Field::TextInput)
+              condition_type[:const].downcase == value.downcase
+            else
+              condition_type[:const] == value
+            end
           when :enum
-            condition_type[:enum].include?(value)
+            if self.is_a?(JsonSchemaForm::Field::TextInput)
+              condition_type[:enum].map(&:downcase).include?(value.downcase)
+            else
+              condition_type[:enum].include?(value)
+            end
           end
           negated ? !match : match
         end
