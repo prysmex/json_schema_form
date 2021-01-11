@@ -4,7 +4,7 @@ This gem is powered by [superhash](https://github.com/prysmex/super_hash) so you
 
 Validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
 
-JsonSchemaForm gem is designed to contain the backing classes for form definitions that are based on json schema standard [json_schema](https://json-schema.org/). There are some differences between the standard schemas and the ones defined by JsonSchemaForm::Form::Form, mainly to support:
+JsonSchemaForm gem is designed to contain the backing classes for form definitions that are based on json schema standard [json_schema](https://json-schema.org/). There are some differences between the standard schemas and the ones defined by JsonSchemaForm::Form, mainly to support:
  - Response sets
  - Display properties
  - versioning and version migration
