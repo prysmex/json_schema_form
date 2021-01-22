@@ -12,6 +12,7 @@ module JsonSchemaForm
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
           required(:displayProperties).hash do
+            optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do

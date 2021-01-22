@@ -13,6 +13,7 @@ module JsonSchemaForm
           config.validate_keys = true
           required(:static).filled(Types::True)
           required(:displayProperties).hash do
+            optional(:hiddenOnCreate).maybe(:bool)
             required(:sort).filled(:integer)
           end
         end

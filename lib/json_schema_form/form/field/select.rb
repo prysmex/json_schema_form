@@ -15,6 +15,7 @@ module JsonSchemaForm
           config.validate_keys = true
           required(:responseSetId) { int? | str? }
           required(:displayProperties).hash do
+            optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
