@@ -130,6 +130,72 @@ module JsonSchemaForm
       self
     end
 
+    def max_score
+      # ToDo check if is_inspection 
+      self[:properties].inject(nil) do |acum, (name, field_def)|
+        max_score_for_path = max_score_for_path(field_def)
+        if max_score_for_path.nil?
+          acum
+        else
+          acum.to_f + max_score_for_path(field_def)
+        end
+      end
+    end
+
+    def max_score_for_path(field)
+      conditional_fields = [JsonSchemaForm::Field::Select, JsonSchemaForm::Field::Switch, JsonSchemaForm::Field::TextInput]
+  
+      if conditional_fields.include? field.class
+    
+        posible_values = case field
+        when JsonSchemaForm::Field::Select
+          field.response_set[:responses]
+        when JsonSchemaForm::Field::Switch
+          [{value: true, score: 1}, {value: false, score: 0}]
+        when JsonSchemaForm::Field::TextInput
+          values = []
+          field.dependent_conditions.each do |condition|
+            condition_value = condition[:if][:properties].values[0]
+  
+            value = if condition_value[:not].present?
+             'BP8;x&/dTF2Qn[RG' #some very random text
+            else
+              if condition_value[:const].present?
+                condition_value[:const]
+              elsif condition_value[:enum].present?
+                condition_value[:enum][0]
+              end
+            end
+  
+            values.push({value: value, score: nil})
+          end
+          values
+        end
+    
+        posible_values.map do |posible_value|
+          dependent_conditions = field.dependent_conditions_for_value(posible_value[:value])
+          sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
+            max_score = condition[:then].max_score
+            if max_score.nil?
+              acum
+            else
+              acum.to_f + max_score
+            end
+          end
+          if sub_schemas_max_score.nil?
+            posible_value[:score]
+          else
+            posible_value[:score].to_f + sub_schemas_max_score
+          end
+        end.compact.max
+    
+      elsif field.respond_to?(:max_score)
+        field.max_score
+      else
+        nil
+      end
+    end
+
     def valid_for_locale?(locale = :es)
       self.merged_properties.find{|k,v| v.valid_for_locale?(locale) == false}.nil? &&
       self.response_sets.find{|k,v| v.valid_for_locale?(locale) == false}.nil?
