@@ -50,7 +50,11 @@ module JsonSchemaForm
       ##################
 
       def max_score
-        self[:enum]&.max || 0
+        self[:enum]&.max
+      end
+
+      def score_for_value(value)
+        value
       end
 
       def migrate!

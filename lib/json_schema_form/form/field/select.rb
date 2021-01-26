@@ -48,8 +48,16 @@ module JsonSchemaForm
       def max_score
         self.response_set
             .try(:[], :responses)
-            &.max_by {|property| property[:score] || 0 }
-            .try(:[], :score) || 0
+            &.reject{|property| property[:score].nil?}
+            &.max_by{|property| property[:score] }
+            .try(:[], :score)
+      end
+
+      def score_for_value(value)
+        self.response_set
+          .try(:[], :responses)
+          &.find{|response| response[:value] == value}
+          .try(:[], :score)
       end
 
       def compile!
