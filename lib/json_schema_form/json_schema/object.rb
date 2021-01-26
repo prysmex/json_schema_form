@@ -48,7 +48,7 @@ module JsonSchemaForm
       # set attribute methods for defaults and transforms.
       # Also validate 'type' key with raisable error
       attribute :type, {
-        default: ->(instance) { 'object' },
+        # default: ->(instance) { 'object' },
         type: Types::String.enum('object')
       }
       attribute? :required, default: ->(instance) { [].freeze }#, type: Types::Array

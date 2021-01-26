@@ -46,9 +46,28 @@ module JsonSchemaForm
       ##############
 
       def max_score
+        scored_responses = self.response_set
+          .try(:[], :responses)
+          &.reduce(nil) do |sum,response|
+            if response[:score].nil?
+              sum
+            else
+              sum.to_f + response[:score]
+            end
+          end
+      end
+
+      def score_for_value(value)
         self.response_set
-            .try(:[], :responses)
-            .reduce(0){|sum,response| sum + (response[:score] || 0) }
+          .try(:[], :responses)
+          &.select {|response| value.include? response[:value]}
+          &.reduce(nil) do |sum,response|
+            if response[:score].nil?
+              sum
+            else
+              sum.to_f + response[:score]
+            end
+          end
       end
 
       def compile!
