@@ -57,16 +57,21 @@ module JsonSchemaForm
       end
 
       def score_for_value(value)
-        self.response_set
-          .try(:[], :responses)
-          &.select {|response| value.include? response[:value]}
-          &.reduce(nil) do |sum,response|
-            if response[:score].nil?
-              sum
-            else
-              sum.to_f + response[:score]
+        case value
+        when ::Array
+          self.response_set
+            .try(:[], :responses)
+            &.select {|response| value.include? response[:value]}
+            &.reduce(nil) do |sum,response|
+              if response[:score].nil?
+                sum
+              else
+                sum.to_f + response[:score]
+              end
             end
-          end
+        else
+          nil
+        end
       end
 
       def compile!

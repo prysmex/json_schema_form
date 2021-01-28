@@ -53,7 +53,12 @@ module JsonSchemaForm
       end
 
       def score_for_value(value)
-        value
+        case value
+        when ::Integer, ::Float
+          value
+        else
+          nil
+        end
       end
 
       def migrate!
