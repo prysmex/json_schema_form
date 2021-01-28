@@ -47,7 +47,14 @@ module JsonSchemaForm
       end
 
       def score_for_value(value)
-        value ? 1 : 0
+        case value
+        when true
+          1
+        when false
+          0
+        else
+          nil
+        end
       end
 
       def migrate!
