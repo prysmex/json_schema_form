@@ -75,6 +75,16 @@ module JsonSchemaForm
         end
       end
 
+      def value_fails?(value)
+        response_set = self.response_set
+        return false if response_set.nil? || value.nil?
+        response_set[:responses]
+          &.find do |response|
+            value.include?(response[:value]) && response[:failed] == true
+          end
+          .present?
+      end
+
       def compile!
         self[:items] = {
           :"$id" => '/properties/checkbox4738/items',
