@@ -60,6 +60,14 @@ module JsonSchemaForm
           .try(:[], :score)
       end
 
+      def value_fails?(value)
+        response_set = self.response_set
+        return false if response_set.nil?
+        response_set[:responses]
+          .find { |response| response[:value] == value }
+          .try(:[], :failed) || false
+      end
+
       def compile!
         self[:enum] = self.response_set.try(:[], :responses)&.map{|r| r[:value]} || []
       end
