@@ -21,20 +21,20 @@ module JsonSchemaForm
         end
       }
 
-      CONDITION_PROC = ->(instance, obj, attribute) {
-        if obj.is_a? ::Hash
-          instance_path = instance.meta[:path] || []
-          instance.class::BUILDER.call(
-            obj,
-            {
-              parent: instance,
-              is_subschema: true,
-              path: instance_path + [attribute]
-            },
-            # {skip_required_attrs: [:type]}
-          )
-        end
-      }
+      # CONDITION_PROC = ->(instance, obj, attribute) {
+      #   if obj.is_a? ::Hash
+      #     instance_path = instance.meta[:path] || []
+      #     instance.class::BUILDER.call(
+      #       obj,
+      #       {
+      #         parent: instance,
+      #         is_subschema: true,
+      #         path: instance_path + [attribute]
+      #       },
+      #       # {skip_required_attrs: [:type]}
+      #     )
+      #   end
+      # }
 
       # instantiate object classes when setting
       # a property on the allOf key

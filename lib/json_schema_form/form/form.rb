@@ -41,7 +41,8 @@ module JsonSchemaForm
 
       #detect by other ways than 'type' property
       if klass.nil?
-        if obj.has_key?(:properties)
+        debugger
+        if obj.key?(:properties)
           klass = JsonSchemaForm::Form
         end
       end

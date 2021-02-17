@@ -4,41 +4,13 @@ require 'dry-schema'
 module JsonSchemaForm
   module JsonSchema
 
-    module ConditionalMethods
-      
-      # https://json-schema.org/understanding-json-schema/reference/conditionals.html
-      def dependent_conditions
-        parent_all_of = self.meta.dig(:parent, :allOf) || []
-        
-        parent_all_of.select do |condition|
-          condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
-        end
-      end
-
-      def has_dependent_conditions?
-        dependent_conditions.length > 0
-      end
-
-      def dependent_conditions_for_value(value, &block)
-        dependent_conditions.select do |condition|
-          new_value = if value.is_a?(::Hash) ||value.is_a?(::Array)
-            SuperHash::DeepKeysTransform.strigify_recursive(value)
-          else
-            value
-          end
-          yield(condition, value)
-        end
-      end
-      
-    end
-
     class Base < ::SuperHash::Hasher
 
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta
 
-      OBJECT_KEYS = [:properties :required, :required, :propertyNames, :if, :then, :else, :additionalProperties, :minProperties, :maxProperties, :dependencies, :patternProperties]
-      STRING_KEYS = [:pattern, :format]
+      OBJECT_KEYS = [:properties, :required, :required, :propertyNames, :if, :then, :else, :additionalProperties, :minProperties, :maxProperties, :dependencies, :patternProperties]
+      STRING_KEYS = [:minLength, :maxLength, :pattern, :format, :enum, :const]
       NUMBER_KEYS = [:multipleOf, :minimum, :maximum, :exclusiveMinimum, :exclusiveMaximum]
       BOOLEAN_KEYS = []
       ARRAY_KEYS = [:items, :contains, :additionalItems, :minItems, :maxItems, :uniqueItems]
@@ -67,17 +39,17 @@ module JsonSchemaForm
 
         #detect by other ways than 'type' property
         if klass.nil?
-          klass = if OBJECT_KEYS.find{|k| obj.has_key?(k)}
+          klass = if OBJECT_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::Object
-          elsif STRING_KEYS.find{|k| obj.has_key?(k)}
+          elsif STRING_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::STRING
-          elsif NUMBER_KEYS.find{|k| obj.has_key?(k)}
+          elsif NUMBER_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::NUMBER
-          elsif BOOLEAN_KEYS.find{|k| obj.has_key?(k)}
+          elsif BOOLEAN_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::BOOLEAN
-          elsif ARRAY_KEYS.find{|k| obj.has_key?(k)}
+          elsif ARRAY_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::ARRAY
-          elsif NULL_KEYS.find{|k| obj.has_key?(k)}
+          elsif NULL_KEYS.find{|k| obj.key?(k)}
             JsonSchemaForm::JsonSchema::NULL
           end
         end
@@ -87,17 +59,28 @@ module JsonSchemaForm
         klass.new(obj, meta, options)
       end
 
-      def self.inherited(klass)
-        if [
-            'JsonSchemaForm::JsonSchema::Array',
-            'JsonSchemaForm::JsonSchema::Boolean',
-            'JsonSchemaForm::JsonSchema::Null',
-            'JsonSchemaForm::JsonSchema::Number',
-            'JsonSchemaForm::JsonSchema::String'
-        ].include?(klass.name)
-          klass.include(ConditionalMethods)
+      # https://json-schema.org/understanding-json-schema/reference/conditionals.html
+      def dependent_conditions
+        parent_all_of = self.meta.dig(:parent, :allOf) || []
+        
+        parent_all_of.select do |condition|
+          condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
         end
-        super
+      end
+
+      def has_dependent_conditions?
+        dependent_conditions.length > 0
+      end
+
+      def dependent_conditions_for_value(value, &block)
+        dependent_conditions.select do |condition|
+          new_value = if value.is_a?(::Hash) ||value.is_a?(::Array)
+            SuperHash::DeepKeysTransform.strigify_recursive(value)
+          else
+            value
+          end
+          yield(condition, value)
+        end
       end
       
       def initialize(obj={}, meta={}, options={}, &block)
