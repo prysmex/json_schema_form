@@ -9,7 +9,7 @@ module JsonSchemaForm
       super(obj, options, &block)
     end
 
-    FORM_RESPONSE_PROC = ->(instance, responsesArray) {
+    FORM_RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
         responsesArray.map.with_index do |response, index|
           path = instance.meta[:path] + [:responses, index]

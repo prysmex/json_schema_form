@@ -5,6 +5,8 @@ module JsonSchemaForm
 
     BUILDER = Proc.new do |obj, meta, options|
       klass = case obj[:type]
+      when 'object', :object
+        JsonSchemaForm::Form
       when 'string', :string
         if obj[:format] == "date-time"
           JsonSchemaForm::Field::DateInput
@@ -25,8 +27,6 @@ module JsonSchemaForm
         if true#obj&.dig(:displayProperties, :items)
           JsonSchemaForm::Field::Checkbox
         end
-      # when 'object', :object
-      #   JsonSchemaForm::Field::Object
       when 'null', :null
         if obj&.dig(:displayProperties, :useHeader)
           JsonSchemaForm::Field::Header
@@ -51,7 +51,7 @@ module JsonSchemaForm
       klass.new(obj, meta, options)
     end
 
-    FORM_RESPONSE_SETS_PROC = ->(instance, value) {
+    FORM_RESPONSE_SETS_PROC = ->(instance, value, attribute) {
       value&.each do |id, obj|
         path = if instance&.meta&.dig(:path)
           instance.meta[:path] + [:responseSets, id]
@@ -142,7 +142,7 @@ module JsonSchemaForm
       end
     end
 
-    def max_score_for_path(field)
+    def max_score_for_path(field, &block)
       conditional_fields = [JsonSchemaForm::Field::Select, JsonSchemaForm::Field::Switch, JsonSchemaForm::Field::TextInput]
   
       if conditional_fields.include? field.class
@@ -173,7 +173,7 @@ module JsonSchemaForm
         end
     
         posible_values.map do |posible_value|
-          dependent_conditions = field.dependent_conditions_for_value(posible_value[:value])
+          dependent_conditions = field.dependent_conditions_for_value(posible_value[:value], &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
             max_score = condition[:then].max_score
             if max_score.nil?
@@ -248,7 +248,7 @@ module JsonSchemaForm
 
       response_sets_hash = {}.merge(self[:responseSets])
       response_sets_hash[id] = new_definition
-      self[:responseSets] = self.symbolize_recursive(response_sets_hash)
+      self[:responseSets] = SuperHash::DeepKeysTransform.symbolize_recursive(response_sets_hash)
     end
 
     ##########################

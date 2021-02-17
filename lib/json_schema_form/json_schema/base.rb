@@ -8,15 +8,10 @@ module JsonSchemaForm
       
       # https://json-schema.org/understanding-json-schema/reference/conditionals.html
       def dependent_conditions
-        if self.meta.dig(:parent, :allOf)
-          (self.meta.dig(:parent, :allOf) || []).select do |condition|
-            condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
-          end
-        # ToDo consider simple condition when 'if' is at same level as properties
-        elsif self.meta.dig(:parent, :if)
-          []
-        else
-          []
+        parent_all_of = self.meta.dig(:parent, :allOf) || []
+        
+        parent_all_of.select do |condition|
+          condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
         end
       end
 
@@ -24,44 +19,14 @@ module JsonSchemaForm
         dependent_conditions.length > 0
       end
 
-      def dependent_conditions_for_value(value)
+      def dependent_conditions_for_value(value, &block)
         dependent_conditions.select do |condition|
-          negated = !condition.dig(:if, :properties, self.key_name.to_sym, :not).nil?
-          condition_type = if negated
-            condition.dig(:if, :properties, self.key_name.to_sym, :not)
+          new_value = if value.is_a?(::Hash) ||value.is_a?(::Array)
+            SuperHash::DeepKeysTransform.strigify_recursive(value)
           else
-            condition.dig(:if, :properties, self.key_name.to_sym)
+            value
           end
-
-          match = case condition_type.keys[0]
-          when :const
-            # only return true for nil when condition_type[:const] == nil
-            if value.nil? && condition_type[:const].nil?
-              true
-            else
-              next false if value.nil?
-              # simple comparisons from here on
-              if self.is_a?(JsonSchemaForm::Field::TextInput)
-                condition_type[:const].downcase == value.downcase
-              else
-                condition_type[:const] == value
-              end
-            end
-          when :enum
-            # only return true for nil when condition_type[:enum].include?(nil)
-            if value.nil? && condition_type[:enum].include?(nil)
-              true
-            else
-              next false if value.nil?
-              # simple comparisons from here on
-              if self.is_a?(JsonSchemaForm::Field::TextInput)
-                condition_type[:enum].map(&:downcase).include?(value&.downcase)
-              else
-                condition_type[:enum].include?(value)
-              end
-            end
-          end
-          negated ? !match : match
+          yield(condition, value)
         end
       end
       
@@ -71,6 +36,13 @@ module JsonSchemaForm
 
       instance_variable_set('@allow_dynamic_attributes', true)
       attr_reader :meta
+
+      OBJECT_KEYS = [:properties :required, :required, :propertyNames, :if, :then, :else, :additionalProperties, :minProperties, :maxProperties, :dependencies, :patternProperties]
+      STRING_KEYS = [:pattern, :format]
+      NUMBER_KEYS = [:multipleOf, :minimum, :maximum, :exclusiveMinimum, :exclusiveMaximum]
+      BOOLEAN_KEYS = []
+      ARRAY_KEYS = [:items, :contains, :additionalItems, :minItems, :maxItems, :uniqueItems]
+      NULL_KEYS = []
       
       #Builder proc, receives hash and returns a JsonSchemaForm::JsonSchema::? class
       BUILDER = Proc.new do |obj, meta, options|
@@ -79,6 +51,8 @@ module JsonSchemaForm
         # type = Types.Constructor(klass) { |v| klass.new(v[:obj], v[:meta]) }
         # type[{obj: obj, meta: meta}]
         klass = case obj[:type]
+        when 'object', :object
+          JsonSchemaForm::JsonSchema::Object
         when 'string', :string
           JsonSchemaForm::JsonSchema::String
         when 'number', :number, 'integer', :integer
@@ -87,16 +61,24 @@ module JsonSchemaForm
           JsonSchemaForm::JsonSchema::Boolean
         when 'array', :array
           JsonSchemaForm::JsonSchema::Array
-        when 'object', :object
-          JsonSchemaForm::JsonSchema::Object
         when 'null', :null
           JsonSchemaForm::JsonSchema::Null
         end
 
         #detect by other ways than 'type' property
         if klass.nil?
-          if obj.has_key?(:properties)
-            klass = JsonSchemaForm::JsonSchema::Object
+          klass = if OBJECT_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::Object
+          elsif STRING_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::STRING
+          elsif NUMBER_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::NUMBER
+          elsif BOOLEAN_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::BOOLEAN
+          elsif ARRAY_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::ARRAY
+          elsif NULL_KEYS.find{|k| obj.has_key?(k)}
+            JsonSchemaForm::JsonSchema::NULL
           end
         end
 
@@ -123,7 +105,7 @@ module JsonSchemaForm
         super(obj, options, &block)
       end
 
-      attribute :type, {
+      attribute? :type, {
         type: Types::String.enum('array','boolean','null','number','object','string')
       }
       attribute? :'$id', {

@@ -16,6 +16,7 @@ module JsonSchemaForm
           optional(:pattern).filled(:string)
           optional(:format).filled(:string)
           optional(:enum).array(:str?)
+          # optional(:const).filled(:string)
         end
       end
 
@@ -25,7 +26,8 @@ module JsonSchemaForm
           maxLength: self[:maxLength],
           pattern: self[:pattern],
           format: self[:format],
-          enum: self[:enum]
+          enum: self[:enum],
+          # const: self[:const]
         }).compact
       end
 

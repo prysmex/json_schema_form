@@ -4,64 +4,80 @@ module JsonSchemaForm
 
       # instantiate object classes when setting
       # a property on the properties key
-      PROPERTIES_PROC = ->(instance, obj) {
+      PROPERTIES_PROC = ->(instance, obj, attribute) {
         if obj.is_a? ::Hash
+          instance_path = instance.meta[:path] || []
           obj.each do |name, definition|
-            path = if instance&.meta&.dig(:path)
-              instance.meta[:path] + [:properties, name]
-            else
-            [:properties, name]
-            end
-            obj[name] = instance.class::BUILDER.call(definition, {
-              parent: instance,
-              path: path
-            })
+            obj[name] = instance.class::BUILDER.call(
+              definition,
+              {
+                parent: instance,
+                is_subschema: true,
+                path: instance_path + [:properties, name]
+              },
+              # {skip_required_attrs: [:type]}
+            )
           end
         end
       }
 
+      CONDITION_PROC = ->(instance, obj, attribute) {
+        if obj.is_a? ::Hash
+          instance_path = instance.meta[:path] || []
+          instance.class::BUILDER.call(
+            obj,
+            {
+              parent: instance,
+              is_subschema: true,
+              path: instance_path + [attribute]
+            },
+            # {skip_required_attrs: [:type]}
+          )
+        end
+      }
+
       # instantiate object classes when setting
-      # a property on the allOf[:then] key
-      All_OF_PROC = ->(instance, allOfArray) {
+      # a property on the allOf key
+      All_OF_PROC = ->(instance, allOfArray, attribute) {
         if allOfArray.is_a? ::Array
-          allOfArray.map.with_index do |condition_hash, index|
-            condition_hash.each do |key, object_schema|
-              path = if instance&.meta&.dig(:path)
-                instance.meta[:path] + [:allOf, index, :then]
-              else
-                [:allOf, index, :then]
-              end
-              condition_hash[:then] = instance.class::BUILDER.call(
-                condition_hash[:then],
-                {
-                  parent: instance,
-                  is_subschema: true,
-                  path: path
-                },
-                {skip_required_attrs: [:type]}
-              )
-            end
+          allOfArray.map.with_index do |definition, index|
+            path = (instance&.meta&.dig(:path) || []) + [:allOf, index]
+            instance.class::BUILDER.call(
+              definition,
+              {
+                parent: instance,
+                is_subschema: true,
+                path: path
+              },
+              # {skip_required_attrs: [:type]}
+            )
           end
         end
       }
 
       # set attribute methods for defaults and transforms.
       # Also validate 'type' key with raisable error
-      attribute :type, {
-        # default: ->(instance) { 'object' },
+      attribute? :type, {
+        default: ->(instance) { instance.meta.try(:[], :is_subschema) ? nil : 'object' },
         type: Types::String.enum('object')
       }
       attribute? :required, default: ->(instance) { [].freeze }#, type: Types::Array
       attribute? :properties, default: ->(instance) { {}.freeze }, transform: PROPERTIES_PROC#, type: Types::Hash
+      # attribute? :if, default: ->(instance) { {}.freeze }, transform: CONDITION_PROC#, type: Types::Hash
+      # attribute? :then, default: ->(instance) { {}.freeze }, transform: CONDITION_PROC#, type: Types::Hash
+      # attribute? :else, default: ->(instance) { {}.freeze }, transform: CONDITION_PROC#, type: Types::Hash
       attribute? :allOf, default: ->(instance) { [].freeze }, transform: All_OF_PROC
 
       def validation_schema
-        instance = self
+        is_subschema = self.meta.try(:[], :is_subschema)
         Dry::Schema.define(parent: super) do
           config.validate_keys = true
-          required(:type).filled(:string).value(included_in?: ['object'])
+          required(:type).filled(:string).value(included_in?: ['object']) unless is_subschema
           optional(:required).value(:array?).array(:str?)
           optional(:properties).value(:hash)
+          # optional(:if).value(:hash)
+          # optional(:then).value(:hash)
+          # optional(:else).value(:hash)
           optional(:allOf).array(:hash) do
             required(:if).hash do
               required(:properties).value(:hash)
@@ -112,7 +128,7 @@ module JsonSchemaForm
 
         properties_hash = {}.merge(self[:properties])
         properties_hash[id] = new_definition
-        self[:properties] = self.symbolize_recursive(properties_hash)
+        self[:properties] = SuperHash::DeepKeysTransform.symbolize_recursive(properties_hash)
       end
 
       def remove_property(id)

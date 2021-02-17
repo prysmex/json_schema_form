@@ -81,7 +81,7 @@ These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
 only: (Array, Boolean, Null, Number, String)
 - `dependent_conditions`
 - `has_dependent_conditions?`
-- `dependent_conditions_for_value(value)`
+- `dependent_conditions_for_value(value) {|condition, value| some_schema_validation }`
 
 In addition to the previous methods, the `JsonSchemaForm::JsonSchema::Object` class has the following methods:
 property management:

@@ -2,7 +2,7 @@ module JsonSchemaForm
   module JsonSchema
     class Array < Base
 
-      ITEMS_PROC = ->(instance, value) {
+      ITEMS_PROC = ->(instance, value, attribute) {
         if value.is_a?(::Array)
           value.map{|i| BUILDER.call(i, {parent: instance}) }
         elsif value.is_a?(::Hash)
@@ -12,7 +12,7 @@ module JsonSchemaForm
         end
       }
 
-      CONTAINS_PROC = ->(instance, value) {
+      CONTAINS_PROC = ->(instance, value, attribute) {
         BUILDER.call(value, {parent: instance}) if value.present?
       }
 
