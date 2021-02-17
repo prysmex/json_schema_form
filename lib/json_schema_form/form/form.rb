@@ -41,9 +41,18 @@ module JsonSchemaForm
 
       #detect by other ways than 'type' property
       if klass.nil?
-        debugger
-        if obj.key?(:properties)
-          klass = JsonSchemaForm::Form
+        klass = if OBJECT_KEYS.find{|k| obj.key?(k)}
+          JsonSchemaForm::Form
+        # elsif STRING_KEYS.find{|k| obj.key?(k)}
+        #   JsonSchemaForm::JsonSchema::STRING
+        # elsif NUMBER_KEYS.find{|k| obj.key?(k)}
+        #   JsonSchemaForm::JsonSchema::NUMBER
+        # elsif BOOLEAN_KEYS.find{|k| obj.key?(k)}
+        #   JsonSchemaForm::JsonSchema::BOOLEAN
+        # elsif ARRAY_KEYS.find{|k| obj.key?(k)}
+        #   JsonSchemaForm::JsonSchema::ARRAY
+        # elsif NULL_KEYS.find{|k| obj.key?(k)}
+        #   JsonSchemaForm::JsonSchema::NULL
         end
       end
 
