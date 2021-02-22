@@ -151,14 +151,14 @@ module JsonSchemaForm
       self
     end
 
-    def max_score
+    def max_score(&block)
       # ToDo check if is_inspection 
       self[:properties].inject(nil) do |acum, (name, field_def)|
-        max_score_for_path = max_score_for_path(field_def)
+        max_score_for_path = max_score_for_path(field_def, &block)
         if max_score_for_path.nil?
           acum
         else
-          acum.to_f + max_score_for_path(field_def)
+          acum.to_f + max_score_for_path(field_def, &block)
         end
       end
     end
