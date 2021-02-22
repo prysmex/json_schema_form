@@ -1,7 +1,10 @@
 module JsonSchemaForm
   module Field
-    class Switch < ::JsonSchemaForm::JsonSchema::Boolean
+    class Switch < ::SuperHash::Hasher
 
+      include JsonSchemaForm::JsonSchema::Schemable
+      include JsonSchemaForm::Field::StrictTypes::Boolean
+      include JsonSchemaForm::JsonSchema::Validatable
       include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
@@ -10,7 +13,6 @@ module JsonSchemaForm
 
       def validation_schema
         Dry::Schema.define(parent: super) do
-          config.validate_keys = true
           required(:displayProperties).hash do
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do

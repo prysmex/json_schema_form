@@ -1,14 +1,30 @@
 module JsonSchemaForm
-  class Form < ::JsonSchemaForm::JsonSchema::Object
+  class Form < ::SuperHash::Hasher
 
     attr_reader :is_inspection
 
-    BUILDER = Proc.new do |obj, meta, options|
+    include JsonSchemaForm::JsonSchema::Schemable
+    include JsonSchemaForm::JsonSchema::Validatable
+    include JsonSchemaForm::JsonSchema::Attributes
+    include JsonSchemaForm::Field::StrictTypes::Object
+
+    BUILDER = ->(attribute, obj, meta, options) {
+
+      schema_proc = Proc.new do |inst|
+        inst.define_singleton_method(:builder) do |*args|
+          JsonSchemaForm::Form::BUILDER.call(*args)
+        end
+      end
+
+      if [:allOf, :if, :not].include?(attribute)
+        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+      end
+
       klass = case obj[:type]
-      when 'object', :object
-        JsonSchemaForm::Form
+      # when 'object', :object
+      #   JsonSchemaForm::Form
       when 'string', :string
-        if obj[:format] == "date-time"
+        if obj[:format] == 'date-time'
           JsonSchemaForm::Field::DateInput
         elsif !obj[:responseSetId].nil? || !obj[:enum].nil? # enum is for v2.11.0 compatibility
           JsonSchemaForm::Field::Select
@@ -41,27 +57,19 @@ module JsonSchemaForm
 
       #detect by other ways than 'type' property
       if klass.nil?
-        klass = if OBJECT_KEYS.find{|k| obj.key?(k)}
-          JsonSchemaForm::Form
-        # elsif STRING_KEYS.find{|k| obj.key?(k)}
-        #   JsonSchemaForm::JsonSchema::STRING
-        # elsif NUMBER_KEYS.find{|k| obj.key?(k)}
-        #   JsonSchemaForm::JsonSchema::NUMBER
-        # elsif BOOLEAN_KEYS.find{|k| obj.key?(k)}
-        #   JsonSchemaForm::JsonSchema::BOOLEAN
-        # elsif ARRAY_KEYS.find{|k| obj.key?(k)}
-        #   JsonSchemaForm::JsonSchema::ARRAY
-        # elsif NULL_KEYS.find{|k| obj.key?(k)}
-        #   JsonSchemaForm::JsonSchema::NULL
+        if obj.has_key?(:properties)
+          klass = JsonSchemaForm::Form
+        elsif obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
+          return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
         end
       end
 
       raise StandardError.new('builder conditions not met') if klass.nil?
 
       klass.new(obj, meta, options)
-    end
+    }
 
-    FORM_RESPONSE_SETS_PROC = ->(instance, value, attribute) {
+    FORM_RESPONSE_SETS_TRANSFORM = ->(instance, value, attribute) {
       value&.each do |id, obj|
         path = if instance&.meta&.dig(:path)
           instance.meta[:path] + [:responseSets, id]
@@ -75,7 +83,7 @@ module JsonSchemaForm
       end
     }
 
-    attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
+    attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_TRANSFORM
     attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
 
     ##################
@@ -86,8 +94,19 @@ module JsonSchemaForm
       is_subschema = meta[:is_subschema]
       is_inspection = self.is_inspection
       Dry::Schema.define(parent: super) do
-        config.validate_keys = true
         if !is_subschema
+
+          before(:key_validator) do |result|
+            result.to_h.inject({}) do |acum, (k,v)|
+              if v.is_a?(::Hash) && k == :responseSets
+                acum[k] = {}
+              else
+                acum[k] = v
+              end
+              acum
+            end
+          end
+
           required(:schemaFormVersion).value(:string)
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
@@ -99,18 +118,10 @@ module JsonSchemaForm
       end
     end
 
-    def schema_validation_hash
-      json = super
-      if !meta[:is_subschema]
-        json[:responseSets]&.clear
-      end
-      json
-    end
-
     def schema_errors
-      errors_hash = Marshal.load(Marshal.dump(super())) #new reference
+      errors_hash = super
       if !meta[:is_subschema]
-        self[:responseSets].each do |id, resp_set|
+        self[:responseSets]&.each do |id, resp_set|
           resp_set_errors = resp_set.schema_errors
           unless resp_set_errors.empty?
             errors_hash[:responseSets] ||= {}
