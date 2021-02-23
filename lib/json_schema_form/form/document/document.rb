@@ -8,7 +8,7 @@ module JsonSchemaForm
       instance_variable_set('@allow_dynamic_attributes', true)
       
       #map to class for validating attributes, defaults
-      EXTRAS_PROC = ->(instance, obj) {
+      EXTRAS_PROC = ->(instance, obj, attribute) {
         if obj.is_a? ::Hash
           obj.each do |name, definition|
             obj[name] = ::JsonSchemaForm::Document::Extras.new(definition)
@@ -17,7 +17,7 @@ module JsonSchemaForm
       }
       
       #map to class for validating attributes, defaults
-      META_PROC = ->(instance, obj) {
+      META_PROC = ->(instance, obj, attribute) {
         if obj.is_a? ::Hash
           obj.each do |name, definition|
             obj[name] = ::JsonSchemaForm::Document::Meta.new(definition)
