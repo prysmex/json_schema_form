@@ -154,16 +154,16 @@ module JsonSchemaForm
     def max_score(&block)
       # ToDo check if is_inspection 
       self[:properties].inject(nil) do |acum, (name, field_def)|
-        max_score_for_path = max_score_for_path(field_def, &block)
+        max_score_for_path = max_score_for_path(name, field_def, &block)
         if max_score_for_path.nil?
           acum
         else
-          acum.to_f + max_score_for_path(field_def, &block)
+          acum.to_f + max_score_for_path(name, field_def, &block)
         end
       end
     end
 
-    def max_score_for_path(field, &block)
+    def max_score_for_path(name, field, &block)
       conditional_fields = [JsonSchemaForm::Field::Select, JsonSchemaForm::Field::Switch, JsonSchemaForm::Field::TextInput]
   
       if conditional_fields.include? field.class
@@ -194,7 +194,7 @@ module JsonSchemaForm
         end
     
         posible_values.map do |posible_value|
-          dependent_conditions = field.dependent_conditions_for_value(posible_value[:value], &block)
+          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => posible_value[:value]}, &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
             max_score = condition[:then].max_score
             if max_score.nil?
