@@ -196,7 +196,7 @@ module JsonSchemaForm
         posible_values.map do |posible_value|
           dependent_conditions = field.dependent_conditions_for_value({"#{name}" => posible_value[:value]}, &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
-            max_score = condition[:then].max_score
+            max_score = condition[:then].max_score(&block)
             if max_score.nil?
               acum
             else
