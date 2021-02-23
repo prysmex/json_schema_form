@@ -9,7 +9,7 @@ module JsonSchemaForm
       super(obj, options, &block)
     end
 
-    FORM_RESPONSE_PROC = ->(instance, responsesArray) {
+    FORM_RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
         responsesArray.map.with_index do |response, index|
           path = instance.meta[:path] + [:responses, index]
@@ -33,16 +33,22 @@ module JsonSchemaForm
     def validation_schema
       Dry::Schema.JSON do
         config.validate_keys = true
+        
+        before(:key_validator) do |result|
+          result.to_h.inject({}) do |acum, (k,v)|
+            if v.is_a?(::Array) && k == :responses
+              acum[k] = []
+            else
+              acum[k] = v
+            end
+            acum
+          end
+        end
+
         required(:id) { int? | str? }
         required(:responses).array(:hash) do
         end
       end
-    end
-
-    def schema_validation_hash
-      json = Marshal.load(Marshal.dump(self)) # new reference
-      json[:responses]&.clear
-      json
     end
 
     def valid_with_schema?
@@ -50,7 +56,7 @@ module JsonSchemaForm
     end
 
     def schema_errors
-      errors_hash = validation_schema.(schema_validation_hash).errors.to_h.merge({})
+      errors_hash = validation_schema.(self).errors.to_h.merge({})
       self[:responses]&.each.with_index do |response, index|
         response_errors = response.schema_errors
         unless response_errors.empty?

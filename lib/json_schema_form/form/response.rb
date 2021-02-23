@@ -35,16 +35,12 @@ module JsonSchemaForm
       end
     end
 
-    def schema_validation_hash
-      Marshal.load(Marshal.dump(self))# new reference
-    end
-
     def valid_with_schema?
       schema_errors.empty?
     end
 
     def schema_errors
-      validation_schema.(schema_validation_hash).errors.to_h.merge({})
+      validation_schema.(self).errors.to_h.merge({})
     end
 
     ##############
