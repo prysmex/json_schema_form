@@ -5,7 +5,8 @@ module JsonSchemaForm
       include JsonSchemaForm::JsonSchema::Schemable
       include JsonSchemaForm::Field::StrictTypes::String
       include JsonSchemaForm::JsonSchema::Validatable
-      include ::JsonSchemaForm::Field::ResponseSettable
+      include JsonSchemaForm::Field::ResponseSettable
+      include JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####
