@@ -8,6 +8,19 @@ module JsonSchemaForm
     include JsonSchemaForm::JsonSchema::Attributes
     include JsonSchemaForm::Field::StrictTypes::Object
 
+    CONDITIONAL_FIELDS = [
+      JsonSchemaForm::Field::Select,
+      JsonSchemaForm::Field::Switch,
+      JsonSchemaForm::Field::TextInput
+    ].freeze
+
+    SCORABLE_FIELDS = [
+      JsonSchemaForm::Field::Checkbox,
+      JsonSchemaForm::Field::Slider,
+      JsonSchemaForm::Field::Switch,
+      JsonSchemaForm::Field::Select
+    ].freeze
+
     BUILDER = ->(attribute, obj, meta, options) {
 
       schema_proc = Proc.new do |inst|
@@ -158,15 +171,14 @@ module JsonSchemaForm
         if max_score_for_path.nil?
           acum
         else
-          acum.to_f + max_score_for_path(name, field_def, &block)
+          acum.to_f + max_score_for_path
         end
       end
     end
 
     def max_score_for_path(name, field, &block)
-      conditional_fields = [JsonSchemaForm::Field::Select, JsonSchemaForm::Field::Switch, JsonSchemaForm::Field::TextInput]
-  
-      if conditional_fields.include? field.class
+
+      if CONDITIONAL_FIELDS.include? field.class
     
         posible_values = case field
         when JsonSchemaForm::Field::Select
@@ -210,7 +222,7 @@ module JsonSchemaForm
           end
         end.compact.max
     
-      elsif field.respond_to?(:max_score)
+      elsif SCORABLE_FIELDS.include? field.class
         field.max_score
       else
         nil
