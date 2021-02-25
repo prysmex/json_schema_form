@@ -67,7 +67,7 @@ module JsonSchemaForm
 
       def dependent_conditions_for_value(value, &block)
         dependent_conditions.select do |condition|
-          yield(condition[:if], value)
+          yield(condition[:if], value, self)
         end
       end
 
