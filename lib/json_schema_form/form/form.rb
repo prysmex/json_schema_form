@@ -1,12 +1,43 @@
 module JsonSchemaForm
-  class Form < ::JsonSchemaForm::JsonSchema::Object
+  class Form < ::SuperHash::Hasher
 
     attr_reader :is_inspection
 
-    BUILDER = Proc.new do |obj, meta, options|
+    include JsonSchemaForm::JsonSchema::Schemable
+    include JsonSchemaForm::JsonSchema::Validatable
+    include JsonSchemaForm::JsonSchema::Attributes
+    include JsonSchemaForm::Field::StrictTypes::Object
+
+    CONDITIONAL_FIELDS = [
+      JsonSchemaForm::Field::Select,
+      JsonSchemaForm::Field::Switch,
+      JsonSchemaForm::Field::TextInput
+    ].freeze
+
+    SCORABLE_FIELDS = [
+      JsonSchemaForm::Field::Checkbox,
+      JsonSchemaForm::Field::Slider,
+      JsonSchemaForm::Field::Switch,
+      JsonSchemaForm::Field::Select
+    ].freeze
+
+    BUILDER = ->(attribute, obj, meta, options) {
+
+      schema_proc = Proc.new do |inst|
+        inst.define_singleton_method(:builder) do |*args|
+          JsonSchemaForm::Form::BUILDER.call(*args)
+        end
+      end
+
+      if [:allOf, :if, :not].include?(attribute)
+        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+      end
+
       klass = case obj[:type]
+      # when 'object', :object
+      #   JsonSchemaForm::Form
       when 'string', :string
-        if obj[:format] == "date-time"
+        if obj[:format] == 'date-time'
           JsonSchemaForm::Field::DateInput
         elsif !obj[:responseSetId].nil? || !obj[:enum].nil? # enum is for v2.11.0 compatibility
           JsonSchemaForm::Field::Select
@@ -25,8 +56,6 @@ module JsonSchemaForm
         if true#obj&.dig(:displayProperties, :items)
           JsonSchemaForm::Field::Checkbox
         end
-      # when 'object', :object
-      #   JsonSchemaForm::Field::Object
       when 'null', :null
         if obj&.dig(:displayProperties, :useHeader)
           JsonSchemaForm::Field::Header
@@ -43,15 +72,17 @@ module JsonSchemaForm
       if klass.nil?
         if obj.has_key?(:properties)
           klass = JsonSchemaForm::Form
+        elsif obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
+          return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
         end
       end
 
       raise StandardError.new('builder conditions not met') if klass.nil?
 
       klass.new(obj, meta, options)
-    end
+    }
 
-    FORM_RESPONSE_SETS_PROC = ->(instance, value) {
+    FORM_RESPONSE_SETS_TRANSFORM = ->(instance, value, attribute) {
       value&.each do |id, obj|
         path = if instance&.meta&.dig(:path)
           instance.meta[:path] + [:responseSets, id]
@@ -65,7 +96,7 @@ module JsonSchemaForm
       end
     }
 
-    attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_PROC
+    attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_TRANSFORM
     attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
 
     ##################
@@ -76,8 +107,19 @@ module JsonSchemaForm
       is_subschema = meta[:is_subschema]
       is_inspection = self.is_inspection
       Dry::Schema.define(parent: super) do
-        config.validate_keys = true
         if !is_subschema
+
+          before(:key_validator) do |result|
+            result.to_h.inject({}) do |acum, (k,v)|
+              if v.is_a?(::Hash) && k == :responseSets
+                acum[k] = {}
+              else
+                acum[k] = v
+              end
+              acum
+            end
+          end
+
           required(:schemaFormVersion).value(:string)
           required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
@@ -89,18 +131,10 @@ module JsonSchemaForm
       end
     end
 
-    def schema_validation_hash
-      json = super
-      if !meta[:is_subschema]
-        json[:responseSets]&.clear
-      end
-      json
-    end
-
     def schema_errors
-      errors_hash = Marshal.load(Marshal.dump(super())) #new reference
+      errors_hash = super
       if !meta[:is_subschema]
-        self[:responseSets].each do |id, resp_set|
+        self[:responseSets]&.each do |id, resp_set|
           resp_set_errors = resp_set.schema_errors
           unless resp_set_errors.empty?
             errors_hash[:responseSets] ||= {}
@@ -130,22 +164,21 @@ module JsonSchemaForm
       self
     end
 
-    def max_score
+    def max_score(&block)
       # ToDo check if is_inspection 
       self[:properties].inject(nil) do |acum, (name, field_def)|
-        max_score_for_path = max_score_for_path(field_def)
+        max_score_for_path = max_score_for_path(name, field_def, &block)
         if max_score_for_path.nil?
           acum
         else
-          acum.to_f + max_score_for_path(field_def)
+          acum.to_f + max_score_for_path
         end
       end
     end
 
-    def max_score_for_path(field)
-      conditional_fields = [JsonSchemaForm::Field::Select, JsonSchemaForm::Field::Switch, JsonSchemaForm::Field::TextInput]
-  
-      if conditional_fields.include? field.class
+    def max_score_for_path(name, field, &block)
+
+      if CONDITIONAL_FIELDS.include? field.class
     
         posible_values = case field
         when JsonSchemaForm::Field::Select
@@ -173,9 +206,9 @@ module JsonSchemaForm
         end
     
         posible_values.map do |posible_value|
-          dependent_conditions = field.dependent_conditions_for_value(posible_value[:value])
+          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => posible_value[:value]}, &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
-            max_score = condition[:then].max_score
+            max_score = condition[:then]&.max_score(&block)
             if max_score.nil?
               acum
             else
@@ -189,7 +222,7 @@ module JsonSchemaForm
           end
         end.compact.max
     
-      elsif field.respond_to?(:max_score)
+      elsif SCORABLE_FIELDS.include? field.class
         field.max_score
       else
         nil
@@ -248,7 +281,7 @@ module JsonSchemaForm
 
       response_sets_hash = {}.merge(self[:responseSets])
       response_sets_hash[id] = new_definition
-      self[:responseSets] = self.symbolize_recursive(response_sets_hash)
+      self[:responseSets] = SuperHash::DeepKeysTransform.symbolize_recursive(response_sets_hash)
     end
 
     ##########################

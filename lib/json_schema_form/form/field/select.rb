@@ -1,9 +1,12 @@
 module JsonSchemaForm
   module Field
-    class Select < ::JsonSchemaForm::JsonSchema::String
+    class Select < ::SuperHash::Hasher
 
-      include ::JsonSchemaForm::Field::InstanceMethods
-      include ::JsonSchemaForm::Field::ResponseSettable
+      include JsonSchemaForm::JsonSchema::Schemable
+      include JsonSchemaForm::Field::StrictTypes::String
+      include JsonSchemaForm::JsonSchema::Validatable
+      include JsonSchemaForm::Field::ResponseSettable
+      include JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####
@@ -12,7 +15,6 @@ module JsonSchemaForm
       def validation_schema
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
-          config.validate_keys = true
           required(:responseSetId) { int? | str? }
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
@@ -30,15 +32,6 @@ module JsonSchemaForm
             required(:hidden).filled(:bool)
           end
         end
-      end
-
-      def schema_validation_hash
-        json = super
-        enum_locales = json.dig(:displayProperties, :i18n, :enum)
-        enum_locales&.each do |lang, locales|
-          locales&.clear
-        end
-        json
       end
 
       ##############

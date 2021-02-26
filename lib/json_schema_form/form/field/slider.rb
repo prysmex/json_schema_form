@@ -1,7 +1,10 @@
 module JsonSchemaForm
   module Field
-    class Slider < ::JsonSchemaForm::JsonSchema::Number
+    class Slider < ::SuperHash::Hasher
 
+      include JsonSchemaForm::JsonSchema::Schemable
+      include JsonSchemaForm::Field::StrictTypes::Number
+      include JsonSchemaForm::JsonSchema::Validatable
       include ::JsonSchemaForm::Field::InstanceMethods
 
       ##################
@@ -10,8 +13,17 @@ module JsonSchemaForm
 
       def validation_schema
         Dry::Schema.define(parent: super) do
-          config.validate_keys = true
           # required(:responseSetId) { int? | str? }
+
+          before(:key_validator) do |result|
+            schema = Marshal.load(Marshal.dump(result.to_h))
+            enum_locales = schema.dig(:displayProperties, :i18n, :enum)
+            enum_locales&.each do |lang, locales|
+              locales&.clear
+            end
+            schema
+          end
+
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
@@ -34,15 +46,6 @@ module JsonSchemaForm
             required(:useSlider).filled(:bool)
           end
         end
-      end
-
-      def schema_validation_hash
-        json = super
-        enum_locales = json.dig(:displayProperties, :i18n, :enum)
-        enum_locales&.each do |lang, locales|
-          locales&.clear
-        end
-        json
       end
 
       ##################
