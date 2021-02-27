@@ -2,10 +2,9 @@ module JsonSchemaForm
   module Field
     class NumberInput < ::SuperHash::Hasher
 
-      include JsonSchemaForm::JsonSchema::Schemable
+      include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Number
-      include JsonSchemaForm::JsonSchema::Validatable
-      include ::JsonSchemaForm::Field::InstanceMethods
+      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####

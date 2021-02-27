@@ -51,7 +51,7 @@ module JsonSchemaForm
       end
     end
 
-    def valid_with_schema?
+    def has_errors?
       schema_errors.empty?
     end
 

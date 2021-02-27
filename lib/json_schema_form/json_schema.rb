@@ -1,5 +1,6 @@
 require_relative 'json_schema/schemable'
 require_relative 'json_schema/validatable'
+require_relative 'json_schema/dry_schema_validatable'
 require_relative 'json_schema/arrayable'
 require_relative 'json_schema/booleanable'
 require_relative 'json_schema/nullable'

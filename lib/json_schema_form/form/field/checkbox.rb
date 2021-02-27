@@ -2,10 +2,9 @@ module JsonSchemaForm
   module Field
     class Checkbox < ::SuperHash::Hasher
 
-      include JsonSchemaForm::JsonSchema::Schemable
+      include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Array
-      include JsonSchemaForm::JsonSchema::Validatable
-      include ::JsonSchemaForm::Field::InstanceMethods
+      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
       include ::JsonSchemaForm::Field::ResponseSettable
 
       ##################
@@ -80,7 +79,6 @@ module JsonSchemaForm
 
       def compile!
         self[:items] = {
-          :"$id" => '/properties/checkbox4738/items',
           type: 'string',
           enum: self.response_set.try(:[], :responses)&.map{|r| r[:value]} || [],
           :'$schema' => 'http://json-schema.org/draft-07/schema#'

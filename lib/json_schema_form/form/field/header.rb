@@ -2,10 +2,9 @@ module JsonSchemaForm
   module Field
     class Header < ::SuperHash::Hasher
 
-      include JsonSchemaForm::JsonSchema::Schemable
+      include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Null
-      include JsonSchemaForm::JsonSchema::Validatable
-      include ::JsonSchemaForm::Field::InstanceMethods
+      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####
