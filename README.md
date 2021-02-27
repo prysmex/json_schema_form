@@ -73,7 +73,7 @@ These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
 - `validation_schema` returns the instance of Dry::Schema::Processor used to validate the schema
 - `schema_validation_hash` returns a the hash that will be used by the validation_schema, it may be a subset of the schema object
 - `schema_errors` returns a hash with the errors found
-- `valid_with_schema?` returns true if no errors
+- `has_errors?` returns true if no errors
 - `required?` returns true if validations include required
 - `key_name` returns extracts the last part of the $id value
 - `meta` returns a hash with metadata (parent object, object path, ...)
@@ -183,7 +183,7 @@ object_schema.schema_validation_hash
 # => {:$id=>"http://example.com/example.json", :$schema=>"http://json-schema.org/draft-07/schema#", :type=>"object", :title=>"Test", :some_invalid_key=>1, :required=>["age"], :properties=>{}, :allOf=>[{:if=>{:properties=>{}}, :then=>{}}]}
 object_schema.schema_errors
 # => {:some_invalid_key=>["is not allowed"], :properties=>{:name=>{"another_invalid_key"=>["is not allowed"]}}, :allOf=>{0=>{:then=>{:properties=>{:is_it_luke_skywalker?=>{"yet_another_invalid_key"=>["is not allowed"]}}}}}}
-object_schema.valid_with_schema?
+object_schema.has_errors?
 # => false
 
 # inspecting the number property

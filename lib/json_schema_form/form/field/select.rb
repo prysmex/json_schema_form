@@ -2,11 +2,10 @@ module JsonSchemaForm
   module Field
     class Select < ::SuperHash::Hasher
 
-      include JsonSchemaForm::JsonSchema::Schemable
+      include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::String
-      include JsonSchemaForm::JsonSchema::Validatable
+      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
       include JsonSchemaForm::Field::ResponseSettable
-      include JsonSchemaForm::Field::InstanceMethods
 
       ##################
       ###VALIDATIONS####

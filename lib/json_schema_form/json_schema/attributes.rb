@@ -53,6 +53,21 @@ module JsonSchemaForm
         end
       }
 
+      DEFINITIONS_TRANSFORM = ->(instance, value, attribute) {
+        case value
+        when ::Hash
+          value.inject({}) do |acum, (name, definition)|
+            acum[name] = instance.class::HASH_PROC.call(
+              attribute, 
+              instance,
+              definition,
+              [:definitions, name]
+            )
+            acum
+          end
+        end
+      }
+
       HASH_PROC = ->(attribute, instance, hash, path) {
         instance.builder(
           attribute,
@@ -109,6 +124,7 @@ module JsonSchemaForm
         ########
         base.attribute? :required#, type: Types::Array
         base.attribute? :properties, transform: PROPERTIES_TRANSFORM#, type: Types::Hash
+        base.attribute? :definitions, transform: DEFINITIONS_TRANSFORM#, type: Types::Hash
 
         #######
         #array#

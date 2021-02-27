@@ -1,5 +1,4 @@
 require 'super_hash'
-require 'dry-schema'
 
 module JsonSchemaForm
   module JsonSchema
@@ -7,7 +6,6 @@ module JsonSchemaForm
     class Schema < ::SuperHash::Hasher
       
       include JsonSchemaForm::JsonSchema::Schemable
-      include JsonSchemaForm::JsonSchema::Validatable
       include JsonSchemaForm::JsonSchema::Attributes
       include JsonSchemaForm::JsonSchema::Objectable
       include JsonSchemaForm::JsonSchema::Stringable
@@ -15,6 +13,8 @@ module JsonSchemaForm
       include JsonSchemaForm::JsonSchema::Booleanable
       include JsonSchemaForm::JsonSchema::Arrayable
       include JsonSchemaForm::JsonSchema::Nullable
+      include JsonSchemaForm::JsonSchema::Validatable #TODO load only if configured
+      include JsonSchemaForm::JsonSchema::DrySchemaValidatable #TODO load only if configured
 
     end
   end

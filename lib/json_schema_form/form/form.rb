@@ -5,6 +5,7 @@ module JsonSchemaForm
 
     include JsonSchemaForm::JsonSchema::Schemable
     include JsonSchemaForm::JsonSchema::Validatable
+    include JsonSchemaForm::JsonSchema::DrySchemaValidatable
     include JsonSchemaForm::JsonSchema::Attributes
     include JsonSchemaForm::Field::StrictTypes::Object
 
@@ -131,8 +132,10 @@ module JsonSchemaForm
       end
     end
 
-    def schema_errors
+    def schema_instance_errors
       errors_hash = super
+
+      # responseSets errors
       if !meta[:is_subschema]
         self[:responseSets]&.each do |id, resp_set|
           resp_set_errors = resp_set.schema_errors
@@ -142,6 +145,7 @@ module JsonSchemaForm
           end
         end
       end
+      
       errors_hash
     end
 
