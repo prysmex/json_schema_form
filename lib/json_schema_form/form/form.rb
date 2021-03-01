@@ -30,7 +30,7 @@ module JsonSchemaForm
         end
       end
 
-      if [:allOf, :if, :not].include?(attribute)
+      if [:allOf, :if, :not, :additionalProperties].include?(attribute)
         return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
       end
 
