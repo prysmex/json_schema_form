@@ -12,7 +12,7 @@ module JsonSchemaForm
     CONDITIONAL_FIELDS = [
       JsonSchemaForm::Field::Select,
       JsonSchemaForm::Field::Switch,
-      JsonSchemaForm::Field::TextInput
+      # JsonSchemaForm::Field::TextInput
     ].freeze
 
     SCORABLE_FIELDS = [
@@ -189,24 +189,24 @@ module JsonSchemaForm
           field.response_set[:responses]
         when JsonSchemaForm::Field::Switch
           [{value: true, score: 1}, {value: false, score: 0}]
-        when JsonSchemaForm::Field::TextInput
-          values = []
-          field.dependent_conditions.each do |condition|
-            condition_value = condition[:if][:properties].values[0]
+        # when JsonSchemaForm::Field::TextInput
+        #   values = []
+        #   field.dependent_conditions.each do |condition|
+        #     condition_value = condition[:if][:properties].values[0]
   
-            value = if condition_value[:not].present?
-             'BP8;x&/dTF2Qn[RG' #some very random text
-            else
-              if condition_value[:const].present?
-                condition_value[:const]
-              elsif condition_value[:enum].present?
-                condition_value[:enum][0]
-              end
-            end
+        #     value = if condition_value[:not].present?
+        #      'BP8;x&/dTF2Qn[RG' #some very random text
+        #     else
+        #       if condition_value[:const].present?
+        #         condition_value[:const]
+        #       elsif condition_value[:enum].present?
+        #         condition_value[:enum][0]
+        #       end
+        #     end
   
-            values.push({value: value, score: nil})
-          end
-          values
+        #     values.push({value: value, score: nil})
+        #   end
+        #   values
         end
     
         posible_values.map do |posible_value|
