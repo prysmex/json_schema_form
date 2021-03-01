@@ -47,6 +47,11 @@ module JsonSchemaForm
             self[:definitions]&.each do |k,v|
               v.schema_errors(errors)
             end
+          elsif key == :additionalProperties
+            next if !value.is_a?(::Hash)
+            self[:additionalProperties]&.each do |k,v|
+              v.schema_errors(errors)
+            end
           else
             case value
             when ::Array

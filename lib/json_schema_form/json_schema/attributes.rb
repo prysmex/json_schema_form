@@ -38,6 +38,15 @@ module JsonSchemaForm
         end
       }
 
+      ADDITIONAL_PROPERTIES_TRANSFORM = ->(instance, value, attribute) {
+        case value
+        when ::Hash
+          instance.class::HASH_PROC.call(attribute, instance, value, [attribute])
+        else
+          value
+        end
+      }
+
       PROPERTIES_TRANSFORM = ->(instance, value, attribute) {
         case value
         when ::Hash
@@ -125,6 +134,7 @@ module JsonSchemaForm
         base.attribute? :required#, type: Types::Array
         base.attribute? :properties, transform: PROPERTIES_TRANSFORM#, type: Types::Hash
         base.attribute? :definitions, transform: DEFINITIONS_TRANSFORM#, type: Types::Hash
+        base.attribute? :additionalProperties, transform: ADDITIONAL_PROPERTIES_TRANSFORM#, type: Types::Hash
 
         #######
         #array#
