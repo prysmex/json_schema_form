@@ -12,6 +12,7 @@ module JsonSchemaForm
     CONDITIONAL_FIELDS = [
       JsonSchemaForm::Field::Select,
       JsonSchemaForm::Field::Switch,
+      JsonSchemaForm::Field::NumberInput,
       # JsonSchemaForm::Field::TextInput
     ].freeze
 
