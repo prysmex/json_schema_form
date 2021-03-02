@@ -190,27 +190,23 @@ module JsonSchemaForm
           field.response_set[:responses]
         when JsonSchemaForm::Field::Switch
           [{value: true, score: 1}, {value: false, score: 0}]
-        # when JsonSchemaForm::Field::TextInput
-        #   values = []
-        #   field.dependent_conditions.each do |condition|
-        #     condition_value = condition[:if][:properties].values[0]
-  
-        #     value = if condition_value[:not].present?
-        #      'BP8;x&/dTF2Qn[RG' #some very random text
-        #     else
-        #       if condition_value[:const].present?
-        #         condition_value[:const]
-        #       elsif condition_value[:enum].present?
-        #         condition_value[:enum][0]
-        #       end
-        #     end
-  
-        #     values.push({value: value, score: nil})
-        #   end
-        #   values
+        when JsonSchemaForm::Field::NumberInput
+          values = []
+          field.dependent_conditions.each do |condition|
+            condition_value = condition[:if][:properties].values[0]
+
+            value = if condition_value[:not].present?
+               'BP8;x&/dTF2Qn[RG' #some very random text
+              else
+                condition_value[:const]
+              end
+        
+            values.push({value: value, score: nil})            
+          end
+          values
         end
     
-        posible_values.map do |posible_value|
+        posible_values&.map do |posible_value|
           dependent_conditions = field.dependent_conditions_for_value({"#{name}" => posible_value[:value]}, &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
             max_score = condition[:then]&.max_score(&block)
@@ -225,7 +221,7 @@ module JsonSchemaForm
           else
             posible_value[:score].to_f + sub_schemas_max_score
           end
-        end.compact.max
+        end&.compact&.max
     
       elsif SCORABLE_FIELDS.include? field.class
         field.max_score
