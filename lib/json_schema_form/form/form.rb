@@ -225,7 +225,7 @@ module JsonSchemaForm
           else
             posible_value[:score].to_f + sub_schemas_max_score
           end
-        end.compact.max
+        end&.compact.max
     
       elsif SCORABLE_FIELDS.include? field.class
         field.max_score
