@@ -198,11 +198,7 @@ module JsonSchemaForm
             value = if condition_value[:not].present?
                'BP8;x&/dTF2Qn[RG' #some very random text
               else
-                if condition_value[:const].present?
-                  condition_value[:const]
-                elsif condition_value[:enum].present?
-                  condition_value[:enum][0]
-                end
+                condition_value[:const]
               end
         
             values.push({value: value, score: nil})            
