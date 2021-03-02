@@ -31,8 +31,17 @@ module JsonSchemaForm
         end
       end
 
-      if [:allOf, :if, :not, :additionalProperties].include?(attribute)
+      if attribute == :definitions && obj.key?(:properties)
+        return JsonSchemaForm::Form.new(obj, meta, options)
+      end
+
+      if [:allOf, :if, :not, :additionalProperties, :definitions].include?(attribute)
         return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+      end
+
+      # a component
+      if attribute == :properties && obj.key?(:$ref)
+        return ::JsonSchemaForm::Component.new(obj, meta, options)
       end
 
       klass = case obj[:type]
@@ -65,23 +74,21 @@ module JsonSchemaForm
           JsonSchemaForm::Field::Info
         elsif obj[:static]
           JsonSchemaForm::Field::Static
-        else
-          raise StandardError.new('null field is not valid')
         end
-      end
-
-      #detect by other ways than 'type' property
-      if klass.nil?
+      else
+        #detect by other ways than 'type' property
         if obj.has_key?(:properties)
-          klass = JsonSchemaForm::Form
-        elsif obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
-          return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+          JsonSchemaForm::Form
         end
       end
 
-      raise StandardError.new('builder conditions not met') if klass.nil?
+      return klass.new(obj, meta, options) if klass
 
-      klass.new(obj, meta, options)
+      if obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
+        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+      end
+
+      raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
     }
 
     FORM_RESPONSE_SETS_TRANSFORM = ->(instance, value, attribute) {
