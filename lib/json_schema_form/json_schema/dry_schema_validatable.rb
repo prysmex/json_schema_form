@@ -84,6 +84,7 @@ module JsonSchemaForm
           optional(:anyOf).array(:hash)
           optional(:oneOf).array(:hash)
           optional(:not)#.value(:hash)
+          optional(:$ref)#.value(:string)
 
           if instance.types&.include?('object') || instance.types.nil?
             optional(:required).value(:array?).array(:str?)
