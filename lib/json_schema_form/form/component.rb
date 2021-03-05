@@ -7,7 +7,7 @@ module JsonSchemaForm
     def validation_schema
       Dry::Schema.JSON do
         config.validate_keys = true
-        required(:$ref).filled(:integer)
+        required(:$ref).filled(:string)
         required(:displayProperties).hash do
           optional(:hiddenOnCreate).maybe(:bool)
           # required(:pictures).value(:array?).array(:str?)
