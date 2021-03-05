@@ -238,8 +238,13 @@ module JsonSchemaForm
     end
 
     def valid_for_locale?(locale = :es)
-      self.merged_properties.find{|k,v| v.valid_for_locale?(locale) == false}.nil? &&
-      self.response_sets.find{|k,v| v.valid_for_locale?(locale) == false}.nil?
+      all_properties_are_valid = self.merged_properties.find do |k,v|
+        !v.is_a?(JsonSchemaForm::Component) && (v.valid_for_locale?(locale) == false)
+      end.nil?
+      all_response_sets_are_valid = self.response_sets.find do |k,v|
+        v.valid_for_locale?(locale) == false
+      end.nil?
+      all_properties_are_valid && all_response_sets_are_valid
     end
 
     def migrate!
