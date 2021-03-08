@@ -57,7 +57,9 @@ module JsonSchemaForm
         parent_all_of = self.meta.dig(:parent, :allOf) || []
         
         parent_all_of.select do |condition|
-          condition.dig(:if, :properties).keys.include?(self.key_name.to_sym)
+          key = self.key_name&.to_sym
+          next false if key.nil?
+          condition.dig(:if, :properties).keys.include?(key)
         end
       end
 
