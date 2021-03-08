@@ -7,6 +7,7 @@ module JsonSchemaForm
       attribute? :failed, default: ->(instance) { nil }
       attribute? :notes, default: ->(instance) { nil }
       attribute? :report_ids, default: ->(instance) { [].freeze }
+      attribute? :action_ids, default: ->(instance) { [].freeze }
 
     end
   end
