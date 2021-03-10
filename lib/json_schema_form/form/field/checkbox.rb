@@ -14,7 +14,8 @@ module JsonSchemaForm
       def validation_schema
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
-          required(:responseSetId) { int? | str? }
+          required(:uniqueItems)
+          required(:items)
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
@@ -77,15 +78,10 @@ module JsonSchemaForm
           .present?
       end
 
-      def compile!
-        self[:items] = {
-          type: 'string',
-          enum: self.response_set.try(:[], :responses)&.map{|r| r[:value]} || [],
-          :'$schema' => 'http://json-schema.org/draft-07/schema#'
-        }
-      end
-
       def migrate!
+        self[:items] = {'$ref': "#/definitions/#{self[:responseSetId]}"}
+        self[:uniqueItems] = true
+        self.delete(:responseSetId)
       end
 
     end

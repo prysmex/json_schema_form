@@ -32,6 +32,10 @@ module JsonSchemaForm
         errors_hash
       end
 
+      def compile!
+        self.delete(:displayProperties)
+      end
+
     end
 
     module ResponseSettable
@@ -45,17 +49,32 @@ module JsonSchemaForm
 
       #get the field's response set, only applies to certain fields
       def response_set
-        root_parent.get_response_set(self[:responseSetId])
+        case self
+        when Checkbox
+          root_parent.get_response_set(self[:items][:$ref])
+        when Select
+          root_parent.get_response_set(self[:$ref])
+        end
       end
 
       def schema_instance_errors
         errors_hash = super
         
-        if self[:responseSetId].nil?
-          errors_hash[:responseSetId] = 'must be present'
-        elsif self.response_set.nil?
-          errors_hash[:responseSetId] = 'response set is not present'
+        case self
+        when Checkbox
+          if self.dig(:items, :$ref).nil?
+            errors_hash[:'items.$ref'] = 'must be present'
+          end
+        when Select
+          if self[:$ref].nil?
+            errors_hash[:$ref] = 'must be present'
+          end
         end
+        
+        if self.response_set.nil?
+          errors_hash[:responseSet] = 'response set is not present'
+        end
+        
         errors_hash
       end
 

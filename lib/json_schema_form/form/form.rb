@@ -24,6 +24,10 @@ module JsonSchemaForm
     ].freeze
 
     BUILDER = ->(attribute, obj, meta, options) {
+      
+      if attribute == :responseSets #temporary for compatibility on v3.0.0 migrations
+        return Hash.new(obj)
+      end
 
       schema_proc = Proc.new do |inst|
         inst.define_singleton_method(:builder) do |*args|
@@ -31,17 +35,24 @@ module JsonSchemaForm
         end
       end
 
-      if attribute == :definitions && obj.key?(:properties)
-        return JsonSchemaForm::Form.new(obj, meta, options)
+      if attribute == :definitions
+        if obj.key?(:properties)
+          return JsonSchemaForm::Form.new(obj, meta, options)
+        elsif obj[:type] == 'string'
+          return JsonSchemaForm::ResponseSet.new(obj, meta, options)
+        end
       end
 
       if [:allOf, :if, :not, :additionalProperties, :definitions].include?(attribute)
         return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
       end
 
-      # a component
       if attribute == :properties && obj.key?(:$ref)
-        return ::JsonSchemaForm::Component.new(obj, meta, options)
+        if obj.dig(:displayProperties, :isSelect)
+          return JsonSchemaForm::Field::Select.new(obj, meta, options)
+        else
+          return ::JsonSchemaForm::Component.new(obj, meta, options)
+        end
       end
 
       klass = case obj[:type]
@@ -50,7 +61,7 @@ module JsonSchemaForm
       when 'string', :string
         if obj[:format] == 'date-time'
           JsonSchemaForm::Field::DateInput
-        elsif !obj[:responseSetId].nil? || !obj[:enum].nil? # enum is for v2.11.0 compatibility
+        elsif !obj[:responseSetId].nil? #deprecated, only for compatibility before v3.0.0
           JsonSchemaForm::Field::Select
         else
           JsonSchemaForm::Field::TextInput
@@ -64,9 +75,7 @@ module JsonSchemaForm
       when 'boolean', :boolean
         JsonSchemaForm::Field::Switch
       when 'array', :array
-        if true#obj&.dig(:displayProperties, :items)
-          JsonSchemaForm::Field::Checkbox
-        end
+        JsonSchemaForm::Field::Checkbox
       when 'null', :null
         if obj&.dig(:displayProperties, :useHeader)
           JsonSchemaForm::Field::Header
@@ -91,21 +100,7 @@ module JsonSchemaForm
       raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
     }
 
-    FORM_RESPONSE_SETS_TRANSFORM = ->(instance, value, attribute) {
-      value&.each do |id, obj|
-        path = if instance&.meta&.dig(:path)
-          instance.meta[:path] + [:responseSets, id]
-        else
-          [:responseSets, id]
-        end
-        value[id] = JsonSchemaForm::ResponseSet.new(obj, {
-          parent: instance,
-          path: path
-        })
-      end
-    }
-
-    attribute? :responseSets, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }, transform: FORM_RESPONSE_SETS_TRANSFORM
+    update_attribute :definitions, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }
     attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
 
     ##################
@@ -117,20 +112,7 @@ module JsonSchemaForm
       is_inspection = self.is_inspection
       Dry::Schema.define(parent: super) do
         if !is_subschema
-
-          before(:key_validator) do |result|
-            result.to_h.inject({}) do |acum, (k,v)|
-              if v.is_a?(::Hash) && k == :responseSets
-                acum[k] = {}
-              else
-                acum[k] = v
-              end
-              acum
-            end
-          end
-
           required(:schemaFormVersion).value(:string)
-          required(:responseSets).value(:hash)
           required(:required).value(:array?).array(:str?)
           required(:availableLocales).value(:array?).array(:str?)
           if is_inspection
@@ -143,13 +125,17 @@ module JsonSchemaForm
     def schema_instance_errors
       errors_hash = super
 
-      # responseSets errors
-      if !meta[:is_subschema]
-        self[:responseSets]&.each do |id, resp_set|
+      if meta[:is_subschema]
+        if self.has_key?('$id')
+          errors_hash['$id'] = 'id should only be present in root schemas'
+        end
+      else
+        # responseSets errors
+        self[:definitions]&.each do |id, resp_set|
           resp_set_errors = resp_set.schema_errors
           unless resp_set_errors.empty?
-            errors_hash[:responseSets] ||= {}
-            errors_hash[:responseSets][id] = resp_set_errors
+            errors_hash[:definitions] ||= {}
+            errors_hash[:definitions][id] = resp_set_errors
           end
         end
       end
@@ -169,9 +155,6 @@ module JsonSchemaForm
 
       #compile dynamic properties
       self.get_dynamic_forms.each{|form| form.compile!}
-
-      #remove json schema none-compliant properties
-      self.delete(:responseSets)
 
       self
     end
@@ -194,7 +177,9 @@ module JsonSchemaForm
     
         posible_values = case field
         when JsonSchemaForm::Field::Select
-          field.response_set[:responses]
+          field.response_set[:anyOf].map do |obj|
+            {value: obj[:const], score: obj[:score]}
+          end
         when JsonSchemaForm::Field::Switch
           [{value: true, score: 1}, {value: false, score: 0}]
         when JsonSchemaForm::Field::NumberInput
@@ -260,7 +245,7 @@ module JsonSchemaForm
       self.get_dynamic_forms.each{|form| form.migrate!}
 
       # migrate response sets
-      self[:responseSets]&.each do |id, definition|
+      self[:definitions]&.each do |id, definition|
         if definition&.respond_to?(:migrate!)
           puts 'migrating response set'
           definition.migrate!
@@ -269,7 +254,7 @@ module JsonSchemaForm
 
       # migrate form object
       if !meta[:is_subschema]
-        self[:schemaFormVersion] = '1.0.0'
+        self[:schemaFormVersion] = '3.0.0'
       end
     end
 
@@ -277,24 +262,23 @@ module JsonSchemaForm
     ###RESPONSE SET MANAGEMENT####
     ##############################
 
-    # get responseSets
+    # get responseSets #ToDo this can be improved
     def response_sets
-      self[:responseSets]
+      self[:definitions].select do |k,v|
+        v.key?('anyOf') || v.key?('oneOf')
+      end
     end
 
     # returns the response set definition with specified id
     def get_response_set(id)
-      self&.dig(:responseSets, id.to_sym)
+      path = id&.sub('#/', '')&.split('/')&.map(&:to_sym)
+      self.dig(*path)
     end
 
     def add_response_set(id, definition)
-      new_definition = definition.merge({
-        id: id
-      })
-
-      response_sets_hash = {}.merge(self[:responseSets])
-      response_sets_hash[id] = new_definition
-      self[:responseSets] = SuperHash::DeepKeysTransform.symbolize_recursive(response_sets_hash)
+      new_definitions_hash = {}.merge(self[:definitions])
+      new_definitions_hash[id] = definition
+      self[:definitions] = SuperHash::DeepKeysTransform.symbolize_recursive(response_sets_hash)
     end
 
     ##########################

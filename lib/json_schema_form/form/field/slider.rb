@@ -12,7 +12,6 @@ module JsonSchemaForm
 
       def validation_schema
         Dry::Schema.define(parent: super) do
-          # required(:responseSetId) { int? | str? }
 
           before(:key_validator) do |result|
             schema = Marshal.load(Marshal.dump(result.to_h))

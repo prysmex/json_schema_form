@@ -9,10 +9,10 @@ module JsonSchemaForm
       super(obj, options, &block)
     end
 
-    FORM_RESPONSE_PROC = ->(instance, responsesArray, attribute) {
+    RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
         responsesArray.map.with_index do |response, index|
-          path = instance.meta[:path] + [:responses, index]
+          path = instance.meta[:path] + [:anyOf, index]
           JsonSchemaForm::Response.new(
             response,
             {
@@ -24,7 +24,8 @@ module JsonSchemaForm
       end
     }
 
-    attribute? :responses, default: ->(instance) { [].freeze }, transform: FORM_RESPONSE_PROC
+    attribute :anyOf, default: ->(instance) { [].freeze }, transform: RESPONSE_PROC
+    attribute :type
 
     ##################
     ###VALIDATIONS####
@@ -36,7 +37,7 @@ module JsonSchemaForm
         
         before(:key_validator) do |result|
           result.to_h.inject({}) do |acum, (k,v)|
-            if v.is_a?(::Array) && k == :responses
+            if v.is_a?(::Array) && k == :anyOf
               acum[k] = []
             else
               acum[k] = v
@@ -44,9 +45,9 @@ module JsonSchemaForm
             acum
           end
         end
-
-        required(:id) { int? | str? }
-        required(:responses).array(:hash) do
+        required(:type).filled(Types::String.enum('string'))
+        optional(:title) { str? }
+        required(:anyOf).array(:hash) do
         end
       end
     end
@@ -57,11 +58,11 @@ module JsonSchemaForm
 
     def schema_errors
       errors_hash = validation_schema.(self).errors.to_h.merge({})
-      self[:responses]&.each.with_index do |response, index|
+      self[:anyOf]&.each.with_index do |response, index|
         response_errors = response.schema_errors
         unless response_errors.empty?
-          errors_hash[:responses] ||= {}
-          errors_hash[:responses][index] = response_errors
+          errors_hash[:anyOf] ||= {}
+          errors_hash[:anyOf][index] = response_errors
         end
       end
       errors_hash

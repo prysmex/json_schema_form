@@ -3,7 +3,6 @@ module JsonSchemaForm
     class Select < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::String
       include JsonSchemaForm::JsonSchema::DrySchemaValidatable
       include JsonSchemaForm::Field::ResponseSettable
 
@@ -14,9 +13,9 @@ module JsonSchemaForm
       def validation_schema
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
-          required(:responseSetId) { int? | str? }
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
+            required(:isSelect).filled(Types::True)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
@@ -60,11 +59,11 @@ module JsonSchemaForm
           .try(:[], :failed) || false
       end
 
-      def compile!
-        self[:enum] = self.response_set.try(:[], :responses)&.map{|r| r[:value]} || []
-      end
-
       def migrate!
+        self['$ref'] = "#/definitions/#{self[:responseSetId]}"
+        self.bury(:displayProperties, :isSelect, true)
+        self.delete(:type)
+        self.delete(:responseSetId)
       end
 
     end
