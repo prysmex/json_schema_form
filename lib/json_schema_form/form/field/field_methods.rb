@@ -51,7 +51,7 @@ module JsonSchemaForm
       def response_set
         case self
         when Checkbox
-          root_parent.get_response_set(self[:items][:$ref])
+          root_parent.get_response_set(self.dig(:items, :$ref))
         when Select
           root_parent.get_response_set(self[:$ref])
         end
