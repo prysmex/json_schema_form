@@ -129,15 +129,6 @@ module JsonSchemaForm
         if self.has_key?('$id')
           errors_hash['$id'] = 'id should only be present in root schemas'
         end
-      else
-        # responseSets errors
-        self[:definitions]&.each do |id, resp_set|
-          resp_set_errors = resp_set.schema_errors
-          unless resp_set_errors.empty?
-            errors_hash[:definitions] ||= {}
-            errors_hash[:definitions][id] = resp_set_errors
-          end
-        end
       end
       
       errors_hash
@@ -252,10 +243,39 @@ module JsonSchemaForm
         end
       end
 
+      #3.0.0 migrations
+      if self[:schemaFormVersion] != '3.0.0'
+        if !meta[:is_subschema]
+          new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
+            anyOf = definition[:responses].map do |r|
+              {
+                type: 'string',
+                const: r[:value],
+                displayProperties: r[:displayProperties],
+                enableScore: r[:enableScore],
+                score: r[:score],
+                failed: r[:failed]
+              }
+            end
+            acum[id] = {
+              type: 'string',
+              anyOf: anyOf
+            }
+            acum
+          end
+          old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
+          self.delete(:responseSets)
+          self[:definitions] = old_definitions.merge(new_definitions)
+        else
+          self.delete(:$id)
+        end
+      end
+
       # migrate form object
       if !meta[:is_subschema]
         self[:schemaFormVersion] = '3.0.0'
       end
+      self
     end
 
     ##############################

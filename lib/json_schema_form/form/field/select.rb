@@ -60,7 +60,7 @@ module JsonSchemaForm
       end
 
       def migrate!
-        self['$ref'] = "#/definitions/#{self[:responseSetId]}"
+        self[:'$ref'] = "#/definitions/#{self[:responseSetId]}"
         self.bury(:displayProperties, :isSelect, true)
         self.delete(:type)
         self.delete(:responseSetId)

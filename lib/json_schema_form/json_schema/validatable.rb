@@ -6,7 +6,8 @@ module JsonSchemaForm
         :properties, :if, :then, :else, :additionalProperties, :dependencies, :patternProperties,
         :contains,
         :not,
-        :definitions
+        :definitions,
+        :items
       ].freeze
 
       ARRAY_SUBSCHEMA_KEYS = [

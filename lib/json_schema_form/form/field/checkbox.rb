@@ -79,7 +79,7 @@ module JsonSchemaForm
       end
 
       def migrate!
-        self[:items] = {'$ref': "#/definitions/#{self[:responseSetId]}"}
+        self[:items] = JsonSchemaForm::JsonSchema::Schema.new({'$ref': "#/definitions/#{self[:responseSetId]}"})
         self[:uniqueItems] = true
         self.delete(:responseSetId)
       end

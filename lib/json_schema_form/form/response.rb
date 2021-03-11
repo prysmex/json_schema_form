@@ -1,13 +1,9 @@
 module JsonSchemaForm
   class Response < ::SuperHash::Hasher
 
-    instance_variable_set('@allow_dynamic_attributes', true)
-    attr_reader :meta
-
-    def initialize(obj, meta={}, options={}, &block)
-      @meta = meta
-      super(obj, options, &block)
-    end
+    include JsonSchemaForm::JsonSchema::Schemable
+    include JsonSchemaForm::JsonSchema::Validatable
+    include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
     ##################
     ###VALIDATIONS####
@@ -17,12 +13,8 @@ module JsonSchemaForm
       is_inspection = self.meta[:parent].meta[:parent].is_inspection
       Dry::Schema.JSON do
         config.validate_keys = true
-        required(:value).value(:string)
-        if is_inspection
-          required(:enableScore).value(Types::True)
-          required(:score) { int? | float? | nil? }
-          required(:failed).value(:bool)
-        end
+        required(:type).filled(Types::String.enum('string'))
+        required(:const).value(:string)
         required(:displayProperties).hash do
           required(:i18n).hash do
             optional(:es).maybe(:string)
@@ -32,11 +24,12 @@ module JsonSchemaForm
             required(:color).maybe(:string)
           end
         end
+        if is_inspection
+          required(:enableScore).value(Types::True)
+          required(:score) { int? | float? | nil? }
+          required(:failed).value(:bool)
+        end
       end
-    end
-
-    def has_errors?
-      schema_errors.empty?
     end
 
     def schema_errors
