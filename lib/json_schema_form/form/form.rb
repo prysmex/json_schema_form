@@ -291,6 +291,7 @@ module JsonSchemaForm
 
     # returns the response set definition with specified id
     def get_response_set(id)
+      return nil if id.nil?
       path = id&.sub('#/', '')&.split('/')&.map(&:to_sym)
       self.dig(*path)
     end
