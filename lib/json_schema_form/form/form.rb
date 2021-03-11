@@ -166,7 +166,7 @@ module JsonSchemaForm
 
       if CONDITIONAL_FIELDS.include? field.class
     
-        posible_values = case field
+        possible_values = case field
         when JsonSchemaForm::Field::Select
           field.response_set[:anyOf].map do |obj|
             {value: obj[:const], score: obj[:score]}
@@ -189,8 +189,8 @@ module JsonSchemaForm
           values
         end
     
-        posible_values&.map do |posible_value|
-          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => posible_value[:value]}, &block)
+        possible_values&.map do |possible_value|
+          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => possible_value[:value]}, &block)
           sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
             max_score = condition[:then]&.max_score(&block)
             if max_score.nil?
@@ -200,9 +200,9 @@ module JsonSchemaForm
             end
           end
           if sub_schemas_max_score.nil?
-            posible_value[:score]
+            possible_value[:score]
           else
-            posible_value[:score].to_f + sub_schemas_max_score
+            possible_value[:score].to_f + sub_schemas_max_score
           end
         end&.compact&.max
     

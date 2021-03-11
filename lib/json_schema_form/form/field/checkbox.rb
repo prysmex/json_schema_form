@@ -40,7 +40,7 @@ module JsonSchemaForm
 
       def max_score
         scored_responses = self.response_set
-          .try(:[], :responses)
+          .try(:[], :anyOf)
           &.reduce(nil) do |sum,response|
             if response[:score].nil?
               sum
@@ -54,8 +54,8 @@ module JsonSchemaForm
         case value
         when ::Array
           self.response_set
-            .try(:[], :responses)
-            &.select {|response| value.include? response[:value]}
+            .try(:[], :anyOf)
+            &.select {|response| value.include? response[:const]}
             &.reduce(nil) do |sum,response|
               if response[:score].nil?
                 sum
@@ -71,9 +71,9 @@ module JsonSchemaForm
       def value_fails?(value)
         response_set = self.response_set
         return false if response_set.nil? || value.nil?
-        response_set[:responses]
+        response_set[:anyOf]
           &.find do |response|
-            value.include?(response[:value]) && response[:failed] == true
+            value.include?(response[:const]) && response[:failed] == true
           end
           .present?
       end
