@@ -20,7 +20,7 @@ module JsonSchemaForm
       end
     }
 
-    attribute :anyOf, default: ->(instance) { [].freeze }, transform: RESPONSE_PROC
+    attribute? :anyOf, default: ->(instance) { [].freeze }, transform: RESPONSE_PROC
 
     ##################
     ###VALIDATIONS####
@@ -43,13 +43,16 @@ module JsonSchemaForm
 
         required(:type).filled(Types::String.enum('string'))
         optional(:title).maybe(:string)
-        required(:anyOf)
+        required(:anyOf).array(:hash) do
+        end
       end
     end
 
     def schema_errors(errors = {})
+      #own errors
       own_errors = validation_schema.(self).errors.to_h.merge({})
 
+      #anyOf errors
       self[:anyOf]&.each.with_index do |response, index|
         response_errors = response.schema_errors
         unless response_errors.empty?
@@ -58,6 +61,7 @@ module JsonSchemaForm
         end
       end
 
+      #set to passed errors
       own_errors.flatten_to_root.each do |relative_path, errors_array|
         path = (self.meta[:path] || []) + relative_path.to_s.split('.')
         errors.bury(*(path + [errors_array]))
@@ -77,11 +81,11 @@ module JsonSchemaForm
     # end
 
     def get_response_from_value(value)
-      self[:responses].find{|r| r[:value] == value }
+      self[:anyOf].find{|r| r[:const] == value }
     end
 
     def valid_for_locale?(locale = :es)
-      self[:responses].find{|r| r.valid_for_locale?(locale) == false }.nil?
+      self[:anyOf].find{|r| r.valid_for_locale?(locale) == false }.nil?
     end
 
     # def get_failing_responses

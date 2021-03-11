@@ -298,7 +298,7 @@ module JsonSchemaForm
     def add_response_set(id, definition)
       new_definitions_hash = {}.merge(self[:definitions])
       new_definitions_hash[id] = definition
-      self[:definitions] = SuperHash::DeepKeysTransform.symbolize_recursive(response_sets_hash)
+      self[:definitions] = SuperHash::DeepKeysTransform.symbolize_recursive(new_definitions_hash)
     end
 
     ##########################
