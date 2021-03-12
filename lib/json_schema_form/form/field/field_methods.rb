@@ -6,6 +6,7 @@ module JsonSchemaForm
       def self.included(base)
         base.include JsonSchemaForm::JsonSchema::Schemable
         base.include JsonSchemaForm::JsonSchema::Validatable
+        base.include JsonSchemaForm::JsonSchema::Attributes
       end
       
       #get the field's localized label

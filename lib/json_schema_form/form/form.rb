@@ -248,14 +248,19 @@ module JsonSchemaForm
         if !meta[:is_subschema]
           new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
             anyOf = definition[:responses].map do |r|
-              {
+              hash = {
                 type: 'string',
                 const: r[:value],
-                displayProperties: r[:displayProperties],
-                enableScore: r[:enableScore],
-                score: r[:score],
-                failed: r[:failed]
+                displayProperties: r[:displayProperties]
               }
+              if self.is_inspection
+                hash.merge!({
+                  enableScore: r[:enableScore],
+                  score: r[:score],
+                  failed: r[:failed]
+                })
+              end
+              hash
             end
             acum[id] = {
               type: 'string',
