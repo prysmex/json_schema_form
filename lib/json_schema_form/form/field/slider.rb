@@ -24,7 +24,7 @@ module JsonSchemaForm
             hash
           end
 
-          required(:enum).array(:int?)
+          required(:enum).array{ int? | float? }
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
