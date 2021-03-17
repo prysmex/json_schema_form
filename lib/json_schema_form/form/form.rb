@@ -293,7 +293,7 @@ module JsonSchemaForm
     ###COMPONENT MANAGEMENT####
     ###########################
 
-    def components
+    def component_definitions
       self[:definitions].select do |k,v|
         !v.key?(:type)
       end
@@ -306,7 +306,7 @@ module JsonSchemaForm
     # get responseSets #ToDo this can be improved
     def response_sets
       self[:definitions].select do |k,v|
-        v[:type] == 'string'
+        v[:type] == 'string' #v.key?('anyOf')
       end
     end
 
