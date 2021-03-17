@@ -4,7 +4,6 @@ module JsonSchemaForm
 
       include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::String
-      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####
@@ -12,6 +11,7 @@ module JsonSchemaForm
       
       def validation_schema
         Dry::Schema.define(parent: super) do
+          required(:format).filled(Types::String.enum('date-time'))
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)

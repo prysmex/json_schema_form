@@ -4,7 +4,6 @@ module JsonSchemaForm
 
       include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Array
-      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
       include ::JsonSchemaForm::Field::ResponseSettable
 
       ##################
@@ -15,7 +14,9 @@ module JsonSchemaForm
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
           required(:uniqueItems)
-          required(:items)
+          required(:items).hash do
+            required(:'$ref').filled(:string)
+          end
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)

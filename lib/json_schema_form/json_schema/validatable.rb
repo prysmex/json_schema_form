@@ -17,55 +17,58 @@ module JsonSchemaForm
         :items
       ].freeze
 
-      #override to implement schema errors
-      def schema_instance_errors
-        {}
-      end
-
-      def has_errors?
-        schema_errors.empty?
-      end
-      
-      # recursively get schema_errors
-      def schema_errors(errors = {})
-
-        # check for errors
-        own_errors = schema_instance_errors
-        
-        #set the errors on the hash
-        own_errors.flatten_to_root.each do |relative_path, errors_array|
-          path = (self.meta[:path] || []) + relative_path.to_s.split('.')
-          errors.bury(*(path + [errors_array]))
+      BURY_ERRORS_PROC = Proc.new do |errors_to_bury, errors_hash, obj_path|
+        errors_to_bury.flatten_to_root.each do |relative_path, errors_array|
+          path = (obj_path || []) + (relative_path.to_s.split('.')).map{|i| Integer(i) rescue i.to_sym }
+          errors_hash.bury(*(path + [errors_array]))
         end
-        
-        #continue recurrsion for al subschema keys
+      end
+
+      #override to implement schema errors
+      def own_errors
+        raise StandardError.new("need to override 'own_errors' method")
+      end
+
+      def add_subschema_errors(errors)
+        #continue recurrsion for all subschema keys
         self.each do |key, value|
           if key == :properties
             self[:properties]&.each do |k,v|
-              v.schema_errors(errors)
+              v.errors(errors)
             end
           elsif key == :definitions
             self[:definitions]&.each do |k,v|
-              v.schema_errors(errors)
+              v.errors(errors)
             end
           elsif key == :additionalProperties
             next if !value.is_a?(::Hash)
             self[:additionalProperties]&.each do |k,v|
-              v.schema_errors(errors)
+              v.errors(errors)
             end
           else
             case value
             when ::Array
               next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
               value.each do |v|
-                v.schema_errors(errors)
+                v.errors(errors)
               end
             else
               next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-              value&.schema_errors(errors)
+              value.errors(errors)
             end
           end
         end
+      end
+      
+      # recursively get errors
+      def errors(errors={})
+        
+        # check for errors and set them on the passed errors hash
+        own_errors = self.own_errors
+        BURY_ERRORS_PROC.call(own_errors, errors, self.meta[:path])
+
+        # go recursive
+        self.add_subschema_errors(errors)
 
         errors
       end

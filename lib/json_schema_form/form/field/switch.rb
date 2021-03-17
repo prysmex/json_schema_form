@@ -4,7 +4,6 @@ module JsonSchemaForm
 
       include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Boolean
-      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####

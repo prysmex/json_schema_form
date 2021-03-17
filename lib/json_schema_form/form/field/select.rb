@@ -3,7 +3,6 @@ module JsonSchemaForm
     class Select < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
       include JsonSchemaForm::Field::ResponseSettable
 
       ##################
@@ -13,6 +12,7 @@ module JsonSchemaForm
       def validation_schema
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
+          required(:$ref).filled(:string)
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:isSelect).filled(Types::True)

@@ -4,7 +4,6 @@ module JsonSchemaForm
 
       include ::JsonSchemaForm::Field::Base
       include JsonSchemaForm::Field::StrictTypes::Number
-      include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####
@@ -14,14 +13,18 @@ module JsonSchemaForm
         Dry::Schema.define(parent: super) do
 
           before(:key_validator) do |result|
-            schema = Marshal.load(Marshal.dump(result.to_h))
-            enum_locales = schema.dig(:displayProperties, :i18n, :enum)
+            hash = result.to_h.inject({}) do |acum, (k,v)|
+              acum[k] = v
+              acum
+            end
+            enum_locales = hash.dig(:displayProperties, :i18n, :enum)
             enum_locales&.each do |lang, locales|
               locales&.clear
             end
-            schema
+            hash
           end
 
+          required(:enum).array(:int?)
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)

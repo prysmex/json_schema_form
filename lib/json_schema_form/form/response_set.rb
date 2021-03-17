@@ -2,8 +2,6 @@ module JsonSchemaForm
   class ResponseSet < ::SuperHash::Hasher
 
     include JsonSchemaForm::JsonSchema::Schemable
-    include JsonSchemaForm::JsonSchema::Validatable
-    include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
     RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
@@ -48,13 +46,13 @@ module JsonSchemaForm
       end
     end
 
-    def schema_errors(errors = {})
+    def errors(errors = {})
       #own errors
       own_errors = validation_schema.(self).errors.to_h.merge({})
 
       #anyOf errors
       self[:anyOf]&.each.with_index do |response, index|
-        response_errors = response.schema_errors
+        response_errors = response.errors
         unless response_errors.empty?
           own_errors[:anyOf] ||= {}
           own_errors[:anyOf][index] = response_errors

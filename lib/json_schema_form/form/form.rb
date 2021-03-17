@@ -23,28 +23,33 @@ module JsonSchemaForm
       JsonSchemaForm::Field::Select
     ].freeze
 
+    SUBSCHEMA_PROC = Proc.new do |inst|
+      inst.define_singleton_method(:builder) do |*args|
+        JsonSchemaForm::Form::BUILDER.call(*args)
+      end
+    end
+
     BUILDER = ->(attribute, obj, meta, options) {
       
       if attribute == :responseSets #temporary for compatibility on v3.0.0 migrations
         return Hash.new(obj)
       end
 
-      schema_proc = Proc.new do |inst|
-        inst.define_singleton_method(:builder) do |*args|
-          JsonSchemaForm::Form::BUILDER.call(*args)
-        end
-      end
-
       if attribute == :definitions
-        if obj.key?(:properties)
-          return JsonSchemaForm::Form.new(obj, meta, options)
-        elsif obj[:type] == 'string'
+        # if obj.key?(:properties)
+        #   return JsonSchemaForm::Form.new(obj, meta, options)
+        # end
+        # if obj.key?(:'$ref')
+        #   return JsonSchemaForm::ComponentRef.new(obj, meta, options)
+        # end
+        if obj[:type] == 'string'
           return JsonSchemaForm::ResponseSet.new(obj, meta, options)
         end
       end
 
-      if [:allOf, :if, :not, :additionalProperties, :definitions].include?(attribute)
-        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+      #ToDo be more specific
+      if [:allOf, :if, :not, :additionalProperties, :items, :definitions].include?(attribute)
+        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
       end
 
       if attribute == :properties && obj.key?(:$ref)
@@ -93,8 +98,9 @@ module JsonSchemaForm
 
       return klass.new(obj, meta, options) if klass
 
+      #ToDo be more specific
       if obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
-        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: schema_proc ))
+        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
       end
 
       raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
@@ -122,7 +128,7 @@ module JsonSchemaForm
       end
     end
 
-    def schema_instance_errors
+    def own_errors
       errors_hash = super
 
       if meta[:is_subschema]
@@ -283,6 +289,16 @@ module JsonSchemaForm
       self
     end
 
+    ###########################
+    ###COMPONENT MANAGEMENT####
+    ###########################
+
+    def components
+      self[:definitions].select do |k,v|
+        !v.key?(:type)
+      end
+    end
+
     ##############################
     ###RESPONSE SET MANAGEMENT####
     ##############################
@@ -290,7 +306,7 @@ module JsonSchemaForm
     # get responseSets #ToDo this can be improved
     def response_sets
       self[:definitions].select do |k,v|
-        v.key?('anyOf') || v.key?('oneOf')
+        v[:type] == 'string'
       end
     end
 

@@ -2,8 +2,6 @@ module JsonSchemaForm
   class Response < ::SuperHash::Hasher
 
     include JsonSchemaForm::JsonSchema::Schemable
-    include JsonSchemaForm::JsonSchema::Validatable
-    include JsonSchemaForm::JsonSchema::DrySchemaValidatable
 
     ##################
     ###VALIDATIONS####
@@ -32,7 +30,7 @@ module JsonSchemaForm
       end
     end
 
-    def schema_errors
+    def errors
       validation_schema.(self).errors.to_h.merge({})
     end
 

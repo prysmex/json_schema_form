@@ -4,6 +4,8 @@ module JsonSchemaForm
     include JsonSchemaForm::JsonSchema::Schemable
     include JsonSchemaForm::JsonSchema::Validatable
 
+    REF_REGEX = /\A#\/definitions\/\w+\z/
+
     def validation_schema
       Dry::Schema.JSON do
         config.validate_keys = true
@@ -26,13 +28,13 @@ module JsonSchemaForm
       end
     end
 
-    def schema_instance_errors
+    def own_errors
       errors = validation_schema
         &.(self)
         &.errors
         &.to_h
         &.merge({}) || {}
-      errors['$ref_path'] = '$ref must match this regex \A#\/definitions\/\w+\z' if self[:$ref].match(/\A#\/definitions\/\w+\z/).nil?
+      errors['$ref_path'] = "$ref must match this regex #{REF_REGEX}" if self[:$ref].match(REF_REGEX).nil?
       errors
     end
 

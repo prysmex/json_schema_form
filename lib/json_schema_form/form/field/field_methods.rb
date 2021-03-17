@@ -6,9 +6,13 @@ module JsonSchemaForm
       def self.included(base)
         base.include JsonSchemaForm::JsonSchema::Schemable
         base.include JsonSchemaForm::JsonSchema::Validatable
-        base.include JsonSchemaForm::JsonSchema::Attributes
+        base.include JsonSchemaForm::Field::BaseMethods
+        # base.include JsonSchemaForm::JsonSchema::Attributes
       end
-      
+
+    end
+
+    module BaseMethods
       #get the field's localized label
       def i18n_label(locale = :es)
         self.dig(:displayProperties, :i18n, :label, locale)
@@ -23,20 +27,32 @@ module JsonSchemaForm
         end
       end
 
-      def schema_instance_errors
-        errors_hash = super
+      def validation_schema
+        Dry::Schema.JSON do
+          required(:'$id').filled(:string)
+          optional(:title).filled(:string)
+          optional(:'$schema').filled(:string)
+        end
+      end
+
+      def own_errors
+        errors_hash = validation_schema.(self).errors.to_h.merge({})
         
-        if !CONDITIONAL_FIELDS.include?(self.class) && self.dependent_conditions.size > 0
-          errors_hash[:conditionals] = "only the following fields can have conditionals (#{CONDITIONAL_FIELDS.map{|k| k.name.demodulize}.join(', ')})"
+        if !JsonSchemaForm::Form::CONDITIONAL_FIELDS.include?(self.class) && self.dependent_conditions.size > 0
+          errors_hash[:conditionals] = "only the following fields can have conditionals (#{JsonSchemaForm::Form::CONDITIONAL_FIELDS.map{|k| k.name.demodulize}.join(', ')})"
         end
         
         errors_hash
       end
 
+      # do nothing, field errors are not recursive
+      # due to business logic, it is simpler to consider that a field is the last leaf of a schema branch
+      def add_subschema_errors(errors)
+      end
+
       def compile!
         self.delete(:displayProperties)
       end
-
     end
 
     module ResponseSettable
@@ -58,7 +74,7 @@ module JsonSchemaForm
         end
       end
 
-      def schema_instance_errors
+      def own_errors
         errors_hash = super
         
         case self

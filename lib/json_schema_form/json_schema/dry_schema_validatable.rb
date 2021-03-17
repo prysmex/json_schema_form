@@ -36,6 +36,19 @@ module JsonSchemaForm
         end
       
       end
+
+      BEFORE_KEY_VALIDATOR_PROC = Proc.new do |hash|
+        hash.inject({}) do |acum, (k,v)|
+          if v.is_a?(::Array) && JsonSchemaForm::JsonSchema::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
+            acum[k] = []
+          elsif v.is_a?(::Hash) && JsonSchemaForm::JsonSchema::Validatable::HASH_SUBSCHEMA_KEYS.include?(k)
+            acum[k] = {}
+          else
+            acum[k] = v
+          end
+          acum
+        end
+      end
       
       def validation_schema
         instance = self
@@ -47,16 +60,7 @@ module JsonSchemaForm
           # need to clear data because jsonschema always tries to validate
           # for unknown keys inside hashes and arrays
           before(:key_validator) do |result|
-            result.to_h.inject({}) do |acum, (k,v)|
-              if v.is_a?(::Array) && JsonSchemaForm::JsonSchema::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
-                acum[k] = []
-              elsif v.is_a?(::Hash) && JsonSchemaForm::JsonSchema::Validatable::HASH_SUBSCHEMA_KEYS.include?(k)
-                acum[k] = {}
-              else
-                acum[k] = v
-              end
-              acum
-            end
+            BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
           end
 
           optional(:type) do
@@ -136,7 +140,7 @@ module JsonSchemaForm
 
       # private
 
-      def schema_instance_errors
+      def own_errors
         validation_schema
           &.(self)
           &.errors
