@@ -17,5 +17,5 @@
     "hidden": false
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "responseSetId": "0560d75a-ada1-40d4-a40c-40000f6cf616"
+  "$ref": "#/definitions/aa8e82bb-2084-4acb-be4a-3e6dde28b1be"
 }
