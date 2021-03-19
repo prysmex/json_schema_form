@@ -25,14 +25,14 @@ module JsonSchemaForm
         # }
       end
       
-      def initialize(obj={}, meta={}, options={}, &block)
+      def initialize(obj={}, meta={}, options={})
         @meta = {
           parent: nil,
           path: [],
           is_subschema: false
         }.merge(meta)
 
-        super(obj, options, &block)
+        super(obj, options)
       end
 
       def types
@@ -58,6 +58,10 @@ module JsonSchemaForm
           meta.dig(:parent, :required).include?(key_name)
         end
       end
+
+      # def last_id_segment
+      #   self[:'$id']&.gsub(/^(.*[\\\/])/, '')
+      # end
 
       # get name of key if nested inside properties or definitions
       def key_name
