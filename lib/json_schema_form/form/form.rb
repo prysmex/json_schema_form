@@ -281,12 +281,12 @@ module JsonSchemaForm
         else
           self.delete(:$id)
         end
+        self.delete(:additionalProperties)
       end
 
       # migrate form object
       if !meta[:is_subschema]
         self[:schemaFormVersion] = '3.0.0'
-        self.delete(:additionalProperties)
       end
       self
     end
