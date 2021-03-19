@@ -4,7 +4,7 @@ module JsonSchemaForm
 
       module Array
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Arrayable)
+          base.include(JsonSchemaForm::SchemaMethods::Arrayable)
           base.update_attribute :type, {
             type: Types::String.enum('array')
           }
@@ -13,7 +13,7 @@ module JsonSchemaForm
 
       module String
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Stringable)
+          base.include(JsonSchemaForm::SchemaMethods::Stringable)
           base.update_attribute :type, {
             type: Types::String.enum('string')
           }
@@ -22,7 +22,7 @@ module JsonSchemaForm
 
       module Boolean
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Booleanable)
+          base.include(JsonSchemaForm::SchemaMethods::Booleanable)
           base.update_attribute :type, {
             type: Types::String.enum('boolean')
           }
@@ -31,7 +31,7 @@ module JsonSchemaForm
 
       module Null
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Nullable)
+          base.include(JsonSchemaForm::SchemaMethods::Nullable)
           base.update_attribute :type, {
             type: Types::String.enum('null')
           }
@@ -40,7 +40,7 @@ module JsonSchemaForm
 
       module Number
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Numberable)
+          base.include(JsonSchemaForm::SchemaMethods::Numberable)
           base.update_attribute :type, {
             type: Types::String.enum('number')
           }
@@ -49,7 +49,7 @@ module JsonSchemaForm
 
       module Object
         def self.included(base)
-          base.include(JsonSchemaForm::JsonSchema::Objectable)
+          base.include(JsonSchemaForm::SchemaMethods::Objectable)
           base.update_attribute :type, {
             type: Types::String.enum('object')
           }

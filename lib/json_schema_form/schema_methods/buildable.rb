@@ -1,13 +1,13 @@
 module JsonSchemaForm
-  module JsonSchema
-    module Attributes
+  module SchemaMethods
+    module Buildable
 
       def builder(attribute, obj, meta, options)
         self.class::BUILDER.call(attribute, obj, meta, options)
       end
 
       BUILDER = ->(attribute, obj, meta, options) {
-        JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options)
+        JsonSchemaForm::Schema.new(obj, meta, options)
       }
 
       ITEMS_TRANSFORM = ->(instance, value, attribute) {
@@ -37,6 +37,8 @@ module JsonSchemaForm
           instance.class::ARRAY_PROC.call(attribute, instance, value, [attribute])
         end
       }
+      ANY_OF_TRANSFORM = All_OF_TRANSFORM
+      ONE_OF_TRANSFORM = All_OF_TRANSFORM
 
       ADDITIONAL_PROPERTIES_TRANSFORM = ->(instance, value, attribute) {
         case value
@@ -110,43 +112,26 @@ module JsonSchemaForm
         ########
         #global#
         ########
-        base.attribute? :type, {
-          type: (
-            Types::String.enum('array','boolean','null','number','object','string') |
-            Types::Array.constrained(min_size: 1).of(Types::String.enum('array','boolean','null','number','object','string'))
-          )
-        }
-        base.attribute? :'$id', {
-          # default: ->(instance) { 'http://example.com/example.json' }
-        }
-        base.attribute? :'$schema', {
-          # default: ->(instance) { 'http://json-schema.org/draft-07/schema#' }
-        }
-        base.attribute? :if, transform: IF_TRANSFORM#, type: Types::Hash
-        base.attribute? :then, transform: THEN_TRANSFORM#, type: Types::Hash
-        base.attribute? :else, transform: ELSE_TRANSFORM#, type: Types::Hash
-        base.attribute? :allOf, transform: All_OF_TRANSFORM#, type: Types::Array
-        base.attribute? :not, transform: NOT_TRANSFORM#, type: Types::Array
+        base.attribute? :if, transform: IF_TRANSFORM
+        base.attribute? :then, transform: THEN_TRANSFORM
+        base.attribute? :else, transform: ELSE_TRANSFORM
+        base.attribute? :allOf, transform: All_OF_TRANSFORM
+        base.attribute? :anyOf, transform: ANY_OF_TRANSFORM
+        base.attribute? :oneOf, transform: ONE_OF_TRANSFORM
+        base.attribute? :not, transform: NOT_TRANSFORM
 
         ########
         #object#
         ########
-        base.attribute? :required#, type: Types::Array
-        base.attribute? :properties, transform: PROPERTIES_TRANSFORM#, type: Types::Hash
-        base.attribute? :definitions, transform: DEFINITIONS_TRANSFORM#, type: Types::Hash
-        base.attribute? :additionalProperties, transform: ADDITIONAL_PROPERTIES_TRANSFORM#, type: Types::Hash
+        base.attribute? :properties, transform: PROPERTIES_TRANSFORM
+        base.attribute? :definitions, transform: DEFINITIONS_TRANSFORM
+        base.attribute? :additionalProperties, transform: ADDITIONAL_PROPERTIES_TRANSFORM
 
         #######
         #array#
         #######
-        base.attribute? :items, {
-          # type: (Types::Array | Types::Hash),
-          transform: ITEMS_TRANSFORM
-        }
-        base.attribute? :contains, {
-          # type: (Types::Array | Types::Hash),
-          transform: CONTAINS_TRANSFORM
-        }
+        base.attribute? :items, transform: ITEMS_TRANSFORM
+        base.attribute? :contains, transform: CONTAINS_TRANSFORM
       end
 
     end

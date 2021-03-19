@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module JsonSchema
+  module Validations
     module Validatable
 
       HASH_SUBSCHEMA_KEYS = [
@@ -32,30 +32,34 @@ module JsonSchemaForm
       def add_subschema_errors(errors)
         #continue recurrsion for all subschema keys
         self.each do |key, value|
-          if key == :properties
-            self[:properties]&.each do |k,v|
-              v.errors(errors)
-            end
-          elsif key == :definitions
-            self[:definitions]&.each do |k,v|
-              v.errors(errors)
-            end
-          elsif key == :additionalProperties
-            next if !value.is_a?(::Hash)
-            self[:additionalProperties]&.each do |k,v|
-              v.errors(errors)
-            end
-          else
-            case value
-            when ::Array
-              next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-              value.each do |v|
+          begin
+            if key == :properties
+              self[:properties]&.each do |k,v|
+                v.errors(errors)
+              end
+            elsif key == :definitions
+              self[:definitions]&.each do |k,v|
+                v.errors(errors)
+              end
+            elsif key == :additionalProperties
+              next if !value.is_a?(::Hash)
+              self[:additionalProperties]&.each do |k,v|
                 v.errors(errors)
               end
             else
-              next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-              value.errors(errors)
+              case value
+              when ::Array
+                next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
+                value.each do |v|
+                  v.errors(errors)
+                end
+              else
+                next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
+                value.errors(errors)
+              end
             end
+          rescue => exception
+            debugger
           end
         end
       end

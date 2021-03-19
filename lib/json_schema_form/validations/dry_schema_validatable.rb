@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module JsonSchema
+  module Validations
     module DrySchemaValidatable
 
       def self.included(base)
@@ -39,9 +39,9 @@ module JsonSchemaForm
 
       BEFORE_KEY_VALIDATOR_PROC = Proc.new do |hash|
         hash.inject({}) do |acum, (k,v)|
-          if v.is_a?(::Array) && JsonSchemaForm::JsonSchema::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
+          if v.is_a?(::Array) && JsonSchemaForm::Validations::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
             acum[k] = []
-          elsif v.is_a?(::Hash) && JsonSchemaForm::JsonSchema::Validatable::HASH_SUBSCHEMA_KEYS.include?(k)
+          elsif v.is_a?(::Hash) && JsonSchemaForm::Validations::Validatable::HASH_SUBSCHEMA_KEYS.include?(k)
             acum[k] = {}
           else
             acum[k] = v

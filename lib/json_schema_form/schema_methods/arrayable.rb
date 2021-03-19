@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module JsonSchema
+  module SchemaMethods
     module Arrayable
 
     end

@@ -3,10 +3,10 @@ module JsonSchemaForm
 
     attr_reader :is_inspection
 
-    include JsonSchemaForm::JsonSchema::Schemable
-    include JsonSchemaForm::JsonSchema::Validatable
-    include JsonSchemaForm::JsonSchema::DrySchemaValidatable
-    include JsonSchemaForm::JsonSchema::Attributes
+    include JsonSchemaForm::SchemaMethods::Schemable
+    include JsonSchemaForm::Validations::Validatable
+    include JsonSchemaForm::Validations::DrySchemaValidatable
+    include JsonSchemaForm::SchemaMethods::Buildable
     include JsonSchemaForm::Field::StrictTypes::Object
 
     CONDITIONAL_FIELDS = [
@@ -49,7 +49,7 @@ module JsonSchemaForm
 
       #ToDo be more specific
       if [:allOf, :if, :not, :additionalProperties, :items, :definitions].include?(attribute)
-        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
+        return JsonSchemaForm::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
       end
 
       if attribute == :properties && obj.key?(:$ref)
@@ -100,7 +100,7 @@ module JsonSchemaForm
 
       #ToDo be more specific
       if obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
-        return JsonSchemaForm::JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
+        return JsonSchemaForm::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
       end
 
       raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
@@ -270,6 +270,7 @@ module JsonSchemaForm
             end
             acum[id] = {
               type: 'string',
+              isResponseSet: true,
               anyOf: anyOf
             }
             acum
@@ -285,6 +286,7 @@ module JsonSchemaForm
       # migrate form object
       if !meta[:is_subschema]
         self[:schemaFormVersion] = '3.0.0'
+        self.delete(:additionalProperties)
       end
       self
     end

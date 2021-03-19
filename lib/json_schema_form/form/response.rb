@@ -1,7 +1,7 @@
 module JsonSchemaForm
   class Response < ::SuperHash::Hasher
 
-    include JsonSchemaForm::JsonSchema::Schemable
+    include JsonSchemaForm::SchemaMethods::Schemable
 
     ##################
     ###VALIDATIONS####

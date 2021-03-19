@@ -1,8 +1,8 @@
 module JsonSchemaForm
   class Component < ::SuperHash::Hasher
 
-    include JsonSchemaForm::JsonSchema::Schemable
-    include JsonSchemaForm::JsonSchema::Validatable
+    include JsonSchemaForm::SchemaMethods::Schemable
+    include JsonSchemaForm::Validations::Validatable
 
     REF_REGEX = /\A#\/definitions\/\w+\z/
 

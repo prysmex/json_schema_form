@@ -37,8 +37,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rspec", "~> 3.9.0"
+  spec.add_development_dependency "minitest", ">= 5.14"
+  spec.add_development_dependency "minitest-reporters", ">= 1.4"
+  spec.add_dependency "super_hash", '0.1.3'
   spec.add_dependency "dry-schema", "1.6.1"
-  # spec.add_dependency "super_hash", '0.1.0' #TODO make this work
 
 end

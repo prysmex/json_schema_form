@@ -4,10 +4,10 @@ module JsonSchemaForm
     module Base
 
       def self.included(base)
-        base.include JsonSchemaForm::JsonSchema::Schemable
-        base.include JsonSchemaForm::JsonSchema::Validatable
+        base.include JsonSchemaForm::SchemaMethods::Schemable
+        base.include JsonSchemaForm::Validations::Validatable
         base.include JsonSchemaForm::Field::BaseMethods
-        # base.include JsonSchemaForm::JsonSchema::Attributes
+        # base.include JsonSchemaForm::SchemaMethods::Buildable
       end
 
     end

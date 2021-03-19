@@ -1,5 +1,5 @@
 module JsonSchemaForm
-  module JsonSchema
+  module SchemaMethods
     module Schemable
 
       # OBJECT_KEYS = [:properties, :required, :required, :propertyNames, :if, :then, :else, :additionalProperties, :minProperties, :maxProperties, :dependencies, :patternProperties]
@@ -10,26 +10,39 @@ module JsonSchemaForm
       # NULL_KEYS = []
 
       attr_reader :meta
-      attr_reader :types
 
       def self.included(base)
         base.instance_variable_set('@allow_dynamic_attributes', true)
+
+        base.attribute? :type, {
+          type: (
+            Types::String.enum('array','boolean','null','number','object','string') |
+            Types::Array.constrained(min_size: 1).of(Types::String.enum('array','boolean','null','number','object','string'))
+          )
+        }
+        # base.attribute? :'$id', {
+        #   default: ->(instance) { "##{instance.meta[:path].join('/')}#{instance.key_name}" }
+        # }
       end
       
-      def initialize(obj={}, meta=nil, options={}, &block)
-        @meta = meta || {
+      def initialize(obj={}, meta={}, options={}, &block)
+        @meta = {
           parent: nil,
           path: [],
           is_subschema: false
-        }
-        @types = obj[:type].is_a?(::Array) ? obj[:type] : [obj[:type]] if obj[:type]
+        }.merge(meta)
 
         super(obj, options, &block)
+      end
+
+      def types
+        self[:type].is_a?(::Array) ? self[:type] : [self[:type]] if self[:type]
       end
 
       # get the uppermost parent
       def root_parent
         parent = meta[:parent]
+        return parent if parent.nil?
         loop do
           next_parent = parent.meta[:parent]
           break if next_parent.nil?
@@ -46,9 +59,12 @@ module JsonSchemaForm
         end
       end
 
-      # ToDo this should be more robust
+      # get name of key if nested inside properties or definitions
       def key_name
-        self[:'$id']&.gsub(/^(.*[\\\/])/, '')
+        last_2 = self.meta[:path].last(2)
+        if last_2.size == 2 && [:properties, :definitions].include?(last_2[0])
+          last_2[1]
+        end
       end
 
       # https://json-schema.org/understanding-json-schema/reference/conditionals.html
@@ -57,7 +73,7 @@ module JsonSchemaForm
         parent_all_of = self.meta.dig(:parent, :allOf) || []
         
         parent_all_of.select do |condition|
-          key = self.key_name&.to_sym
+          key = self.key_name
           next false if key.nil?
           condition.dig(:if, :properties).keys.include?(key)
         end

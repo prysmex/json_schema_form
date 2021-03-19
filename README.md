@@ -12,29 +12,29 @@ JsonSchemaForm gem is designed to contain the backing classes for form definitio
 The classes can be divided into the following 'modules':
 
 ### json_schema:
-Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::JsonSchema::Base`
- - `JsonSchemaForm::JsonSchema::Array`
- - `JsonSchemaForm::JsonSchema::Boolean`
- - `JsonSchemaForm::JsonSchema::Null`
- - `JsonSchemaForm::JsonSchema::Number`
- - `JsonSchemaForm::JsonSchema::String`
- - `JsonSchemaForm::JsonSchema::Object`
+Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchemaForm::SchemaMethods::Base`
+ - `JsonSchemaForm::SchemaMethods::Array`
+ - `JsonSchemaForm::SchemaMethods::Boolean`
+ - `JsonSchemaForm::SchemaMethods::Null`
+ - `JsonSchemaForm::SchemaMethods::Number`
+ - `JsonSchemaForm::SchemaMethods::String`
+ - `JsonSchemaForm::SchemaMethods::Object`
     
 ### form/field:
 These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
 | Name                                  | Parent class                          |
 | ------------------------------------- |:-------------------------------------:|
-|`JsonSchemaForm::Field::Checkbox`      |`< JsonSchemaForm::JsonSchema::Array`|
-|`JsonSchemaForm::Field::DateInput`     |`< JsonSchemaForm::JsonSchema::String`|
-|`JsonSchemaForm::Field::Header`        |`< JsonSchemaForm::JsonSchema::Null`|
-|`JsonSchemaForm::Field::Info`          |`< JsonSchemaForm::JsonSchema::Null`|
-|`JsonSchemaForm::Field::NumberInput`   |`< JsonSchemaForm::JsonSchema::Number`|
-|`JsonSchemaForm::Field::Select`        |`< JsonSchemaForm::JsonSchema::String`|
-|`JsonSchemaForm::Field::Slider`        |`< JsonSchemaForm::JsonSchema::Number`|
-|`JsonSchemaForm::Field::Static`        |`< JsonSchemaForm::JsonSchema::Null`|
-|`JsonSchemaForm::Field::Switch`        |`< JsonSchemaForm::JsonSchema::Boolean`|
-|`JsonSchemaForm::Field::TextInput`     |`< JsonSchemaForm::JsonSchema::String`|
-|`JsonSchemaForm::Form`                 |`< JsonSchemaForm::JsonSchema::Object`|
+|`JsonSchemaForm::Field::Checkbox`      |`< JsonSchemaForm::SchemaMethods::Array`|
+|`JsonSchemaForm::Field::DateInput`     |`< JsonSchemaForm::SchemaMethods::String`|
+|`JsonSchemaForm::Field::Header`        |`< JsonSchemaForm::SchemaMethods::Null`|
+|`JsonSchemaForm::Field::Info`          |`< JsonSchemaForm::SchemaMethods::Null`|
+|`JsonSchemaForm::Field::NumberInput`   |`< JsonSchemaForm::SchemaMethods::Number`|
+|`JsonSchemaForm::Field::Select`        |`< JsonSchemaForm::SchemaMethods::String`|
+|`JsonSchemaForm::Field::Slider`        |`< JsonSchemaForm::SchemaMethods::Number`|
+|`JsonSchemaForm::Field::Static`        |`< JsonSchemaForm::SchemaMethods::Null`|
+|`JsonSchemaForm::Field::Switch`        |`< JsonSchemaForm::SchemaMethods::Boolean`|
+|`JsonSchemaForm::Field::TextInput`     |`< JsonSchemaForm::SchemaMethods::String`|
+|`JsonSchemaForm::Form`                 |`< JsonSchemaForm::SchemaMethods::Object`|
 
 To view some examples, check `spec/examples`
 
@@ -68,13 +68,13 @@ Or install it yourself as:
 
 ### json_schema:
 
-These methods are available in all `JsonSchemaForm::JsonSchema::*` classes:
+These methods are available in all `JsonSchemaForm::SchemaMethods::*` classes:
 - `validations` returns any json schema validations
 - `validation_schema` returns the instance of Dry::Schema::Processor used to validate the schema
 - `schema_validation_hash` returns a the hash that will be used by the validation_schema, it may be a subset of the schema object
 - `schema_errors` returns a hash with the errors found
 - `required?` returns true if validations include required
-- `key_name` returns extracts the last part of the $id value
+- `key_name` ToDo
 - `meta` returns a hash with metadata (parent object, object path, ...)
 - `root_parent`
 only: (Array, Boolean, Null, Number, String)
@@ -82,7 +82,7 @@ only: (Array, Boolean, Null, Number, String)
 - `has_dependent_conditions?`
 - `dependent_conditions_for_value(value) {|condition, value| some_schema_validation }`
 
-In addition to the previous methods, the `JsonSchemaForm::JsonSchema::Object` class has the following methods:
+In addition to the previous methods, the `JsonSchemaForm::SchemaMethods::Object` class has the following methods:
 property management:
 - `add_property(id, definition)`
 - `remove_property(id)`
@@ -112,7 +112,7 @@ getters:
 Let's create a simple number schema by using it's backing class.
 
 ```ruby
-number_schema = JsonSchemaForm::JsonSchema::Number.new({
+number_schema = JsonSchemaForm::SchemaMethods::Number.new({
  type: 'number'
 })
 number_schema
@@ -125,7 +125,7 @@ number_schema
 
 Now lets create a more interesting object schema containing a null and a number schema as properties
 ```ruby
-object_schema = JsonSchemaForm::JsonSchema::Object.new({
+object_schema = JsonSchemaForm::SchemaMethods::Object.new({
   "$id": "http://example.com/example.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
@@ -186,7 +186,7 @@ object_schema.errors
 # inspecting the number property
 property = object_schema[:properties][:size]
 property.class
-# => JsonSchemaForm::JsonSchema::Number
+# => JsonSchemaForm::SchemaMethods::Number
 property.required?
 # => true
 property.key_name

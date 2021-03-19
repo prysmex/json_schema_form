@@ -1,7 +1,7 @@
 module JsonSchemaForm
   class ResponseSet < ::SuperHash::Hasher
 
-    include JsonSchemaForm::JsonSchema::Schemable
+    include JsonSchemaForm::SchemaMethods::Schemable
 
     RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
@@ -41,6 +41,7 @@ module JsonSchemaForm
 
         required(:type).filled(Types::String.enum('string'))
         optional(:title).maybe(:string)
+        required(:isResponseSet).filled(Types::True)
         required(:anyOf).array(:hash) do
         end
       end
