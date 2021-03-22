@@ -3,7 +3,7 @@ module JsonSchemaForm
     class Switch < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::Boolean
+      include JsonSchemaForm::StrictTypes::Boolean
 
       ##################
       ###VALIDATIONS####

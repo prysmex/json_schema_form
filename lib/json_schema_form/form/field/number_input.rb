@@ -3,7 +3,7 @@ module JsonSchemaForm
     class NumberInput < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::Number
+      include JsonSchemaForm::StrictTypes::Number
 
       ##################
       ###VALIDATIONS####

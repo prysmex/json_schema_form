@@ -3,9 +3,10 @@ require_relative 'form/document/document'
 require_relative 'form/document/extras'
 require_relative 'form/document/meta'
 
+require_relative 'form/strict_types'
+
 # field classes
 require_relative 'form/field/field_methods'
-require_relative 'form/field/strict_types'
 require_relative 'form/field/checkbox'
 require_relative 'form/field/date_input'
 require_relative 'form/field/header'

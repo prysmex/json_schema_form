@@ -3,7 +3,7 @@ module JsonSchemaForm
     class Info < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::Null
+      include JsonSchemaForm::StrictTypes::Null
 
       ##################
       ###VALIDATIONS####

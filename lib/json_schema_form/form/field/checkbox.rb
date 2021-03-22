@@ -3,7 +3,7 @@ module JsonSchemaForm
     class Checkbox < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::Array
+      include JsonSchemaForm::StrictTypes::Array
       include ::JsonSchemaForm::Field::ResponseSettable
 
       ##################

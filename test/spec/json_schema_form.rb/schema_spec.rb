@@ -77,34 +77,147 @@ class SchemaTest < Minitest::Test
     assert_raises(Dry::Types::ConstraintError) { JsonSchemaForm::Schema.new({type: ['invalid_type']}) }
   end
 
+  def test_empty_dependent_conditions_no_parent
+    instance = JsonSchemaForm::Schema.new()
+    assert_empty instance.dependent_conditions
+    assert_equal false, instance.has_dependent_conditions?
+    assert_empty instance.dependent_conditions_for_value('some_value') {false}
+    assert_empty instance.dependent_conditions_for_value('some_value') {true}
+  end
+
+  def test_empty_dependent_conditions_with_parent
+    instance = JsonSchemaForm::Schema.new({
+      properties: {
+        with_dependent_conditions: {type: 'string'},
+        no_dependent_conditions: {type: 'string'}
+      },
+      allOf: [
+        {
+          if: {properties: {with_dependent_conditions: {const: 'correct_value'}}},
+          then: {properties: {}}
+        }
+      ]
+    })
+
+    #child_with_conditions
+    child_with_conditions = instance[:properties][:with_dependent_conditions]
+    refute_empty child_with_conditions.dependent_conditions
+    assert_equal true, child_with_conditions.has_dependent_conditions?
+    assert_empty = child_with_conditions.dependent_conditions_for_value('other_value'){ true }
+    assert_empty child_with_conditions.dependent_conditions_for_value('correct_value'){ false }
+    refute_empty child_with_conditions.dependent_conditions_for_value('correct_value'){ true }
+
+    #child_no_conditions
+    child_no_conditions = instance[:properties][:no_dependent_conditions]
+    assert_empty child_no_conditions.dependent_conditions
+    assert_equal false, child_no_conditions.has_dependent_conditions?
+    assert_empty child_no_conditions.dependent_conditions_for_value('correct_value'){ true }
+  end
+  
   ###########
   #buildable#
   ###########
 
-  #ToDo dependent_conditions
+  def test_if_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({if: {}})[:if]
+  end
+  def test_then_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({then: {}})[:then]
+  end
+  def test_else_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({else: {}})[:else]
+  end
+  def test_allOf_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({allOf: [{}]})[:allOf].first
+  end
+  def test_anyOf_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({anyOf: [{}]})[:anyOf].first
+  end
+  def test_oneOf_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({oneOf: [{}]})[:oneOf].first
+  end
+  def test_not_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({not: {}})[:not]
+  end
+  def test_properties_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({properties: {prop1: {}}})[:properties][:prop1]
+  end
+  def test_definitions_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({definitions: {def1: {}}})[:definitions][:def1]
+  end
+  def test_additionalProperties_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({additionalProperties: {}})[:additionalProperties]
+  end
+  def test_items_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({items: [{}]})[:items].first
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({items: {}})[:items]
+  end
+  def test_contains_transform
+    assert_instance_of JsonSchemaForm::Schema, JsonSchemaForm::Schema.new({contains: {}})[:contains]
+  end
 
   ###########
   #arrayable#
   ###########
 
+  # no tests needed
+
   #############
   #booleanable#
   #############
+
+  # no tests needed
 
   ##########
   #nullable#
   ##########
 
+  # no tests needed
+
   ############
   #numberable#
   ############
+
+  # no tests needed
 
   ############
   #objectable#
   ############
 
+  # add_property
+  def test_add_property
+    instance = JsonSchemaForm::Schema.new()
+    instance.add_property('prop1', {type: 'string'})
+    refute_nil JsonSchemaForm::Schema, instance.dig(:properties, :type)
+  end
+
+  # remove_property
+  def test_remove_property
+    instance = JsonSchemaForm::Schema.new({properties: {prop1: {}}})
+    instance.remove_property('prop1')
+    assert_equal 0, instance[:properties].size
+  end
+
+  # add_required_property
+  def test_add_required_property
+    instance = JsonSchemaForm::Schema.new()
+    instance.add_required_property(:prop1)
+    assert_equal 'prop1', instance[:required].first
+  end
+
+  # remove_required_property
+  def test_remove_required_property
+    instance = JsonSchemaForm::Schema.new()
+    assert_nil instance[:required]
+    instance.add_required_property(:prop1)
+    instance.remove_required_property(:prop1)
+    assert_nil instance[:required].first
+  end
+
   ############
   #stringable#
   ############
+
+  # no tests needed
 
 end

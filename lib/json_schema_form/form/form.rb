@@ -7,7 +7,7 @@ module JsonSchemaForm
     include JsonSchemaForm::Validations::Validatable
     include JsonSchemaForm::Validations::DrySchemaValidatable
     include JsonSchemaForm::SchemaMethods::Buildable
-    include JsonSchemaForm::Field::StrictTypes::Object
+    include JsonSchemaForm::StrictTypes::Object
 
     CONDITIONAL_FIELDS = [
       JsonSchemaForm::Field::Select,
@@ -151,7 +151,7 @@ module JsonSchemaForm
       end
 
       #compile dynamic properties
-      self.get_dynamic_forms.each{|form| form.compile!}
+      self.get_all_of_subschemas.each{|form| form.compile!}
 
       self
     end
@@ -239,7 +239,7 @@ module JsonSchemaForm
       end
       
       #migrate dynamic forms
-      self.get_dynamic_forms.each{|form| form.migrate!}
+      self.get_all_of_subschemas.each{|form| form.migrate!}
 
       # migrate response sets
       self[:definitions]&.each do |id, definition|
@@ -291,6 +291,20 @@ module JsonSchemaForm
       self
     end
 
+    #ToDo consider else key in allOf
+    def get_all_of_subschemas(levels=nil, level=0)
+      return [] if levels && level >= levels
+      schemas_array=[]
+      self[:allOf]&.each do |condition_subschema|
+        subschema = condition_subschema[:then]
+        if subschema
+          schemas_array.push(subschema)
+          schemas_array.concat(subschema.get_all_of_subschemas(levels, level + 1))
+        end
+      end
+      schemas_array
+    end
+
     ###########################
     ###COMPONENT MANAGEMENT####
     ###########################
@@ -328,6 +342,37 @@ module JsonSchemaForm
     ##########################
     ###PROPERTY MANAGEMENT####
     ##########################
+
+    # get properties
+    def properties
+      self[:properties]
+    end
+
+    # get dynamic properties
+    def dynamic_properties(levels=nil)
+      get_all_of_subschemas(levels).reduce({}) do |acum, subschema|
+        acum.merge(subschema.properties || {})
+      end
+    end
+
+    # get own and dynamic properties
+    def merged_properties(levels=nil)
+      (self[:properties] || {})
+        .merge(self.dynamic_properties(levels))
+    end
+
+    # returns the property JSON definition inside the properties key
+    def get_property(property)
+      self.dig(:properties, property.to_sym)
+    end
+
+    def get_dynamic_property(property, levels=nil)
+      dynamic_properties(levels).try(:[], property.to_sym)
+    end
+
+    def get_merged_property(property, levels=nil)
+      merged_properties(levels).try(:[], property.to_sym)
+    end
 
     def prepend_property(id, definition)
       new_definition = {}.merge(definition)

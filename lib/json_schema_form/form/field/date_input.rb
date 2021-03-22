@@ -3,7 +3,7 @@ module JsonSchemaForm
     class DateInput < ::SuperHash::Hasher
 
       include ::JsonSchemaForm::Field::Base
-      include JsonSchemaForm::Field::StrictTypes::String
+      include JsonSchemaForm::StrictTypes::String
 
       ##################
       ###VALIDATIONS####
