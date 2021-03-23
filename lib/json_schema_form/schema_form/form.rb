@@ -147,6 +147,10 @@ module SchemaForm
       errors_hash
     end
 
+    def errors_passthru
+      {is_inspection: self.is_inspection}
+    end
+
     ##############
     ###METHODS####
     ##############

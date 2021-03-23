@@ -51,13 +51,13 @@ module SchemaForm
       JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(validation_schema, self)
     end
 
-    def errors(errors, caller)
+    def errors(errors, passthru)
       #own errors
       own_errors = self.own_errors
 
       #anyOf errors (responses)
       self[:anyOf]&.each.with_index do |response, index|
-        response_errors = response.errors(is_inspection: caller.is_inspection)
+        response_errors = response.errors(is_inspection: passthru[:is_inspection])
         unless response_errors.empty?
           own_errors[:anyOf] ||= {}
           own_errors[:anyOf][index] = response_errors

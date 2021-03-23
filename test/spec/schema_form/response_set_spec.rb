@@ -4,14 +4,6 @@ class ResponseSetTest < Minitest::Test
   
   include TestHelper::Examples
 
-  def parent_stub(is_inspection: false)
-    inspection_stub = Object.new
-    inspection_stub.define_singleton_method(:is_inspection) do
-      is_inspection
-    end
-    inspection_stub
-  end
-
   def test_valid_for_locale
     instance = SchemaForm::ResponseSet.new({
       type: 'string',
@@ -46,7 +38,7 @@ class ResponseSetTest < Minitest::Test
   def test_default_example_is_valid
     hash = get_parsed_example('/../test/examples/schema_form/response_set.json')
     instance = SchemaForm::ResponseSet.new(hash)
-    assert_empty instance.errors({}, self.parent_stub)
+    assert_empty instance.errors({}, {is_inspection: false})
   end
 
 end
