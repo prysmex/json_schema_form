@@ -1,0 +1,26 @@
+{
+  "is_inspection": {
+    "type": "string",
+    "const": "option3476",
+    "displayProperties": {
+      "i18n": {
+        "en": "Some label es",
+        "es": "Some label en"
+      },
+      "color": null
+    },
+    "enableScore": true,
+    "score": null,
+    "failed": false
+  },
+  "default": {
+    "type": "string",
+    "const": "option3476",
+    "displayProperties": {
+      "i18n": {
+        "en": "Some label es",
+        "es": "Some label en"
+      }
+    }
+  }
+}

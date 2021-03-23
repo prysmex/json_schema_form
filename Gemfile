@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-gem 'super_hash', '0.1.3', git: 'https://github.com/prysmex/super_hash.git'
+gem 'super_hash', '0.1.4', git: 'https://github.com/prysmex/super_hash.git'
 
 # Specify your gem's dependencies in json_schema_form.gemspec
 gemspec
