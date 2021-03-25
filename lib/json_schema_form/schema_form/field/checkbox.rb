@@ -85,6 +85,8 @@ module SchemaForm
 
       def migrate!
         self[:items] = JsonSchema::Schema.new({'$ref': "#/definitions/#{self[:responseSetId]}"})
+        self.delete(:minItems)
+        self.delete(:maxItems)
         self[:uniqueItems] = true
         self.delete(:responseSetId)
       end

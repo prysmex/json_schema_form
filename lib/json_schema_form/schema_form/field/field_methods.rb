@@ -50,7 +50,7 @@ module SchemaForm
 
     module ResponseSettable
 
-      REF_REGEX = /\A#\/definitions\/\w+\z/
+      REF_REGEX = /\A#\/definitions\/[a-z0-9\-_]+\z/
 
       # get the translation for a value in the field's response set
       def i18n_value(value, locale = :es)

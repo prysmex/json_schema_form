@@ -128,20 +128,22 @@ module SchemaForm
           JsonSchema::Validations::DrySchemaValidatable::BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
         end
 
+        optional(:'$id').filled(:string)
         required(:properties).value(:hash)
-        required(:'$schema').filled(:string)
+        required(:required).value(:array?).array(:str?)
+        required(:allOf).array(:hash)
         if !is_subschema
-          # required(:'$id').filled(:string)
-          required(:'title').filled(:string)
+          required(:'title').maybe(:string)
           required(:type).filled(Types::String.enum('object'))
           required(:schemaFormVersion).value(:string)
-          required(:required).value(:array?).array(:str?)
-          optional(:allOf).array(:hash)
-          optional(:definitions).value(:hash)
+          required(:definitions).value(:hash)
           required(:availableLocales).value(:array?).array(:str?)
+          required(:'$schema').filled(:string)
           if is_inspection
             optional(:maxScore) { int? | float? | nil? }
           end
+        else
+          optional(:'$schema').filled(:string)
         end
 
       end

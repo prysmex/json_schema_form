@@ -16,16 +16,16 @@ module FieldHelpers
     get_parsed_example("/schema_form/field/#{underscored_klass_name}.json")
   end
 
-  def asdf
-    {
-      properties: {},
-      definitions: {
-        :"__test_response_set_id__" => SchemaForm::ResponseSet.new(
-          get_parsed_example("/schema_form/response_set.json")[:default]
-        )
-      }
-    }
-  end
+  # def asdf
+  #   {
+  #     properties: {},
+  #     definitions: {
+  #       :"__test_response_set_id__" => SchemaForm::ResponseSet.new(
+  #         get_parsed_example("/schema_form/response_set.json")[:default]
+  #       )
+  #     }
+  #   }
+  # end
 
 end
 
