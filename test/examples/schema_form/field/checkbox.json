@@ -3,6 +3,7 @@
   "title": "checkbox",
   "type": "array",
   "displayProperties": {
+    "hiddenOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

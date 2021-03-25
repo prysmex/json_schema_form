@@ -3,6 +3,7 @@
   "title": "text_area",
   "type": "string",
   "displayProperties": {
+    "hiddenOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

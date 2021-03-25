@@ -2,6 +2,7 @@
   "$id": "/properties/dropdown5353",
   "title": "dropdown5353",
   "displayProperties": {
+    "hiddenOnCreate": false,
     "isSelect": true,
     "pictures": [],
     "i18n": {

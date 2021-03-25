@@ -4,6 +4,7 @@
   "title": "Description",
   "static": true,
   "displayProperties": {
+    "hiddenOnCreate": false,
     "sort": 1
   }
 }
