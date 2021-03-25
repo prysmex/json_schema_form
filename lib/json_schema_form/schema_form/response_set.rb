@@ -2,6 +2,7 @@ module SchemaForm
   class ResponseSet < ::SuperHash::Hasher
 
     include JsonSchema::SchemaMethods::Schemable
+    include JsonSchema::Validations::Validatable
 
     RESPONSE_PROC = ->(instance, responsesArray, attribute) {
       if responsesArray.is_a? ::Array
@@ -24,7 +25,7 @@ module SchemaForm
     ###VALIDATIONS####
     ##################
     
-    def validation_schema
+    def validation_schema(passthru)
       Dry::Schema.JSON do
         config.validate_keys = true
 
@@ -47,26 +48,8 @@ module SchemaForm
       end
     end
 
-    def own_errors
-      JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(validation_schema, self)
-    end
-
-    def errors(errors, passthru)
-      #own errors
-      own_errors = self.own_errors
-
-      #anyOf errors (responses)
-      self[:anyOf]&.each.with_index do |response, index|
-        response_errors = response.errors(is_inspection: passthru[:is_inspection])
-        unless response_errors.empty?
-          own_errors[:anyOf] ||= {}
-          own_errors[:anyOf][index] = response_errors
-        end
-      end
-
-      JsonSchema::Validations::Validatable::BURY_ERRORS_PROC.call(own_errors, errors, self.meta[:path])
-
-      errors
+    def own_errors(passthru)
+      JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(validation_schema(passthru), self)
     end
 
     ##############

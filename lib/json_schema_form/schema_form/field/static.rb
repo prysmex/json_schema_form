@@ -9,7 +9,7 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
 
-      def validation_schema
+      def validation_schema(passthru)
         Dry::Schema.define(parent: super) do
           required(:type)
           required(:static).filled(Types::True)
@@ -18,6 +18,10 @@ module SchemaForm
             required(:sort).filled(:integer)
           end
         end
+      end
+
+      def valid_for_locale?(locale = :es)
+        true
       end
 
     end

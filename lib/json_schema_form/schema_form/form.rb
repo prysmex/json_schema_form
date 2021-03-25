@@ -1,11 +1,8 @@
 module SchemaForm
   class Form < ::SuperHash::Hasher
 
-    attr_reader :is_inspection
-
     include JsonSchema::SchemaMethods::Schemable
     include JsonSchema::Validations::Validatable
-    include JsonSchema::Validations::DrySchemaValidatable
     include JsonSchema::SchemaMethods::Buildable
     include JsonSchema::StrictTypes::Object
 
@@ -33,6 +30,7 @@ module SchemaForm
       SchemaForm::Form::BUILDER.call(*args)
     end
 
+    #defined in a Proc so it can be reused by SUBSCHEMA_PROC
     BUILDER = ->(attribute, obj, meta, options) {
       
       if attribute == :responseSets #temporary for compatibility on v3.0.0 migrations
@@ -53,7 +51,7 @@ module SchemaForm
 
       #ToDo be more specific
       if [:allOf, :if, :not, :additionalProperties, :items, :definitions].include?(attribute)
-        return JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
+        return JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC))
       end
 
       if attribute == :properties && obj.key?(:$ref)
@@ -120,35 +118,56 @@ module SchemaForm
     ###VALIDATIONS####
     ##################
 
-    def validation_schema
+    def validation_schema(passthru)
       is_subschema = meta[:is_subschema]
-      is_inspection = self.is_inspection
-      Dry::Schema.define(parent: super) do
+      is_inspection = passthru[:is_inspection]
+      Dry::Schema.JSON do
+        config.validate_keys = true
+
+        before(:key_validator) do |result|
+          JsonSchema::Validations::DrySchemaValidatable::BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
+        end
+
+        required(:properties).value(:hash)
+        required(:'$schema').filled(:string)
         if !is_subschema
+          # required(:'$id').filled(:string)
+          required(:'title').filled(:string)
+          required(:type).filled(Types::String.enum('object'))
           required(:schemaFormVersion).value(:string)
           required(:required).value(:array?).array(:str?)
+          optional(:allOf).array(:hash)
+          optional(:definitions).value(:hash)
           required(:availableLocales).value(:array?).array(:str?)
           if is_inspection
             optional(:maxScore) { int? | float? | nil? }
           end
         end
+
       end
     end
 
-    def own_errors
-      errors_hash = super
+    def own_errors(passthru)
+      errors_hash = own_errors = JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+        validation_schema(passthru),
+        self
+      )
 
       if meta[:is_subschema]
         if self.has_key?('$id')
           errors_hash['$id'] = 'id should only be present in root schemas'
         end
       end
+
+      # if !CONDITIONAL_FIELDS.include?(self.class) && self.dependent_conditions.size > 0
+      #   errors_hash[:conditionals] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|k| k.name.demodulize}.join(', ')})"
+      # end
+
+      # if self.response_set.nil?
+      #   errors_hash[:responseSet] = 'response set is not present'
+      # end
       
       errors_hash
-    end
-
-    def errors_passthru
-      {is_inspection: self.is_inspection}
     end
 
     ##############
@@ -167,8 +186,8 @@ module SchemaForm
       self
     end
 
+    # ToDo check if is_inspection 
     def max_score(&block)
-      # ToDo check if is_inspection 
       self[:properties].inject(nil) do |acum, (name, field_def)|
         max_score_for_path = max_score_for_path(name, field_def, &block)
         if max_score_for_path.nil?
@@ -240,7 +259,7 @@ module SchemaForm
       all_properties_are_valid && all_response_sets_are_valid
     end
 
-    def migrate!
+    def migrate!(options={})
       # migrate properties
       self[:properties]&.each do |id, definition|
         if definition&.respond_to?(:migrate!)
@@ -270,7 +289,7 @@ module SchemaForm
                 const: r[:value],
                 displayProperties: r[:displayProperties]
               }
-              if self.is_inspection
+              if options[:is_inspection]
                 hash.merge!({
                   enableScore: r[:enableScore],
                   score: r[:score],
@@ -338,11 +357,11 @@ module SchemaForm
     end
 
     # returns the response set definition with specified id
-    def get_response_set(id)
-      return nil if id.nil?
-      path = id&.sub('#/', '')&.split('/')&.map(&:to_sym)
-      self.dig(*path)
-    end
+    # def get_response_set(id)
+    #   return nil if id.nil?
+    #   path = id&.sub('#/', '')&.split('/')&.map(&:to_sym)
+    #   self.dig(*path)
+    # end
 
     def add_response_set(id, definition)
       new_definitions_hash = {}.merge(self[:definitions])
@@ -378,11 +397,11 @@ module SchemaForm
     end
 
     def get_dynamic_property(property, levels=nil)
-      dynamic_properties(levels).try(:[], property.to_sym)
+      dynamic_properties(levels)&.[](property.to_sym)
     end
 
     def get_merged_property(property, levels=nil)
-      merged_properties(levels).try(:[], property.to_sym)
+      merged_properties(levels)&.[](property.to_sym)
     end
 
     def prepend_property(id, definition)

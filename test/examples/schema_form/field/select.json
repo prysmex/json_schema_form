@@ -1,8 +1,8 @@
 {
   "$id": "/properties/dropdown5353",
   "title": "dropdown5353",
-  "type": "string",
   "displayProperties": {
+    "isSelect": true,
     "pictures": [],
     "i18n": {
       "label": {
@@ -17,5 +17,5 @@
     "hidden": false
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$ref": "#/definitions/aa8e82bb-2084-4acb-be4a-3e6dde28b1be"
+  "$ref": "#/definitions/__test_response_set_id__"
 }

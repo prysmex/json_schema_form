@@ -9,7 +9,7 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
       
-      def validation_schema
+      def validation_schema(passthru)
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
           required(:$ref).filled(:string)
@@ -38,17 +38,17 @@ module SchemaForm
 
       def max_score
         self.response_set
-            .try(:[], :anyOf)
+            &.[](:anyOf)
             &.reject{|property| property[:score].nil?}
             &.max_by{|property| property[:score] }
-            .try(:[], :score)
+            &.[](:score)
       end
 
       def score_for_value(value)
         self.response_set
-          .try(:[], :anyOf)
+          &.[](:anyOf)
           &.find{|response| response[:const] == value}
-          .try(:[], :score)
+          &.[](:score)
       end
 
       def value_fails?(value)
@@ -56,7 +56,7 @@ module SchemaForm
         return false if response_set.nil?
         response_set[:anyOf]
           .find { |response| response[:const] == value }
-          .try(:[], :failed) || false
+          &.[](:failed) || false
       end
 
       def migrate!

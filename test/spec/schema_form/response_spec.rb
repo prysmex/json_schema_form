@@ -21,15 +21,15 @@ class ResponseTest < Minitest::Test
   end
   
   def test_default_example_is_valid
-    hash = get_parsed_example('/../test/examples/schema_form/response.json')[:default]
+    hash = get_parsed_example('/schema_form/response.json')[:default]
     instance = SchemaForm::Response.new(hash)
     assert_empty instance.errors
   end
 
   def test_inspection_example_is_valid
-    hash = get_parsed_example('/../test/examples/schema_form/response.json')[:is_inspection]
+    hash = get_parsed_example('/schema_form/response.json')[:is_inspection]
     instance = SchemaForm::Response.new(hash)
-    assert_empty instance.errors(is_inspection: true)
+    assert_empty instance.errors({is_inspection: true})
   end
 
   # def test_type_must_be_present

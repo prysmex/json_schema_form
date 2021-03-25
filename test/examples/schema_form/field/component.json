@@ -1,0 +1,15 @@
+{
+  "$id": "/properties/component1",
+  "$ref": "#/definitions/component1",
+  "displayProperties": {
+    "hiddenOnCreate": false,
+    "sort": 1,
+    "hidden": false,
+    "i18n": {
+      "label": {
+        "es": "Prueba 1",
+        "en": "Test 1"
+      }
+    }
+  }
+}

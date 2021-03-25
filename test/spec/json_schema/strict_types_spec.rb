@@ -23,16 +23,4 @@ class StrictTypesTest < Minitest::Test
     end
   end
 
-  #Array
-
-  #String
-
-  #Boolean
-
-  #Null
-
-  #Number
-
-  #object
-
 end

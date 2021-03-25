@@ -1,11 +1,11 @@
 {
   "is_inspection": {
     "type": "string",
-    "const": "option3476",
+    "const": "score_1",
     "displayProperties": {
       "i18n": {
-        "en": "Some label es",
-        "es": "Some label en"
+        "en": "score_1_en",
+        "es": "score_1_en"
       },
       "color": null
     },
@@ -15,11 +15,11 @@
   },
   "default": {
     "type": "string",
-    "const": "option3476",
+    "const": "no_score_1",
     "displayProperties": {
       "i18n": {
-        "en": "Some label es",
-        "es": "Some label en"
+        "en": "no_score_1_en",
+        "es": "no_score_1_es"
       }
     }
   }

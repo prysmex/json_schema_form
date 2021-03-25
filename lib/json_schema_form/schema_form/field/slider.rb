@@ -9,7 +9,7 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
 
-      def validation_schema
+      def validation_schema(passthru)
         Dry::Schema.define(parent: super) do
 
           before(:key_validator) do |result|
@@ -73,11 +73,11 @@ module SchemaForm
       def valid_for_locale?(locale = :es)
         label_is_valid = super
 
-        any_translation_missing = !!self[:enum].find do |value|
-          self.dig(:displayProperties, :i18n, :enum, locale, value).nil?
+        missing_locale = self[:enum].find do |value|
+          self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s&.to_sym).to_s.empty?
         end
         
-        label_is_valid && !any_translation_missing
+        label_is_valid && !missing_locale
       end
 
     end

@@ -37,59 +37,59 @@ module JsonSchema
       end
 
       # recursively build errors hash
-      def errors(errors={}, passthru={})
-        passthru = passthru.merge(self.errors_passthru)
+      def errors(passthru={}, errors={})
         
         # check for errors and set them on the passed errors hash
-        own_errors = self.own_errors
+        own_errors = self.own_errors(passthru)
         BURY_ERRORS_PROC.call(own_errors, errors, self.meta[:path])
 
         # go recursive
-        self.add_subschema_errors(errors, passthru)
+        self.subschemas_errors(passthru, errors)
 
         errors
       end
 
-      def errors_passthru
-        {}
+      #ToDo support customizing if we should check for respond_to? or not (maybe you want it to fail?)
+      def call_subschema_errors(subschema, errors, passthru)
+        subschema.errors(passthru, errors) if subschema.respond_to?(:errors)
       end
 
       #override to implement schema errors
-      def own_errors
+      def own_errors(passthru)
         raise NoMethodError.new("need to override 'own_errors' method")
       end
 
-      def add_subschema_errors(errors, passthru)
+      def subschemas_errors(passthru, errors)
         #continue recurrsion for all subschema keys
         self.each do |key, value|
           if key == :additionalProperties
             next if !value.is_a?(::Hash)
             self[:additionalProperties]&.each do |k,v|
-              v.errors(errors, passthru)
+              call_subschema_errors(v, errors, passthru)
             end
           elsif key == :definitions
             self[:definitions]&.each do |k,v|
-              v.errors(errors, passthru)
+              call_subschema_errors(v, errors, passthru)
             end
           elsif key == :dependencies
             self[:dependencies]&.each do |k,v|
               next if !v.is_a?(::Hash)
-              v.errors(errors, passthru)
+              call_subschema_errors(v, errors, passthru)
             end
           elsif key == :properties
             self[:properties]&.each do |k,v|
-              v.errors(errors, passthru)
+              call_subschema_errors(v, errors, passthru)
             end
           else
             case value
             when ::Array
               next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
               value.each do |v|
-                v.errors(errors, passthru)
+                call_subschema_errors(v, errors, passthru)
               end
             else
               next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-              value.errors(errors, passthru)
+              call_subschema_errors(value, errors, passthru)
             end
           end
         end

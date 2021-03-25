@@ -7,7 +7,8 @@ module SchemaForm
     ###VALIDATIONS####
     ##################
     
-    def validation_schema(is_inspection)
+    def validation_schema(passthru)
+      is_inspection = passthru[:is_inspection]
       Dry::Schema.JSON do
         config.validate_keys = true
         required(:type).filled(Types::String.enum('string'))
@@ -17,9 +18,7 @@ module SchemaForm
             optional(:es).maybe(:string)
             optional(:en).maybe(:string)
           end
-          if is_inspection
-            required(:color).maybe(:string)
-          end
+          optional(:color).maybe(:string)
         end
         if is_inspection
           required(:enableScore).value(Types::True)
@@ -29,11 +28,12 @@ module SchemaForm
       end
     end
 
-    def errors(is_inspection: false)
-      JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
-        validation_schema(is_inspection),
+    def errors(passthru={}, errors={})
+      own_errors = JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+        validation_schema(passthru),
         self
       )
+      JsonSchema::Validations::Validatable::BURY_ERRORS_PROC.call(own_errors, errors, self.meta[:path])
     end
 
     ##############

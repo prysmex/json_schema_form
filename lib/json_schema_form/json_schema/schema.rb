@@ -11,8 +11,11 @@ module JsonSchema
     include JsonSchema::SchemaMethods::Booleanable
     include JsonSchema::SchemaMethods::Arrayable
     include JsonSchema::SchemaMethods::Nullable
-    include JsonSchema::Validations::Validatable #TODO load only if configured
-    include JsonSchema::Validations::DrySchemaValidatable #TODO load only if configured
+    include JsonSchema::Validations::Validatable
+
+    def own_errors(passthru)
+      {}
+    end
 
   end
 end

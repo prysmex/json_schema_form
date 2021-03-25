@@ -9,9 +9,10 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
 
-      def validation_schema
+      def validation_schema(passthru)
         Dry::Schema.define(parent: super) do
           required(:type)
+          optional(:default).value(:bool)
           required(:displayProperties).hash do
             optional(:hiddenOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
@@ -63,8 +64,8 @@ module SchemaForm
 
       def valid_for_locale?(locale = :es)
         super &&
-          !self.dig(:displayProperties, :i18n, :trueLabel, locale).nil? &&
-          !self.dig(:displayProperties, :i18n, :falseLabel, locale).nil?
+          !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
+          !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
       end
 
     end

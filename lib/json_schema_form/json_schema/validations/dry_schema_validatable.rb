@@ -1,3 +1,5 @@
+# limitations:
+# - assumes all transforms exist (otherwise nested validations are ignored)
 module JsonSchema
   module Validations
     module DrySchemaValidatable
@@ -58,7 +60,7 @@ module JsonSchema
           .merge({})
       end
       
-      def validation_schema
+      def validation_schema(passthru)
         instance = self
 
         Dry::Schema.JSON do
@@ -148,8 +150,8 @@ module JsonSchema
 
       # private
 
-      def own_errors
-        OWN_ERRORS_PROC.call(validation_schema, self)
+      def own_errors(passthru)
+        OWN_ERRORS_PROC.call(validation_schema(passthru), self)
       end
 
     end

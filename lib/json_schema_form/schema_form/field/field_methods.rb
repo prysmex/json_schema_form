@@ -7,7 +7,6 @@ module SchemaForm
         base.include JsonSchema::SchemaMethods::Schemable
         base.include JsonSchema::Validations::Validatable
         base.include SchemaForm::Field::BaseMethods
-        # base.include JsonSchema::SchemaMethods::Buildable
       end
 
     end
@@ -24,15 +23,17 @@ module SchemaForm
       end
       
       def valid_for_locale?(locale = :es)
-        case self
-        when SchemaForm::Field::Static
-          true
-        else
-          i18n_label(locale).to_s.empty?
-        end
+        !i18n_label(locale).to_s.empty?
       end
 
-      def validation_schema
+      def own_errors(passthru)
+        JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+          validation_schema(passthru),
+          self
+        )
+      end
+
+      def validation_schema(passthru)
         Dry::Schema.JSON do
           config.validate_keys = true
           required(:'$id').filled(:string)
@@ -41,27 +42,16 @@ module SchemaForm
         end
       end
 
-      def own_errors
-        errors_hash = JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(validation_schema, self)
-        
-        if !SchemaForm::Form::CONDITIONAL_FIELDS.include?(self.class) && self.dependent_conditions.size > 0
-          errors_hash[:conditionals] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|k| k.name.demodulize}.join(', ')})"
-        end
-        
-        errors_hash
-      end
-
-      # do nothing, field errors are not recursive
-      # due to business logic, it is simpler to consider that a field is the last leaf of a schema branch
-      def add_subschema_errors(errors)
-      end
-
       def compile!
         self.delete(:displayProperties)
       end
+
     end
 
     module ResponseSettable
+
+      REF_REGEX = /\A#\/definitions\/\w+\z/
+
       # get the translation for a value in the field's response set
       def i18n_value(value, locale = :es)
         self
@@ -70,24 +60,20 @@ module SchemaForm
           &.dig(:displayProperties, :i18n, locale)
       end
 
-      #get the field's response set, only applies to certain fields
-      def response_set
-        case self
-        when Checkbox
-          root_parent&.get_response_set(self.dig(:items, :$ref))
-        when Select
-          root_parent&.get_response_set(self[:$ref])
-        end
+      def response_set_id
+        self[:$ref]
       end
 
-      def own_errors
-        errors_hash = super
-        
-        if self.response_set.nil?
-          errors_hash[:responseSet] = 'response set is not present'
-        end
-        
-        errors_hash
+      #get the field's response set, only applies to certain fields
+      def response_set
+        path = self.response_set_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
+        root_parent&.dig(*path)
+      end
+
+      def own_errors(passthru)
+        errors = super
+        errors['$ref_path'] = "$ref must match this regex #{REF_REGEX}" if self.response_set_id&.match(REF_REGEX).nil?
+        errors
       end
 
     end

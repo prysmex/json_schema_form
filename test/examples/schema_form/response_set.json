@@ -1,16 +1,5 @@
 {
   "type": "string",
   "isResponseSet": true,
-  "anyOf": [
-    {
-      "type": "string",
-      "const": "option2501",
-      "displayProperties": {
-        "i18n": {
-          "en": "Test 1",
-          "es": "Prueba 1"
-        }
-      }
-    }
-  ]
+  "anyOf": []
 }

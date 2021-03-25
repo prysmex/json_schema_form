@@ -14,13 +14,13 @@ module ValidatableTestMethods
   end
 
   def override_own_errors_as_empty(klass = SampleSchema)
-    klass.define_method(:own_errors) do
+    klass.define_method(:own_errors) do |passthru|
       {}
     end
   end
 
   def override_own_errors_with_whitelisted_types(klass = SampleSchema)
-    klass.define_method(:own_errors) do
+    klass.define_method(:own_errors) do |passthru|
       errors = {}
       if !TestHelper::JSON_SCHEMA_TYPES.include?(self[:type])
         errors[:type] = TYPE_ERROR_MESSAGE

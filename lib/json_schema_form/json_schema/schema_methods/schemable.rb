@@ -41,9 +41,10 @@ module JsonSchema
 
       # get the uppermost parent
       def root_parent
-        parent = meta[:parent]
+        parent = self.meta[:parent]
         return parent if parent.nil?
         loop do
+          break unless parent.respond_to?(:meta)
           next_parent = parent.meta[:parent]
           break if next_parent.nil?
           parent = next_parent
@@ -58,10 +59,6 @@ module JsonSchema
           meta.dig(:parent, :required).include?(key_name)
         end
       end
-
-      # def last_id_segment
-      #   self[:'$id']&.gsub(/^(.*[\\\/])/, '')
-      # end
 
       # get name of key if nested inside properties or definitions
       def key_name

@@ -9,7 +9,7 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
 
-      def validation_schema
+      def validation_schema(passthru)
         Dry::Schema.define(parent: super) do
           required(:type)
           required(:displayProperties).hash do

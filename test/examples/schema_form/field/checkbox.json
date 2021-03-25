@@ -16,8 +16,9 @@
     "sort": 19,
     "hidden": false
   },
+  "uniqueItems": true,
   "$schema": "http://json-schema.org/draft-07/schema#",
   "items": {
-    "$ref": "#/definitions/1c5738ed-df44-4d31-81a6-1ef042c5a133"
+    "$ref": "#/definitions/__test_response_set_id__"
   }
 }

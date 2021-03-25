@@ -10,7 +10,7 @@ module SchemaForm
       ###VALIDATIONS####
       ##################
       
-      def validation_schema
+      def validation_schema(passthru)
         #TODO find a way to prevent enum from being valid
         Dry::Schema.define(parent: super) do
           required(:type)
@@ -40,9 +40,13 @@ module SchemaForm
       ###METHODS####
       ##############
 
+      def response_set_id
+        self.dig(:items, :$ref)
+      end
+
       def max_score
         scored_responses = self.response_set
-          .try(:[], :anyOf)
+          &.[](:anyOf)
           &.reduce(nil) do |sum,response|
             if response[:score].nil?
               sum
@@ -56,7 +60,7 @@ module SchemaForm
         case value
         when ::Array
           self.response_set
-            .try(:[], :anyOf)
+            &.[](:anyOf)
             &.select {|response| value.include? response[:const]}
             &.reduce(nil) do |sum,response|
               if response[:score].nil?
