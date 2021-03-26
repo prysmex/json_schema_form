@@ -1,5 +1,4 @@
 {
-  "$id": "/properties/component1",
   "$ref": "#/definitions/component1",
   "displayProperties": {
     "hiddenOnCreate": false,

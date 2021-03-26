@@ -157,7 +157,14 @@ module SchemaForm
 
       if meta[:is_subschema]
         if self.has_key?('$id')
-          errors_hash['$id'] = 'id should only be present in root schemas'
+          errors_hash['_$id'] = 'id should only be present in root schemas'
+        end
+      end
+
+      self[:properties]&.each do |k,v|
+        regex = Regexp.new("\A\/properties\/\w+#{k}\z")
+        if v[:$id]&.match(regex).nil?
+          errors_hash["$id.#{k}"] = "$id in property #{k} needs to match #{regex}"
         end
       end
 

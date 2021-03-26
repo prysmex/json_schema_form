@@ -21,6 +21,10 @@ module SchemaForm
       def i18n_label(locale = :es)
         self.dig(:displayProperties, :i18n, :label, locale)
       end
+
+      def set_label_for_locale(label, locale = :es)
+        SuperHash::Helpers.bury(self, :displayProperties, :i18n, :label, locale, label)
+      end
       
       def valid_for_locale?(locale = :es)
         !i18n_label(locale).to_s.empty?
@@ -36,7 +40,6 @@ module SchemaForm
       def validation_schema(passthru)
         Dry::Schema.JSON do
           config.validate_keys = true
-          required(:'$id').filled(:string)
           optional(:title).filled(:string)
           optional(:'$schema').filled(:string)
         end

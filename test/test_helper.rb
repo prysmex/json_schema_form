@@ -43,14 +43,6 @@ module TestHelper
       )
     end
 
-    def build_example_with_example_response(type)
-      example_response_set = get_parsed_example('/schema_form/response_set.json')
-      example_response_set[:anyOf].push(
-        get_parsed_example('/schema_form/response.json')[type]
-      )
-      example_response_set
-    end
-
   end
 
 end

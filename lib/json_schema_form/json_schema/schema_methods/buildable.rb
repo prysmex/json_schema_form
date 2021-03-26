@@ -26,7 +26,11 @@ module JsonSchema
       end
 
       def builder(attribute, obj, meta, options)
-        self.class.new(obj, meta, options)
+        if false#obj.class != ::Hash
+          obj.class.new(obj, meta, options)
+        else
+          self.class.new(obj, meta, options)
+        end
       end
 
       ###########

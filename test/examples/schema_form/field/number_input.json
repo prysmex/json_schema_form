@@ -1,5 +1,4 @@
 {
-  "$id": "/properties/number_input",
   "title": "number_input",
   "type": "number",
   "displayProperties": {
