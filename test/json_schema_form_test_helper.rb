@@ -2,12 +2,13 @@ require 'minitest/autorun'
 require 'minitest/spec'
 require 'minitest/reporters'
 require 'json_schema_form'
+require_relative 'examples'
 require 'json'
 
 Minitest::Reporters.use!
 
-module TestHelper
-
+module JsonSchemaFormTestHelper
+  
   JSON_SCHEMA_TYPES = [
     'array',
     'boolean',
@@ -27,22 +28,4 @@ module TestHelper
     end
   end
   
-  module Examples
-
-    def gem_directory_path
-      File.expand_path(File.dirname(__FILE__)) + '/../test/examples'
-    end
-    
-    def get_parsed_example(example_path)
-      SuperHash::DeepKeysTransform.symbolize_recursive(
-        JSON.parse(
-          File.read(
-            gem_directory_path + example_path
-          )
-        )
-      )
-    end
-
-  end
-
 end

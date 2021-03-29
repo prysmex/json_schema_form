@@ -61,7 +61,7 @@ module SchemaForm
 
       def migrate!
         self[:'$ref'] = "#/definitions/#{self[:responseSetId]}"
-        SuperHash::Helpers.bury(self, :displayProperties, :isSelect, true)
+        SuperHash::Utils.bury(self, :displayProperties, :isSelect, true)
         self.delete(:type)
         self.delete(:responseSetId)
       end

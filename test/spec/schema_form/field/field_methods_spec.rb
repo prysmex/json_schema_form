@@ -1,7 +1,6 @@
-require 'test_helper'
+require 'json_schema_form_test_helper'
 
 module FieldHelpers
-  include TestHelper::Examples
 
   def field_klass_name
     self.class.name.sub('Test', '')
@@ -13,7 +12,7 @@ module FieldHelpers
 
   def example_for_current_field_klass
     underscored_klass_name = field_klass_name.split(/(?=[A-Z])/).map(&:downcase).join('_')
-    get_parsed_example("/schema_form/field/#{underscored_klass_name}.json")
+    JsonSchemaForm::SchemaFormExamples.send(underscored_klass_name)
   end
 
 end
@@ -69,7 +68,7 @@ module ResponseSettableTests
   end
   
   def test_response_set
-    example_form = self.get_parsed_example("/schema_form/form.json")
+    example_form = JsonSchemaForm::SchemaFormExamples.form
     field_example = self.example_for_current_field_klass
     field_instance = field_klass.new(field_example, {parent: example_form})
     
@@ -80,7 +79,7 @@ module ResponseSettableTests
   end
 
   def test_i18n_value
-    example_form = self.get_parsed_example("/schema_form/form.json")
+    example_form = JsonSchemaForm::SchemaFormExamples.form
     field_example = self.example_for_current_field_klass
     field_instance = field_klass.new(field_example, parent: example_form)
 

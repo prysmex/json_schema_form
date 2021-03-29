@@ -1,8 +1,8 @@
-require 'test_helper'
+require 'json_schema_form_test_helper'
 
 module ValidatableTestMethods
 
-  include TestHelper::SampleClassHooks
+  include JsonSchemaFormTestHelper::SampleClassHooks
   
   TYPE_ERROR_MESSAGE = 'type is not whitelisted'.freeze
 
@@ -22,7 +22,7 @@ module ValidatableTestMethods
   def override_own_errors_with_whitelisted_types(klass = SampleSchema)
     klass.define_method(:own_errors) do |passthru|
       errors = {}
-      if !TestHelper::JSON_SCHEMA_TYPES.include?(self[:type])
+      if !JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.include?(self[:type])
         errors[:type] = TYPE_ERROR_MESSAGE
       end
       errors
@@ -174,7 +174,7 @@ class ValidatableTest < Minitest::Test
       }
     })
     errors = instance.errors
-    assert_equal 1, SuperHash::Helpers.flatten_to_root(errors).keys.size
+    assert_equal 1, SuperHash::Utils.flatten_to_root(errors).keys.size
     assert_equal TYPE_ERROR_MESSAGE, errors.dig(:properties, :prop1, :allOf, 0, :items, 1, :type)
   end
 

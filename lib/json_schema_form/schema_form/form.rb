@@ -5,6 +5,7 @@ module SchemaForm
     include JsonSchema::Validations::Validatable
     include JsonSchema::SchemaMethods::Buildable
     include JsonSchema::StrictTypes::Object
+    # include SuperHash::Helpers
 
     CONDITIONAL_FIELDS = [
       SchemaForm::Field::Select,
@@ -29,7 +30,7 @@ module SchemaForm
     def builder(*args)
       SchemaForm::Form::BUILDER.call(*args)
     end
-
+    
     #defined in a Proc so it can be reused by SUBSCHEMA_PROC
     BUILDER = ->(attribute, obj, meta, options) {
       
@@ -162,19 +163,23 @@ module SchemaForm
       end
 
       self[:properties]&.each do |k,v|
+        # check property $id
         regex = Regexp.new("\A\/properties\/\w+#{k}\z")
         if v[:$id]&.match(regex).nil?
           errors_hash["$id.#{k}"] = "$id in property #{k} needs to match #{regex}"
         end
+
+        if CONDITIONAL_FIELDS.include?(v.class)
+          if v.response_set.nil?
+            errors_hash["response_set.#{k}"] = 'response set is not present'
+          end
+        else
+          if v.dependent_conditions.size > 0
+            errors_hash["conditionals.#{k}"] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|name| name.name.demodulize}.join(', ')})"
+          end
+        end
       end
 
-      # if !CONDITIONAL_FIELDS.include?(self.class) && self.dependent_conditions.size > 0
-      #   errors_hash[:conditionals] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|k| k.name.demodulize}.join(', ')})"
-      # end
-
-      # if self.response_set.nil?
-      #   errors_hash[:responseSet] = 'response set is not present'
-      # end
       
       errors_hash
     end
@@ -182,6 +187,44 @@ module SchemaForm
     ##############
     ###METHODS####
     ##############
+
+    def add_conditional_property(property_id, on_property, definition, type, value, &block)
+      self[:allOf] ||= []
+
+      cond_path = case type
+      when :const
+        [:const]
+      when :not_const
+        [:not, :const]
+      when :enum
+        [:enum]
+      when :not_enum
+        [:not, :enum]
+      end
+
+      condition = self[:allOf].find do |condition|
+        condition.dig(:if, on_property, *cond_path) == value
+      end
+
+      if condition
+        condition[:then].append_property(property_id, definition)
+        yield(condition[:then]) if block_given?
+      else
+        condition = {
+          if: {
+            :"#{on_property}" => SuperHash::Utils.bury({}, *cond_path, value)
+          },
+          then: {
+            properties: {
+              :"#{property_id}" => definition
+            }
+          }
+        }
+        self[:allOf] = (self[:allOf] || []).push(condition)
+        yield(self[:allOf].last[:then]) if block_given?
+      end
+
+    end
 
     def compile!
       #compile root level properties
@@ -476,12 +519,12 @@ module SchemaForm
     end
 
     def resort!
-      sorted = sorted_properties
-      for i in 0...self[:properties].size
-        sort = [min_sort, i].max
-        property = sorted[i]
-        property[:displayProperties][:sort] = i
-      end
+      # sorted = sorted_properties
+      # for i in 0...self[:properties].size
+      #   sort = [min_sort, i].max
+      #   property = sorted[i]
+      #   property[:displayProperties][:sort] = i
+      # end
     end
 
   end

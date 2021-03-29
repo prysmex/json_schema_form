@@ -1,4 +1,4 @@
-require "test_helper"
+require 'json_schema_form_test_helper'
 
 class SchemaTest < Minitest::Test
   
@@ -8,13 +8,13 @@ class SchemaTest < Minitest::Test
   end
 
   def test_supports_all_single_json_schema_types
-    TestHelper::JSON_SCHEMA_TYPES.each do |type|
+    JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.each do |type|
       assert_equal type, JsonSchema::Schema.new({type: type})[:type]
     end
   end
 
   def test_supports_multiple_schema_types
-    sample = TestHelper::JSON_SCHEMA_TYPES.sample(2)
+    sample = JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.sample(2)
     instance = JsonSchema::Schema.new({type: sample })
     assert_equal sample.size, (instance[:type] & sample).size
   end

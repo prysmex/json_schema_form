@@ -1,8 +1,6 @@
-require 'test_helper'
+require 'json_schema_form_test_helper'
 
 class ResponseTest < Minitest::Test
-
-  include TestHelper::Examples
 
   def test_valid_for_locale
     instance = SchemaForm::Response.new({
@@ -21,13 +19,13 @@ class ResponseTest < Minitest::Test
   end
   
   def test_default_example_is_valid
-    hash = get_parsed_example('/schema_form/response.json')[:default]
+    hash = JsonSchemaForm::SchemaFormExamples.response[:default]
     instance = SchemaForm::Response.new(hash)
     assert_empty instance.errors
   end
 
   def test_inspection_example_is_valid
-    hash = get_parsed_example('/schema_form/response.json')[:is_inspection]
+    hash = JsonSchemaForm::SchemaFormExamples.response[:is_inspection]
     instance = SchemaForm::Response.new(hash)
     assert_empty instance.errors({is_inspection: true})
   end

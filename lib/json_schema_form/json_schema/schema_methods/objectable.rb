@@ -4,12 +4,16 @@ module JsonSchema
 
       ###property management###
   
-      def add_property(id, definition)
+      def add_property(id, definition, options={})
         new_definition = {}.merge(definition)
         new_definition[:'$id'] = "/properties/#{id}" #TODO this currently only works for main form
         properties_hash = self[:properties]&.merge({}) || {}
         properties_hash[id] = new_definition
+        if options[:required]
+          self[:required] = ((self[:required] || []) + [id]).uniq
+        end
         self[:properties] = SuperHash::DeepKeysTransform.symbolize_recursive(properties_hash)
+        self[:properties][id]
       end
 
       def remove_property(id)

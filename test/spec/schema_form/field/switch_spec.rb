@@ -1,25 +1,24 @@
-require "test_helper"
+require 'json_schema_form_test_helper'
 require_relative 'field_methods_spec'
 
 class SwitchTest < Minitest::Test
 
-  include TestHelper::Examples
   include BaseMethodsTests
   
   def test_default_example_is_valid
-    example = get_parsed_example('/schema_form/field/switch.json')
+    example = JsonSchemaForm::SchemaFormExamples.switch
     instance = SchemaForm::Field::Switch.new(example)
     assert_empty instance.errors
   end
 
   def test_default_example_is_valid_for_locale
-    example = get_parsed_example('/schema_form/field/switch.json')
+    example = JsonSchemaForm::SchemaFormExamples.switch
     instance = SchemaForm::Field::Switch.new(example)
     assert_equal true, instance.valid_for_locale?(:en)
   end
 
   def test_valid_for_locale
-    hash = get_parsed_example('/schema_form/field/switch.json')
+    hash = JsonSchemaForm::SchemaFormExamples.switch
     locale = :en
     
     [:label, :trueLabel, :falseLabel].each do |label_key|

@@ -1,10 +1,10 @@
-require "test_helper"
+require 'json_schema_form_test_helper'
 
 class StrictTypesTest < Minitest::Test
-  include TestHelper::SampleClassHooks
+  include JsonSchemaFormTestHelper::SampleClassHooks
 
   # general for all types
-  TestHelper::JSON_SCHEMA_TYPES.each do |type|
+  JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.each do |type|
     strict_type_module = Object.const_get("JsonSchema::StrictTypes::#{type.capitalize}")
 
     # define_method "test_strict_#{type}_required_type" do

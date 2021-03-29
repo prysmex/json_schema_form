@@ -30,9 +30,9 @@ module JsonSchema
       ].freeze
 
       BURY_ERRORS_PROC = Proc.new do |errors_to_bury, errors_hash, obj_path|
-        SuperHash::Helpers.flatten_to_root(errors_to_bury).each do |relative_path, errors_array|
+        SuperHash::Utils.flatten_to_root(errors_to_bury).each do |relative_path, errors_array|
           path = (obj_path || []) + (relative_path.to_s.split('.')).map{|i| Integer(i) rescue i.to_sym }
-          SuperHash::Helpers.bury(errors_hash, *path, errors_array)
+          SuperHash::Utils.bury(errors_hash, *path, errors_array)
         end
       end
 

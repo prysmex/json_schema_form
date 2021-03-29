@@ -7,6 +7,7 @@ module SchemaForm
         base.include JsonSchema::SchemaMethods::Schemable
         base.include JsonSchema::Validations::Validatable
         base.include SchemaForm::Field::BaseMethods
+        # base.include SuperHash::Helpers
       end
 
     end
@@ -23,7 +24,7 @@ module SchemaForm
       end
 
       def set_label_for_locale(label, locale = :es)
-        SuperHash::Helpers.bury(self, :displayProperties, :i18n, :label, locale, label)
+        SuperHash::Utils.bury(self, :displayProperties, :i18n, :label, locale, label)
       end
       
       def valid_for_locale?(locale = :es)
