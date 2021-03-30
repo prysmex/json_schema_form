@@ -166,17 +166,17 @@ module SchemaForm
         # check property $id
         regex = Regexp.new("\\A\/properties\/#{k}\\z")
         if v[:$id]&.match(regex).nil?
-          errors_hash["$id.#{k}"] = "$id in property #{k} needs to match #{regex}"
+          errors_hash["$id_#{k}"] = "$id: '#{v[:$id]}' did not to match #{regex}"
         end
 
         if v.respond_to?(:response_set) && v.response_set.nil?
-          errors_hash["response_set.#{k}"] = 'response set is not present'
+          errors_hash["response_set_#{k}"] = 'response set is not present'
         end
 
         if CONDITIONAL_FIELDS.include?(v.class)
         else
           if v.dependent_conditions.size > 0
-            errors_hash["conditionals.#{k}"] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|name| name.name.demodulize}.join(', ')})"
+            errors_hash["conditionals_#{k}"] = "only the following fields can have conditionals (#{SchemaForm::Form::CONDITIONAL_FIELDS.map{|name| name.name.demodulize}.join(', ')})"
           end
         end
       end
