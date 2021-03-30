@@ -1,40 +1,70 @@
 # JsonSchemaForm
 
-This gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might need to get familiar with it before starting.
+JsonSchemaForm is divided into two parts:
+1) JsonSchema, provides a simple and extensible API to create backing classes for json_schema hashes [json_schema](https://json-schema.org/) so you don't mess around with POROs.
+2) SchemaForm, provides build-in classes that provide form-like functionality that are based on json_schema. This classes are created using `JsonSchema`
 
-Validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
+To do this, this gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might want to get familiar with it before starting.
+Default validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
 
-JsonSchemaForm gem is designed to contain the backing classes for form definitions that are based on json schema standard [json_schema](https://json-schema.org/). There are some differences between the standard schemas and the ones defined by JsonSchemaForm::Form, mainly to support:
- - Response sets
- - Display properties
- - versioning and version migration
- 
-The classes can be divided into the following 'modules':
+## JsonSchema
 
-### json_schema:
-Can be used to back plain and standard [json_schema](https://json-schema.org/) schemas. They all inherit from `JsonSchema::SchemaMethods::Base`
- - `JsonSchema::SchemaMethods::Array`
- - `JsonSchema::SchemaMethods::Boolean`
- - `JsonSchema::SchemaMethods::Null`
- - `JsonSchema::SchemaMethods::Number`
- - `JsonSchema::SchemaMethods::String`
- - `JsonSchema::SchemaMethods::Object`
+This is the backbone and provides multiple ruby `Module`s that are used to easily create a backing class for a json_schema object
+- Arrayable     (methods when type `key` equals or contains `array`)
+- Booleanable   (methods when type `key` equals or contains `boolean`)
+- Buildable     (sets transforms used to create recursive tree structures)
+- Nullable      (methods when type `key` equals or contains `null`)
+- Numberable    (methods when type `key` equals or contains `number`)
+- Objectable    (methods when type `key` equals or contains `object`)
+- Schemable     (base methods are in a module yo avoid creatinga Base class)
+- Stringable    (methods when type `key` equals or contains `string`)
+
+This is exactly how to pre-wired `Schema` class is created
+```ruby
+module JsonSchema
+  class Schema < ::SuperHash::Hasher
+    
+    include JsonSchema::SchemaMethods::Schemable
+    include JsonSchema::SchemaMethods::Buildable
+    include JsonSchema::SchemaMethods::Objectable
+    include JsonSchema::SchemaMethods::Stringable
+    include JsonSchema::SchemaMethods::Numberable
+    include JsonSchema::SchemaMethods::Booleanable
+    include JsonSchema::SchemaMethods::Arrayable
+    include JsonSchema::SchemaMethods::Nullable
+    
+  end
+end
+
+schema = JsonSchema::Schema.new({properties: {prop1: {type: 'string'}}})
+schema.class #=> JsonSchema::Schema
+schema[:properties][:prop1].class #=> JsonSchema::Schema
+```
+
+In addition to this, you can add validations to your objects by using the `JsonSchema::Validations::Validatable` module.
+A basic validation example would be this
+
+```ruby
+class MySchema < ::SuperHash::Hasher
+   
+  include JsonSchema::SchemaMethods::Schemable
+  include JsonSchema::SchemaMethods::Buildable #required for validations
+  include JsonSchema::Validations::Validatable
+
+  def own_errors(passthru)
+    errors_hash = {}
+    errors_hash[:$id] = 'id must be present' if self[:$id].nil?
+    errors_hash
+  end
+
+end
+
+schema = MySchema.new(type: 'array', items: [{type: 'string'}])
+schema.errors #=> {:$id=>"id must be present", :items=>{0=>{:$id=>"id must be present"}}}
+```
+
     
 ### form/field:
-These classes are used by JsonSchemaForm::Form to define its properties or 'fields'
-| Name                                  | Parent class                          |
-| ------------------------------------- |:-------------------------------------:|
-|`SchemaForm::Field::Checkbox`      |`< JsonSchema::SchemaMethods::Array`|
-|`SchemaForm::Field::DateInput`     |`< JsonSchema::SchemaMethods::String`|
-|`SchemaForm::Field::Header`        |`< JsonSchema::SchemaMethods::Null`|
-|`SchemaForm::Field::Info`          |`< JsonSchema::SchemaMethods::Null`|
-|`SchemaForm::Field::NumberInput`   |`< JsonSchema::SchemaMethods::Number`|
-|`SchemaForm::Field::Select`        |`< JsonSchema::SchemaMethods::String`|
-|`SchemaForm::Field::Slider`        |`< JsonSchema::SchemaMethods::Number`|
-|`SchemaForm::Field::Static`        |`< JsonSchema::SchemaMethods::Null`|
-|`SchemaForm::Field::Switch`        |`< JsonSchema::SchemaMethods::Boolean`|
-|`SchemaForm::Field::TextInput`     |`< JsonSchema::SchemaMethods::String`|
-|`JsonSchemaForm::Form`                 |`< JsonSchema::SchemaMethods::Object`|
 
 To view some examples, check `spec/examples`
 
@@ -198,271 +228,8 @@ property.meta
 #}
 ```
 
-### form/field:
-
-#### TextInput
-
-Although fields are most likely to always be found inside a JsonSchemaForm definition, here is an example of a standalone text_input object
-
-```ruby
-text_input = SchemaForm::Field::TextInput.new(
-  {
-    "$id": "/properties/text_area9302",
-    "title": "text_area9302",
-    "type": "string",
-    "some_invalid_property": 1,
-    "displayProperties": {
-      "pictures": [],
-      "i18n": {
-        "label": {
-          "es": "Area de texto",
-          "en": "Text area"
-        }
-      },
-      "visibility": {
-        "label": true
-      },
-      "textarea": true,
-      "sort": 4,
-      "hidden": false
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  }
-)
-
-text_input.errors
-# => {:some_invalid_property=>["is not allowed"]}
-```
-
-```ruby
-JsonSchemaForm::Form.new(
-  {
-    "$id": "http://example.com/example.json",
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "",
-    "type": "object",
-    "schemaFormVersion": "1.0.0",
-    "required": [
-      "text_area9302"
-    ],
-    "properties": {
-      "text_area9302": {
-        "$id": "/properties/text_area9302",
-        "title": "text_area9302",
-        "type": "string",
-        "displayProperties": {
-          "pictures": [],
-          "i18n": {
-            "label": {
-              "es": "Area de texto",
-              "en": "Text area"
-            }
-          },
-          "visibility": {
-            "label": true
-          },
-          "textarea": true,
-          "sort": 4,
-          "hidden": false
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      },
-      "seleccion_anidados_requerido4608": {
-        "$id": "/properties/seleccion_anidados_requerido4608",
-        "title": "seleccion_anidados_requerido4608",
-        "type": "string",
-        "displayProperties": {
-          "pictures": [],
-          "i18n": {
-            "label": {
-              "es": "Seleccion anidados requeridos",
-              "en": "Nested required"
-            }
-          },
-          "visibility": {
-            "label": true
-          },
-          "sort": 33,
-          "hidden": false
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "responseSetId": "10b4b02b-5afe-4bfc-98fe-f975b4513df8"
-      }
-    },
-    "allOf": [
-      {
-        "if": {
-          "properties": {
-            "seleccion_anidados_requerido4608": {
-              "const": "option8663"
-            }
-          }
-        },
-        "then": {
-          "properties": {
-            "sub_campo_11542": {
-              "$id": "/properties/sub_campo_11542",
-              "title": "sub_campo_11542",
-              "type": "string",
-              "displayProperties": {
-                "pictures": [],
-                "i18n": {
-                  "label": {
-                    "es": "Sub campo 1",
-                    "en": "Sub field 1"
-                  }
-                },
-                "visibility": {
-                  "label": true
-                },
-                "sort": 0,
-                "hidden": false
-              },
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "responseSetId": "64d34cdc-be7b-49ca-9c14-7705c5f06e5d"
-            }
-          },
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "sub_campo_11542": {
-                    "const": "option7436"
-                  }
-                }
-              },
-              "then": {
-                "properties": {
-                  "sub_field_26149": {
-                    "$id": "/properties/sub_field_26149",
-                    "title": "sub_field_26149",
-                    "type": "boolean",
-                    "displayProperties": {
-                      "pictures": [],
-                      "i18n": {
-                        "label": {
-                          "es": "Sub campo 2",
-                          "en": "Sub field 2"
-                        },
-                        "trueLabel": {
-                          "en": "Show sub-field",
-                          "es": "Mostrar sub-campo"
-                        },
-                        "falseLabel": {
-                          "en": "Hide sub-field",
-                          "es": "Esconder sub-campo"
-                        }
-                      },
-                      "visibility": {
-                        "label": true
-                      },
-                      "useToggle": true,
-                      "sort": 0,
-                      "hidden": false
-                    },
-                    "default": false,
-                    "$schema": "http://json-schema.org/draft-07/schema#"
-                  }
-                },
-                "allOf": [
-                  {
-                    "if": {
-                      "properties": {
-                        "sub_field_26149": {
-                          "const": true
-                        }
-                      }
-                    },
-                    "then": {
-                      "properties": {
-                        "hola6972": {
-                          "$id": "/properties/hola6972",
-                          "title": "hola6972",
-                          "type": "null",
-                          "displayProperties": {
-                            "pictures": [],
-                            "i18n": {
-                              "label": {
-                                "es": "Hola!",
-                                "en": "Hello"
-                              }
-                            },
-                            "visibility": {
-                              "label": true
-                            },
-                            "kind": "neutral",
-                            "useInfo": true,
-                            "icon": "info",
-                            "sort": 0,
-                            "hidden": false
-                          },
-                          "$schema": "http://json-schema.org/draft-07/schema#"
-                        }
-                      },
-                      "$id": "http://example.com/example.json",
-                      "$schema": "http://json-schema.org/draft-07/schema#",
-                      "required": [],
-                      "allOf": []
-                    }
-                  }
-                ],
-                "$id": "http://example.com/example.json",
-                "$schema": "http://json-schema.org/draft-07/schema#",
-                "required": []
-              }
-            }
-          ],
-          "required": [
-            "sub_campo_11542"
-          ],
-          "$id": "http://example.com/example.json",
-          "$schema": "http://json-schema.org/draft-07/schema#"
-        }
-      }
-    ],
-    "responseSets": {
-      "10b4b02b-5afe-4bfc-98fe-f975b4513df8": {
-        "responses": [
-          {
-            "value": "option8663",
-            "enableScore": true,
-            "score": null,
-            "failed": false,
-            "displayProperties": {
-              "i18n": {
-                "en": "Show sub-field",
-                "es": "Mostrar sub-campo"
-              },
-              "color": null
-            }
-          },
-          {
-            "value": "option3147",
-            "enableScore": true,
-            "score": null,
-            "failed": false,
-            "displayProperties": {
-              "i18n": {
-                "en": "Hide sub-field",
-                "es": "Esconder sub-campo"
-              },
-              "color": null
-            }
-          }
-        ],
-        "id": "10b4b02b-5afe-4bfc-98fe-f975b4513df8"
-      }
-    }
-  }
-)
-```
 
 
-### document:
-    
-### response:
-
-## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
