@@ -72,7 +72,7 @@ module SchemaForm
       #get the field's response set, only applies to certain fields
       def response_set
         path = self.response_set_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
-        root_parent&.dig(*path)
+        root_parent&.dig(*path) unless path.nil? || path.empty?
       end
 
       def own_errors(passthru)
