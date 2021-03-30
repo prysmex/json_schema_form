@@ -1,0 +1,21 @@
+{
+  "title": "text_area",
+  "type": "string",
+  "displayProperties": {
+    "hiddenOnCreate": false,
+    "pictures": [],
+    "i18n": {
+      "label": {
+        "es": "Area de texto",
+        "en": "Text area"
+      }
+    },
+    "visibility": {
+      "label": true
+    },
+    "textarea": true,
+    "sort": 4,
+    "hidden": false
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

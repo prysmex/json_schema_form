@@ -1,0 +1,24 @@
+{
+  "title": "checkbox",
+  "type": "array",
+  "displayProperties": {
+    "hiddenOnCreate": false,
+    "pictures": [],
+    "i18n": {
+      "label": {
+        "es": "opciones",
+        "en": "checkbox"
+      }
+    },
+    "visibility": {
+      "label": true
+    },
+    "sort": 19,
+    "hidden": false
+  },
+  "uniqueItems": true,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "items": {
+    "$ref": "#/definitions/__test_response_set_id__"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$id": "http://example.com/example.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "",
+  "type": "object",
+  "schemaFormVersion": "3.0.0",
+  "required": [],
+  "properties": {},
+  "allOf": [],
+  "definitions": {}
+}

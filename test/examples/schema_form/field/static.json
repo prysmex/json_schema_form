@@ -1,0 +1,9 @@
+{
+  "type": "null",
+  "title": "Description",
+  "static": true,
+  "displayProperties": {
+    "hiddenOnCreate": false,
+    "sort": 1
+  }
+}

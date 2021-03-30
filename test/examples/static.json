@@ -1,9 +1,0 @@
-{
-  "$id": "/properties/description",
-  "type": "null",
-  "title": "Description",
-  "static": true,
-  "displayProperties": {
-    "sort": 1
-  }
-}
