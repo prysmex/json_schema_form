@@ -41,6 +41,7 @@ module SchemaForm
       def validation_schema(passthru)
         Dry::Schema.JSON do
           config.validate_keys = true
+          optional(:$id).filled(:string)
           optional(:title).filled(:string)
           optional(:'$schema').filled(:string)
         end
