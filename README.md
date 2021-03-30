@@ -1,8 +1,8 @@
 # JsonSchemaForm
 
-JsonSchemaForm gem provides a simple and extensible API to create backing classes for json_schema hashes [json_schema](https://json-schema.org/) so you don't mess around with POROs.
-
-In addition, this gem has build-in classes that provide form-like functionality that are based on json_schema.
+JsonSchemaForm is divided into two parts:
+1) JsonSchema, provides a simple and extensible API to create backing classes for json_schema hashes [json_schema](https://json-schema.org/) so you don't mess around with POROs.
+2) SchemaForm, provides build-in classes that provide form-like functionality that are based on json_schema. This classes are created using `JsonSchema`
 
 To do this, this gem is powered by [superhash](https://github.com/prysmex/super_hash) so you might want to get familiar with it before starting.
 Default validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/gems/dry-schema)
