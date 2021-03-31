@@ -43,6 +43,32 @@ schema.class #=> MySchema
 schema[:properties][:prop1].class #=> MySchema
 ```
 As you can see, every time a subschema is found a new instance is serialized by using de default transforms in `JsonSchema::SchemaMethods::Buildable`
+It is important to not that the transforms are present on the following keys:
+```ruby
+[:additionalProperties, :contains, :definitions, :dependencies, :else, :if, :items, :not, :properties, :then, :allOf, :anyOf, :oneOf]
+```
+So if you want to add a new schema after instanciation (for example another property in the `properties` key), you need to re-set the whole key
+or set an already transformed value. Here is a small demostration:
+```ruby
+#WRONG
+schema = MySchema.new({properties: {}})
+schema[:properties][:prop1] = {type: 'number'}
+schema[:properties][:prop1].class # => Hash, not MySchema because transforms where not triggered!
+
+#CORRECT
+#1) set all values before instanciation
+hash = {properties: {prop:1 {type: 'null'}}}
+schema = MySchema.new(hash)
+schema[:properties][:prop1].class # => MySchema
+
+#2) set properties key
+schema[:properties] = schema[:properties].merge({prop2: {type: 'number'}})
+schema[:properties][:prop2].class # => MySchema
+
+#3) use provided method
+schema.add_property(:prop3, {type: 'number'})
+schema[:properties][:prop3].class # => MySchema
+```
 
 This is how to pre-wired `JsonSchema::Schema` class is created
 
