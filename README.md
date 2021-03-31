@@ -25,6 +25,7 @@ This is the backbone and provides multiple ruby `Module`s that are used to easil
 
 Lets create a new backing class for a schema using the provided modules
 ```ruby
+# This is how to pre-wired `JsonSchema::Schema` class is created
 class MySchema < ::SuperHash::Hasher
 
   include JsonSchema::SchemaMethods::Schemable
@@ -73,8 +74,6 @@ schema[:properties][:prop3].class # => MySchema
 schema[:properties][:prop4] = MySchema.new({type: 'number'})
 schema[:properties][:prop4].class # => MySchema
 ```
-
-This is how to pre-wired `JsonSchema::Schema` class is created
 
 ### Meta
 The schema's `meta` method contains helpful data
