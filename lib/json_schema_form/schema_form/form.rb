@@ -21,14 +21,12 @@ module SchemaForm
       SchemaForm::Field::Select
     ].freeze
 
+    # Proc used to redefine an instance builder
+    # This is required because JsonSchema::Schema has its own builder
     SUBSCHEMA_PROC = Proc.new do |inst|
       inst.define_singleton_method(:builder) do |*args|
         SchemaForm::Form::BUILDER.call(*args)
       end
-    end
-
-    def builder(*args)
-      SchemaForm::Form::BUILDER.call(*args)
     end
     
     #defined in a Proc so it can be reused by SUBSCHEMA_PROC
@@ -109,16 +107,41 @@ module SchemaForm
       raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
     }
 
+    # To prevent manually building conditions, we define this Proc
+    # as a utility
+    CONDITION_TYPE_TO_PATH= ->(type) {
+      case type
+      when :const
+        [:const]
+      when :not_const
+        [:not, :const]
+      when :enum
+        [:enum]
+      when :not_enum
+        [:not, :enum]
+      else
+        ArgumentError.new("#{type} is not a whitelisted condition type")
+      end
+    }
+
     update_attribute :definitions, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }
     attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
     update_attribute :properties, default: ->(instance) { {}.freeze }
     update_attribute :required, default: ->(instance) { [].freeze }
     update_attribute :allOf, default: ->(instance) { [].freeze }
 
+    #override builder
+    def builder(*args)
+      SchemaForm::Form::BUILDER.call(*args)
+    end
+
     ##################
     ###VALIDATIONS####
     ##################
-
+    
+    # Validation schema used for building own errors hash
+    # @param passthru [Hash] Options passed
+    # @return [Dry::Schema::JSON] Schema
     def validation_schema(passthru)
       is_subschema = meta[:is_subschema]
       is_inspection = passthru[:is_inspection]
@@ -129,11 +152,11 @@ module SchemaForm
           JsonSchema::Validations::DrySchemaValidatable::BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
         end
 
-        optional(:'$id').filled(:string)
         required(:properties).value(:hash)
         required(:required).value(:array?).array(:str?)
         required(:allOf).array(:hash)
         if !is_subschema
+          optional(:'$id').filled(:string)
           required(:'title').maybe(:string)
           required(:type).filled(Types::String.enum('object'))
           required(:schemaFormVersion).value(:string)
@@ -149,18 +172,18 @@ module SchemaForm
 
       end
     end
-
+    
+    # Build instance's erros hash
+    # - get errors from validation_schema
+    # - ensure each property key matches the property's $id
+    # - ensure only whitelisted properties have conditional properties
+    # @param passthru [Hash] Options passed
+    # @return [Hash] Errors
     def own_errors(passthru)
       errors_hash = own_errors = JsonSchema::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
         validation_schema(passthru),
         self
       )
-
-      if meta[:is_subschema]
-        if self.has_key?('$id')
-          errors_hash['_$id'] = 'id should only be present in root schemas'
-        end
-      end
 
       self[:properties]&.each do |k,v|
         # check property $id
@@ -180,7 +203,6 @@ module SchemaForm
           end
         end
       end
-
       
       errors_hash
     end
@@ -189,119 +211,9 @@ module SchemaForm
     ###METHODS####
     ##############
 
-    def add_conditional_property(property_id, on_property, definition, type, value, &block)
-      self[:allOf] ||= []
-
-      cond_path = case type
-      when :const
-        [:const]
-      when :not_const
-        [:not, :const]
-      when :enum
-        [:enum]
-      when :not_enum
-        [:not, :enum]
-      end
-
-      condition = self[:allOf].find do |condition|
-        condition.dig(:if, on_property, *cond_path) == value
-      end
-
-      if condition
-        condition[:then].append_property(property_id, definition)
-        yield(condition[:then]) if block_given?
-      else
-        condition = {
-          if: {
-            :"#{on_property}" => SuperHash::Utils.bury({}, *cond_path, value)
-          },
-          then: {
-            properties: {
-              :"#{property_id}" => definition
-            }
-          }
-        }
-        self[:allOf] = (self[:allOf] || []).push(condition)
-        yield(self[:allOf].last[:then]) if block_given?
-      end
-
-    end
-
-    def compile!
-      #compile root level properties
-      self[:properties]&.each do |id, definition|
-        definition.compile! if definition&.respond_to?(:compile!)
-      end
-
-      #compile dynamic properties
-      self.get_all_of_subschemas.each{|form| form.compile!}
-
-      self
-    end
-
-    # ToDo check if is_inspection 
-    def max_score(&block)
-      self[:properties].inject(nil) do |acum, (name, field_def)|
-        max_score_for_path = max_score_for_path(name, field_def, &block)
-        if max_score_for_path.nil?
-          acum
-        else
-          acum.to_f + max_score_for_path
-        end
-      end
-    end
-
-    def max_score_for_path(name, field, &block)
-
-      if CONDITIONAL_FIELDS.include? field.class
-    
-        possible_values = case field
-        when SchemaForm::Field::Select
-          field.response_set[:anyOf].map do |obj|
-            {value: obj[:const], score: obj[:score]}
-          end
-        when SchemaForm::Field::Switch
-          [{value: true, score: 1}, {value: false, score: 0}]
-        when SchemaForm::Field::NumberInput
-          values = []
-          field.dependent_conditions.each do |condition|
-            condition_value = condition[:if][:properties].values[0]
-
-            value = if !condition_value[:not].nil?
-               'BP8;x&/dTF2Qn[RG' #some very random text
-              else
-                condition_value[:const]
-              end
-        
-            values.push({value: value, score: nil})            
-          end
-          values
-        end
-    
-        possible_values&.map do |possible_value|
-          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => possible_value[:value]}, &block)
-          sub_schemas_max_score = dependent_conditions.inject(nil) do |acum, condition|
-            max_score = condition[:then]&.max_score(&block)
-            if max_score.nil?
-              acum
-            else
-              acum.to_f + max_score
-            end
-          end
-          if sub_schemas_max_score.nil?
-            possible_value[:score]
-          else
-            possible_value[:score].to_f + sub_schemas_max_score
-          end
-        end&.compact&.max
-    
-      elsif SCORABLE_FIELDS.include? field.class
-        field.max_score
-      else
-        nil
-      end
-    end
-
+    # Checks if the whole form is valid for a specified locale
+    # @param locale [Symbol] locale
+    # @return [Boolean] if valid
     def valid_for_locale?(locale = :es)
       all_properties_are_valid = self.merged_properties.find do |k,v|
         !v.is_a?(SchemaForm::Field::Component) && (v.valid_for_locale?(locale) == false)
@@ -309,89 +221,27 @@ module SchemaForm
       all_response_sets_are_valid = self.response_sets.find do |k,v|
         v.valid_for_locale?(locale) == false
       end.nil?
-      all_properties_are_valid && all_response_sets_are_valid
+      # all_component_definitions_are_valid = self.component_definitions.find do |k,v|
+      #   v.valid_for_locale?(locale) == false
+      # end.nil?
+      all_properties_are_valid && all_response_sets_are_valid# && all_component_definitions_are_valid
     end
 
-    def migrate!(options={})
-      # migrate properties
-      self[:properties]&.each do |id, definition|
-        if definition&.respond_to?(:migrate!)
-          puts 'migrating ' + definition.class.to_s.demodulize
-          definition.migrate!
-        end
-      end
-      
-      #migrate dynamic forms
-      self.get_all_of_subschemas.each{|form| form.migrate!}
-
-      # migrate response sets
-      self[:definitions]&.each do |id, definition|
-        if definition&.respond_to?(:migrate!)
-          puts 'migrating response set'
-          definition.migrate!
-        end
-      end
-
-      #3.0.0 migrations
-      if self[:schemaFormVersion] != '3.0.0'
-        if !meta[:is_subschema]
-          new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
-            anyOf = definition[:responses].map do |r|
-              hash = {
-                type: 'string',
-                const: r[:value],
-                displayProperties: r[:displayProperties]
-              }
-              if options[:is_inspection]
-                hash.merge!({
-                  enableScore: r[:enableScore],
-                  score: r[:score],
-                  failed: r[:failed]
-                })
-              end
-              hash
-            end
-            acum[id] = {
-              type: 'string',
-              isResponseSet: true,
-              anyOf: anyOf
-            }
-            acum
-          end
-          old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
-          self.delete(:responseSets)
-          self[:definitions] = old_definitions.merge(new_definitions)
-        else
-          self.delete(:$id)
-        end
-        self.delete(:additionalProperties)
-      end
-
-      # migrate form object
-      if !meta[:is_subschema]
-        self[:schemaFormVersion] = '3.0.0'
-      end
-      self
-    end
-
-    #ToDo consider else key in allOf
-    def get_all_of_subschemas(levels=nil, level=0)
-      return [] if levels && level >= levels
-      schemas_array=[]
-      self[:allOf]&.each do |condition_subschema|
-        subschema = condition_subschema[:then]
-        if subschema
-          schemas_array.push(subschema)
-          schemas_array.concat(subschema.get_all_of_subschemas(levels, level + 1))
-        end
-      end
-      schemas_array
-    end
+    # Retrieves all properties that are missing a response set
+    # @param
+    # @return
+    # def merged_properties_missing_response_set(levels=nil)
+    #   merged_properties(levels)&.each_with_object([]) |(k,v) array| do
+    #     array.push(v) if v.respond_to?(:response_set) && v.response_set.nil?
+    #   end
+    # end
 
     ###########################
     ###COMPONENT MANAGEMENT####
     ###########################
 
+    # Retrieves all component definitions (SharedSchemaTemplates)
+    # @return [Hash] subset of definitions filtered
     def component_definitions
       self[:definitions].select do |k,v|
         !v.key?(:type)
@@ -457,33 +307,52 @@ module SchemaForm
       merged_properties(levels)&.[](property.to_sym)
     end
 
-    def prepend_property(id, definition)
+    # Adds a property with a sort value of 0 and resorts all other properties
+    # @param id [Symbol] name of the property
+    # @param definition [Hash] the schema to add
+    # @param options[:required] [Boolean] if the property should be required
+    # @return [Object] Property added
+    def prepend_property(id, definition, options={})
       new_definition = {}.merge(definition)
-      new_definition[:displayProperties][:sort] = -1
-      add_property(id, new_definition)
+      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, -1)
+      add_property(id, new_definition, options)
       resort!
     end
 
-    def append_property(id, definition)
+    # Adds a property with a sort value 1 more than the max and resorts all other properties
+    # @param id [Symbol] name of the property
+    # @param definition [Hash] the schema to add
+    # @param options[:required] [Boolean] if the property should be required
+    # @return [Object] Property added
+    def append_property(id, definition, options={})
       new_definition = {}.merge(definition)
-      new_definition[:displayProperties][:sort] = max_sort + 1
-      add_property(id, new_definition)
+      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, (self.max_sort + 1))
+      add_property(id, new_definition, options)
       resort!
     end
 
-    def insert_property_at_index(index, id, definition)
+    # Adds a property with a specified sort value and resorts all other properties
+    # @param id [Symbol] name of the property
+    # @param definition [Hash] the schema to add
+    # @param options[:required] [Boolean] if the property should be required
+    # @return [Object] Property added
+    def insert_property_at_index(index, id, definition, options={})
       new_definition = {}.merge(definition)
-      new_definition[:displayProperties][:sort] = index - 0.5
-      add_property(id, new_definition)
+      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, (index - 0.5))
+      add_property(id, new_definition, options)
       resort!
     end
 
+    # Moves a property to a specific sort value and resorts needed properties
+    # @param target [Integer] sort value to set
+    # @param id [Symbol] name of property to move
+    # @return [Object] mutated self
     def move_property(target, id)
-      prop = self[:properties].find{|k,v| v.key_name == id.to_sym}
+      prop = self[:properties]&.find{|k,v| v.key_name == id.to_sym}
       if !prop.nil?
         current = prop[1][:displayProperties][:sort]
-        r = Range.new(*[current, target].sort)
-        selected = sorted_properties.select{|k| r.include?(k[:displayProperties][:sort]) }
+        range = Range.new(*[current, target].sort)
+        selected = sorted_properties.select{|k| range.include?(k[:displayProperties][:sort]) }
         if target > current
           selected.each{|k| k[:displayProperties][:sort] -= 1 }
         else
@@ -492,40 +361,265 @@ module SchemaForm
         prop[1][:displayProperties][:sort] = target
         resort!
       end
+      self
     end
 
-    ###sorting###
-
     def min_sort
-      self[:properties].map{|k,v| v&.dig(:displayProperties, :sort) }&.min || 0
+      self[:properties]&.map{|k,v| v&.dig(:displayProperties, :sort) }&.min || 0
     end
 
     def max_sort
-      self[:properties].map{|k,v| v&.dig(:displayProperties, :sort) }&.max || 0
+      self[:properties]&.map{|k,v| v&.dig(:displayProperties, :sort) }&.max || 0
     end
 
-    def property_at_sort(i)
-      self[:properties].find{|k,v| v&.dig(:displayProperties, :sort) == i}
+    def get_property_by_sort(i)
+      self[:properties]&.find{|k,v| v&.dig(:displayProperties, :sort) == i}
     end
 
     def verify_sort_order
-      for i in 0...self[:properties].size
-        return false if property_at_sort(i).blank?
+      for i in 0...(self[:properties]&.size || 0)
+        return false if get_property_by_sort(i).blank?
       end
       true
     end
 
     def sorted_properties
-      self[:properties].values.sort_by{|v| v&.dig(:displayProperties, :sort)}
+      self[:properties]&.values&.sort_by{|v| v&.dig(:displayProperties, :sort)} || []
     end
 
     def resort!
-      # sorted = sorted_properties
-      # for i in 0...self[:properties].size
-      #   sort = [min_sort, i].max
-      #   property = sorted[i]
-      #   property[:displayProperties][:sort] = i
-      # end
+      sorted = self.sorted_properties
+      for i in 0...self[:properties].size
+        property = sorted[i]
+        property[:displayProperties][:sort] = i
+      end
+    end
+
+    # Retrieves a condition
+    # @param dependent_on [Symbol] name of property the condition depends on
+    # @param type [Symbol] type of condition to filter by
+    # @param value [String,Boolean,Integer] Value that makes the condition TRUE
+    def get_condition(dependent_on, type, value)
+      cond_path = CONDITION_TYPE_TO_PATH.call(type)
+      self[:allOf]&.find do |condition|
+        if [:enum, :not_enum].include?(type)
+          condition.dig(:if, :properties, dependent_on, *cond_path)&.include?(value)
+        else
+          condition.dig(:if, :properties, dependent_on, *cond_path) == value
+        end
+      end
+    end
+
+    # Appends a new condition or retrieves a matching existing one
+    # @param dependent_on [Symbol] name of property the condition depends on
+    # @param type [Symbol] type of condition to filter by
+    # @param value [String,Boolean,Integer] Value that makes the condition TRUE
+    # @return condition [Hash] added or retrieved condition hash
+    def add_or_get_condition(dependent_on, type, value)
+      raise ArgumentError.new('dependent property not found') if self.get_property(dependent_on).nil?
+      condition = get_condition(dependent_on, type, value)
+      if condition.nil?
+        #ensure transform is triggered
+        self[:allOf] = (self[:allOf] || []) << {
+          if: {
+            properties: {
+              :"#{dependent_on}" => SuperHash::Utils.bury({}, *CONDITION_TYPE_TO_PATH.call(type), value)
+            }
+          },
+          then: {
+            properties: {}
+          }
+        }
+        condition = self[:allOf].last
+      end
+      condition
+    end
+
+    # Adds a dependent property inside a subschema
+    # @param property_id [Symbol] name of property to be added
+    # @param definition [Hash] the property to be added
+    # @param options [Hash]
+    # @param dependent_on [Symbol] name of property the condition depends on
+    # @param type [Symbol] type of condition
+    # @param value [Symbol] value that makes the condition TRUE
+    # @return [] the added property
+    def add_conditional_property(property_id, definition, options={}, position:, dependent_on:, type:, value:)
+      condition = add_or_get_condition(dependent_on, type, value)
+      added_property = case position
+      when :append
+        condition[:then].append_property(property_id, definition, options)
+      when :prepend
+        condition[:then].prepend_property(property_id, definition, options)
+      when Integer
+        condition[:then].insert_property_at_index(position, property_id, definition, options)
+      end
+      yield(condition[:then]) if block_given?
+      added_property
+    end
+
+    # Retrieves all subforms for a specified number of recursion levels
+    # @param levels [Integer] number of recursion to apply
+    # @return [Array] array of subschemas retrieved
+    #ToDo consider else key in allOf
+    def get_all_of_subschemas(levels=nil, level=0)
+      return [] if levels && level >= levels
+      schemas_array=[]
+      self[:allOf]&.each do |condition_subschema|
+        subschema = condition_subschema[:then]
+        if subschema
+          schemas_array.push(subschema)
+          schemas_array.concat(subschema.get_all_of_subschemas(levels, level + 1))
+        end
+      end
+      schemas_array
+    end
+
+    # Calculates the maximum attainable score considering all possible branches
+    # @return [Nil|Float]
+    def max_score(&block)
+      self[:properties].inject(nil) do |acum, (name, field_def)|
+        [
+          acum,
+          max_score_for_branch(name, field_def, &block)
+        ].compact.inject(&:+)
+      end
+    end
+
+    # Calculates the maximum attainable score for a specific branch
+    # @return [Nil|Float]
+    def max_score_for_branch(name, field, &block)
+
+      # Field may have conditional fields so we go recursive trying all possible
+      # values to calculate the max score
+      if CONDITIONAL_FIELDS.include? field.class
+        
+        # can we generalize this?
+        # - 1) when fields respond_to :possible_values
+        # - 2) when fileds don't respond_to :possible_values get values from conditions
+        possible_values = case field
+        when SchemaForm::Field::Select
+          field.response_set[:anyOf].map do |obj|
+            obj[:const]
+          end
+        when SchemaForm::Field::Switch
+          [true, false]
+        when SchemaForm::Field::NumberInput
+          field.dependent_conditions&.map do |condition|
+            condition_value = condition[:if][:properties].values[0]
+            if condition_value.key?(:not)
+              'BP8;x&/dTF2Qn[RG' #some very random text
+            else
+              condition_value[:const]
+            end
+          end || []
+        end
+    
+        #iterate all posible values and take only the max_score
+        possible_values&.map do |value|
+          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => value}, &block)
+          sub_schemas_max_score = dependent_conditions.inject(nil) do |acum_score, condition|
+            [
+              acum_score,
+              condition[:then]&.max_score(&block)
+            ].compact.inject(&:+)
+          end
+          [
+            sub_schemas_max_score,
+            field.score_for_value(value)
+          ].compact.inject(&:+)
+        end&.compact&.max
+      
+      # Field hash score but not conditional fields
+      elsif SCORABLE_FIELDS.include? field.class
+        field.max_score
+      else
+        nil
+      end
+    end
+
+    # @ return [Form] a mutated Form that is json schema compliant
+    def compile!
+      #compile root level properties
+      self[:properties]&.each do |id, definition|
+        definition.compile! if definition&.respond_to?(:compile!)
+      end
+
+      #compile dynamic properties
+      self.get_all_of_subschemas.each{|form| form.compile!}
+
+      self
+    end
+
+    # Allows the definition of migrations to 'upgrade' schemas when the standard changes
+    # The method is only the last migration script (not versioned)
+    # @return [Form] a mutated instance of the Form
+    def migrate!(options={})
+      # migrate properties
+      self[:properties]&.each do |id, definition|
+        if definition&.respond_to?(:migrate!)
+          puts 'migrating ' + definition.class.to_s.demodulize
+          definition.migrate!
+        end
+      end
+      
+      #migrate dynamic forms
+      self.get_all_of_subschemas.each{|form| form.migrate!}
+
+      # migrate response sets
+      self[:definitions]&.each do |id, definition|
+        if definition&.respond_to?(:migrate!)
+          puts 'migrating response set'
+          definition.migrate!
+        end
+      end
+
+      #3.0.0 migrations
+      if self[:schemaFormVersion] != '3.0.0'
+        if !meta[:is_subschema]
+          new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
+            anyOf = definition[:responses].map do |r|
+              hash = {
+                type: 'string',
+                const: r[:value],
+                displayProperties: r[:displayProperties]
+              }
+              if options[:is_inspection]
+                hash.merge!({
+                  enableScore: r[:enableScore],
+                  score: r[:score],
+                  failed: r[:failed]
+                })
+              end
+              hash
+            end
+            acum[id] = {
+              type: 'string',
+              isResponseSet: true,
+              anyOf: anyOf
+            }
+            acum
+          end
+          old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
+          self.delete(:responseSets)
+          self[:definitions] = old_definitions.merge(new_definitions)
+        else
+          self.delete(:$id)
+        end
+        self.delete(:additionalProperties)
+      end
+
+      # migrate form object
+      if !meta[:is_subschema]
+        self[:schemaFormVersion] = '3.0.0'
+      end
+      self
+    end
+
+    private
+
+    #make this private so to favor append, prepend methods
+    def add_property(*args)
+      super(*args)
     end
 
   end

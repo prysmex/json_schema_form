@@ -3,7 +3,7 @@ require 'minitest/spec'
 require 'minitest/reporters'
 require 'json_schema_form'
 require_relative 'examples'
-require 'json'
+require 'byebug'
 
 Minitest::Reporters.use!
 

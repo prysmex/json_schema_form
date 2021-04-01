@@ -1,3 +1,5 @@
+require 'json'
+
 module JsonSchemaForm
   module Examples
 

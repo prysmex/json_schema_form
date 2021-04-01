@@ -48,11 +48,10 @@ module SchemaForm
         scored_responses = self.response_set
           &.[](:anyOf)
           &.reduce(nil) do |sum,response|
-            if response[:score].nil?
-              sum
-            else
-              sum.to_f + response[:score]
-            end
+            [
+              sum,
+              response[:score]
+            ].compact.inject(&:+)
           end
       end
 
@@ -63,11 +62,10 @@ module SchemaForm
             &.[](:anyOf)
             &.select {|response| value.include? response[:const]}
             &.reduce(nil) do |sum,response|
-              if response[:score].nil?
-                sum
-              else
-                sum.to_f + response[:score]
-              end
+              [
+                sum,
+                response[:score]
+              ].compact.inject(&:+)
             end
         else
           nil

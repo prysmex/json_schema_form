@@ -7,5 +7,6 @@
   "required": [],
   "properties": {},
   "allOf": [],
+  "availableLocales": [],
   "definitions": {}
 }

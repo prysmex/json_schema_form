@@ -8,8 +8,9 @@ module SchemaForm
       new(*args, &block).to_hash
     end
 
-    def initialize(form = SchemaForm::Form.new(), &block)
-      raise TypeError.new("first argument must be a SchemaForm::Form instance, got a #{form.class}") unless form.is_a?(SchemaForm::Form) 
+    def initialize(form = {}, &block)
+      form = SchemaForm::Form.new(form) if form.class == Hash
+      raise TypeError.new("first argument must be a SchemaForm::Form or a Hash instance, got a #{form.class}") unless form.is_a?(SchemaForm::Form) 
       @form = form
       @block = block
     end

@@ -2,8 +2,15 @@ module JsonSchema
   module SchemaMethods
     module Objectable
 
-      ###property management###
-  
+      #####################
+      #property management#
+      #####################
+
+      # Adds a property to the 'properties' hash
+      # @param id [Symbol] name of the property
+      # @param definition [Hash] the schema to add
+      # @param options[:required] [Boolean] if the property should be required
+      # @return [Object] Property added
       def add_property(id, definition, options={})
         new_definition = {}.merge(definition)
         new_definition[:'$id'] = "/properties/#{id}" #TODO this currently only works for main form
@@ -16,24 +23,33 @@ module JsonSchema
         self[:properties][id]
       end
 
+      # Removes 'properties' and 'required' key
+      # TODO handle if other property depends on this one
+      # @return [Object] mutated self
       def remove_property(id)
-        unless self[:properties].nil?
-          self[:properties] = self[:properties].reject do |k, v| 
-            k == id.to_sym
-          end
-        end
+        id = id.to_sym
+        self[:properties] = self[:properties].reject{|k, v|  k == id } unless self[:properties].nil?
+        self[:required] = self[:required].reject{|name| name == id} unless self[:required].nil?
+        self
       end
 
-      ###required###
-  
+      ##########
+      #required#
+      ##########
+      
+      # Adds a property to 'required' key
+      # @param name [Symbol] name of key
+      # @return [Array] required key
       def add_required_property(name)
-        return if name.nil?
         self[:required] = (self[:required] || []).push(name.to_s).uniq
       end
-  
+      
+      # Removes a property to 'required' key
+      # @param name [Symbol] name of key
+      # @return [Array] required key
       def remove_required_property(name)
-        return if self[:required].nil?
-        self[:required] = self[:required]&.reject{|n| n == name.to_s }
+        self[:required] = self[:required].reject{|n| n == name.to_s } unless self[:required].nil?
+        self[:required]
       end
 
       ###general###
