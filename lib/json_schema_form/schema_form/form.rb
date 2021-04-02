@@ -1,4 +1,8 @@
 module SchemaForm
+
+  DEFAULT_LOCALE = :es
+  AVAILABLE_LOCALES = [:es, :en]
+
   class Form < ::SuperHash::Hasher
 
     include JsonSchema::SchemaMethods::Schemable
@@ -37,14 +41,15 @@ module SchemaForm
       end
 
       if attribute == :definitions
-        # if obj.key?(:properties)
-        #   return SchemaForm::Form.new(obj, meta, options)
-        # end
-        # if obj.key?(:'$ref')
-        #   return SchemaForm::ComponentRef.new(obj, meta, options)
-        # end
-        if obj[:type] == 'string'
+        if obj[:isResponseSet]
           return SchemaForm::ResponseSet.new(obj, meta, options)
+        else
+          if obj[:type] == 'object'
+            return SchemaForm::Form.new(obj, meta, options)
+          end
+          # if obj.key?(:'$ref')
+          #   return SchemaForm::ComponentRef.new(obj, meta, options)
+          # end
         end
       end
 
@@ -214,17 +219,14 @@ module SchemaForm
     # Checks if the whole form is valid for a specified locale
     # @param locale [Symbol] locale
     # @return [Boolean] if valid
-    def valid_for_locale?(locale = :es)
+    def valid_for_locale?(locale = DEFAULT_LOCALE)
       all_properties_are_valid = self.merged_properties.find do |k,v|
-        !v.is_a?(SchemaForm::Field::Component) && (v.valid_for_locale?(locale) == false)
+        v.valid_for_locale?(locale) == false
       end.nil?
       all_response_sets_are_valid = self.response_sets.find do |k,v|
         v.valid_for_locale?(locale) == false
       end.nil?
-      # all_component_definitions_are_valid = self.component_definitions.find do |k,v|
-      #   v.valid_for_locale?(locale) == false
-      # end.nil?
-      all_properties_are_valid && all_response_sets_are_valid# && all_component_definitions_are_valid
+      all_properties_are_valid && all_response_sets_are_valid
     end
 
     # Retrieves all properties that are missing a response set
@@ -244,7 +246,7 @@ module SchemaForm
     # @return [Hash] subset of definitions filtered
     def component_definitions
       self[:definitions].select do |k,v|
-        !v.key?(:type)
+        !v.key?(:isResponseSet) && (v.key?(:$ref) || v[:type] == 'object')
       end
     end
 
@@ -255,7 +257,7 @@ module SchemaForm
     # get responseSets #ToDo this can be improved
     def response_sets
       self[:definitions].select do |k,v|
-        v[:type] == 'string' #v.key?('anyOf')
+        v[:isResponseSet]
       end
     end
 
@@ -525,7 +527,7 @@ module SchemaForm
           end
           [
             sub_schemas_max_score,
-            field.score_for_value(value)
+            (field.respond_to?(:score_for_value) ? field.score_for_value(value) : nil)
           ].compact.inject(&:+)
         end&.compact&.max
       

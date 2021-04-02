@@ -66,7 +66,7 @@ module SchemaForm
       self[:anyOf].find{|r| r[:const] == value }
     end
 
-    def valid_for_locale?(locale = :es)
+    def valid_for_locale?(locale = DEFAULT_LOCALE)
       self[:anyOf].find{|r| r.valid_for_locale?(locale) == false }.nil?
     end
 

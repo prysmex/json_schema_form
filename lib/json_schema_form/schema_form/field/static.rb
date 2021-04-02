@@ -20,7 +20,7 @@ module SchemaForm
         end
       end
 
-      def valid_for_locale?(locale = :es)
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
         true
       end
 
