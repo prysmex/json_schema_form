@@ -261,17 +261,11 @@ module SchemaForm
       end
     end
 
-    # returns the response set definition with specified id
-    # def get_response_set(id)
-    #   return nil if id.nil?
-    #   path = id&.sub('#/', '')&.split('/')&.map(&:to_sym)
-    #   self.dig(*path)
-    # end
-
     def add_response_set(id, definition)
       new_definitions_hash = {}.merge(self[:definitions])
       new_definitions_hash[id] = definition
       self[:definitions] = SuperHash::DeepKeysTransform.symbolize_recursive(new_definitions_hash)
+      self[:definitions][id]
     end
 
     ##########################
@@ -314,11 +308,8 @@ module SchemaForm
     # @param definition [Hash] the schema to add
     # @param options[:required] [Boolean] if the property should be required
     # @return [Object] Property added
-    def prepend_property(id, definition, options={})
-      new_definition = {}.merge(definition)
-      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, -1)
-      add_property(id, new_definition, options)
-      resort!
+    def prepend_property(*args)
+      insert_property_at_index(self.min_sort, *args)
     end
 
     # Adds a property with a sort value 1 more than the max and resorts all other properties
@@ -326,11 +317,8 @@ module SchemaForm
     # @param definition [Hash] the schema to add
     # @param options[:required] [Boolean] if the property should be required
     # @return [Object] Property added
-    def append_property(id, definition, options={})
-      new_definition = {}.merge(definition)
-      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, (self.max_sort + 1))
-      add_property(id, new_definition, options)
-      resort!
+    def append_property(*args)
+      insert_property_at_index((self.max_sort + 1), *args)
     end
 
     # Adds a property with a specified sort value and resorts all other properties
@@ -339,10 +327,13 @@ module SchemaForm
     # @param options[:required] [Boolean] if the property should be required
     # @return [Object] Property added
     def insert_property_at_index(index, id, definition, options={})
-      new_definition = {}.merge(definition)
-      SuperHash::Utils.bury(new_definition, :displayProperties, :sort, (index - 0.5))
-      add_property(id, new_definition, options)
+      response_set_id = options.delete(:response_set_id)
+
+      prop = add_property(id, definition, options)
+      prop.response_set_id = response_set_id if response_set_id
+      SuperHash::Utils.bury(prop, :displayProperties, :sort, (index - 0.5))
       resort!
+      prop
     end
 
     # Moves a property to a specific sort value and resorts needed properties
@@ -445,18 +436,31 @@ module SchemaForm
     # @param type [Symbol] type of condition
     # @param value [Symbol] value that makes the condition TRUE
     # @return [] the added property
-    def add_conditional_property(property_id, definition, options={}, position:, dependent_on:, type:, value:)
+    def insert_conditional_property_at_index(sort_value, property_id, definition, options={})
+      raise ArgumentError.new("sort must be an Integer, :prepend or :append, got #{sort_value}") unless sort_value.is_a?(Integer) || [:prepend, :append].include?(sort_value)
+      dependent_on = options.delete(:dependent_on)
+      type = options.delete(:type)
+      value = options.delete(:value)
+
       condition = add_or_get_condition(dependent_on, type, value)
-      added_property = case position
-      when :append
-        condition[:then].append_property(property_id, definition, options)
+      added_property = case sort_value
       when :prepend
         condition[:then].prepend_property(property_id, definition, options)
-      when Integer
-        condition[:then].insert_property_at_index(position, property_id, definition, options)
+      when :append
+        condition[:then].append_property(property_id, definition, options)
+      else
+        condition[:then].insert_property_at_index(sort_value, property_id, definition, options)
       end
-      yield(condition[:then]) if block_given?
+      yield(condition[:then], added_property) if block_given?
       added_property
+    end
+
+    def append_conditional_property(*args, &block)
+      insert_conditional_property_at_index(:append, *args, &block)
+    end
+
+    def prepend_conditional_property(*args, &block)
+      insert_conditional_property_at_index(:prepend, *args, &block)
     end
 
     # Retrieves all subforms for a specified number of recursion levels

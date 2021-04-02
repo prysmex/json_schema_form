@@ -17,6 +17,14 @@ module SchemaForm
       def self.included(base)
         require 'dry-schema'
       end
+
+      def hidden
+        self.dig(:displayProperties, :hidden)
+      end
+
+      def hidden=(value)
+        SuperHash::Utils.bury(self, :displayProperties, :hidden, value)
+      end
       
       #get the field's localized label
       def i18n_label(locale = DEFAULT_LOCALE)
@@ -66,7 +74,11 @@ module SchemaForm
       end
 
       def response_set_id
-        self[:$ref]
+        self.dig(*self.class::RESPONSE_SET_PATH)
+      end
+
+      def response_set_id=(id)
+        SuperHash::Utils.bury(self, *self.class::RESPONSE_SET_PATH, "#/definitions/#{id}")
       end
 
       #get the field's response set, only applies to certain fields

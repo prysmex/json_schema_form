@@ -6,6 +6,8 @@ module SchemaForm
       include JsonSchema::StrictTypes::Array
       include ::SchemaForm::Field::ResponseSettable
 
+      RESPONSE_SET_PATH = [:items, :$ref]
+
       ##################
       ###VALIDATIONS####
       ##################
@@ -40,10 +42,6 @@ module SchemaForm
       ##############
       ###METHODS####
       ##############
-
-      def response_set_id
-        self.dig(:items, :$ref)
-      end
 
       def max_score
         scored_responses = self.response_set

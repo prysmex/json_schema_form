@@ -2,7 +2,7 @@
   "$ref": "#/definitions/component1",
   "displayProperties": {
     "hiddenOnCreate": false,
-    "sort": 1,
+    "sort": 0,
     "hidden": false,
     "i18n": {
       "label": {

@@ -13,7 +13,7 @@
     "visibility": {
       "label": true
     },
-    "sort": 8,
+    "sort": 0,
     "hidden": false
   },
   "$schema": "http://json-schema.org/draft-07/schema#"

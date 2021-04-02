@@ -5,6 +5,8 @@ module SchemaForm
       include ::SchemaForm::Field::Base
       include SchemaForm::Field::ResponseSettable
 
+      RESPONSE_SET_PATH = [:$ref]
+
       ##################
       ###VALIDATIONS####
       ##################

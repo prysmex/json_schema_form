@@ -56,8 +56,10 @@ module SchemaForm
     ###METHODS####
     ##############
 
-    # def add_response
-    # end
+    def add_response(definition)
+      self[:anyOf] = (self[:anyOf] || []) << definition
+      self[:anyOf].last
+    end
 
     # def remove_response
     # end
