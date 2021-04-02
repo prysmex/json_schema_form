@@ -18,8 +18,9 @@ module SchemaForm
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:string)
+                end
               end
             end
             required(:visibility).hash do

@@ -37,13 +37,13 @@ class ResponseSetTest < Minitest::Test
 
   def test_valid_for_locale
     instance = build_response_set_instance(:default)
-    assert_equal true, instance.valid_for_locale?(:en)
+    assert_equal true, instance.valid_for_locale?
 
-    instance[:anyOf][0][:displayProperties][:i18n][:en] = ''
-    assert_equal false, instance.valid_for_locale?(:en)
+    instance[:anyOf][0].set_translation('')
+    assert_equal false, instance.valid_for_locale?
 
-    instance[:anyOf][0][:displayProperties][:i18n][:en] = nil
-    assert_equal false, instance.valid_for_locale?(:en)
+    instance[:anyOf][0].set_translation(nil)
+    assert_equal false, instance.valid_for_locale?
   end
 
 end

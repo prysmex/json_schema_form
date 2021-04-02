@@ -39,13 +39,13 @@ module BaseMethodsTests
     instance = field_klass.new(example)
 
     instance.set_label_for_locale('opciones')
-    assert_equal true, instance.valid_for_locale?(:es)
+    assert_equal true, instance.valid_for_locale?
 
     instance.set_label_for_locale('')
-    assert_equal false, instance.valid_for_locale?(:es)
+    assert_equal false, instance.valid_for_locale?
 
     instance.set_label_for_locale(nil)
-    assert_equal false, instance.valid_for_locale?(:es)
+    assert_equal false, instance.valid_for_locale?
 
     assert_equal false, instance.valid_for_locale?(:random)
   end
@@ -90,7 +90,6 @@ module ResponseSettableTests
           const: 'test',
           displayProperties: {
             i18n: {
-              en: "score_1_en",
               es: "score_1_es"
             }
           }
@@ -98,7 +97,7 @@ module ResponseSettableTests
       ]
     })
 
-    assert_equal 'score_1_en', example_form[:properties][:testprop].i18n_value('test', :en)
+    assert_equal 'score_1_es', example_form[:properties][:testprop].i18n_value('test', :es)
   end
 
 end

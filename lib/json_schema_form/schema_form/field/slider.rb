@@ -31,13 +31,15 @@ module SchemaForm
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:string)
+                end
               end
               # ToDo create two types of sliders and remove this when only numbers
               required(:enum).hash do
-                optional(:es).maybe(:hash)
-                optional(:en).maybe(:hash)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:hash)
+                end
               end
             end
             required(:visibility).hash do
@@ -70,7 +72,7 @@ module SchemaForm
       def migrate!
       end
 
-      def valid_for_locale?(locale = :es)
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
         label_is_valid = super
 
         missing_locale = self[:enum].find do |value|

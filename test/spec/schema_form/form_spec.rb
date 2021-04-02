@@ -89,7 +89,16 @@ class FormTest < Minitest::Test
   def test_valid_for_locale
     form_example = JsonSchemaForm::SchemaFormExamples.form
     form = SchemaForm::Form.new(form_example)
-    assert_equal true, form.valid_for_locale?(:es)
+
+    #default example is valid
+    assert_equal true, form.valid_for_locale?
+
+    #ToDo more examples
+    # SchemaForm::FormBuilder.new(form) do
+    #   append_property :prop1, JsonSchemaForm::SchemaFormExamples.select
+    # end
+
+    # form[:properties][:prop1].set_label_for_locale('')
   end
 
   def test_get_condition

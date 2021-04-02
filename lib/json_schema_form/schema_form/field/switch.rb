@@ -18,16 +18,19 @@ module SchemaForm
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:string)
+                end
               end
               required(:trueLabel).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:string)
+                end
               end
               required(:falseLabel).hash do
-                optional(:es).maybe(:string)
-                optional(:en).maybe(:string)
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale).maybe(:string)
+                end
               end
             end
             required(:visibility).hash do
@@ -62,7 +65,7 @@ module SchemaForm
       def migrate!
       end
 
-      def valid_for_locale?(locale = :es)
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
         super &&
           !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
           !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?

@@ -14,25 +14,23 @@ class SwitchTest < Minitest::Test
   def test_default_example_is_valid_for_locale
     example = JsonSchemaForm::SchemaFormExamples.switch
     instance = SchemaForm::Field::Switch.new(example)
-    assert_equal true, instance.valid_for_locale?(:en)
+    assert_equal true, instance.valid_for_locale?
   end
 
   def test_valid_for_locale
     hash = JsonSchemaForm::SchemaFormExamples.switch
-    locale = :en
     
     [:label, :trueLabel, :falseLabel].each do |label_key|
       instance = SchemaForm::Field::Switch.new(hash)
-      labels = instance.dig(:displayProperties, :i18n, label_key)
 
-      labels[locale] = ''
-      assert_equal false, instance.valid_for_locale?(locale)
+      instance.set_label_for_locale('')
+      assert_equal false, instance.valid_for_locale?
 
-      labels[locale] = nil
-      assert_equal false, instance.valid_for_locale?(locale)
+      instance.set_label_for_locale(nil)
+      assert_equal false, instance.valid_for_locale?
 
-      labels.delete(locale)
-      assert_equal false, instance.valid_for_locale?(locale)
+      instance.dig(:displayProperties, :i18n, label_key).delete(SchemaForm::DEFAULT_LOCALE)
+      assert_equal false, instance.valid_for_locale?
     end
   end
 

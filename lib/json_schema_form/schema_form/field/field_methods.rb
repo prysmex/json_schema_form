@@ -19,15 +19,15 @@ module SchemaForm
       end
       
       #get the field's localized label
-      def i18n_label(locale = :es)
+      def i18n_label(locale = DEFAULT_LOCALE)
         self.dig(:displayProperties, :i18n, :label, locale)
       end
 
-      def set_label_for_locale(label, locale = :es)
+      def set_label_for_locale(label, locale = DEFAULT_LOCALE)
         SuperHash::Utils.bury(self, :displayProperties, :i18n, :label, locale, label)
       end
       
-      def valid_for_locale?(locale = :es)
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
         !i18n_label(locale).to_s.empty?
       end
 
@@ -58,7 +58,7 @@ module SchemaForm
       REF_REGEX = /\A#\/definitions\/[a-z0-9\-_]+\z/
 
       # get the translation for a value in the field's response set
-      def i18n_value(value, locale = :es)
+      def i18n_value(value, locale = DEFAULT_LOCALE)
         self
           .response_set
           .get_response_from_value(value)

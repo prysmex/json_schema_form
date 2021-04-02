@@ -15,8 +15,9 @@ module SchemaForm
         required(:const).value(:string)
         required(:displayProperties).hash do
           required(:i18n).hash do
-            optional(:es).maybe(:string)
-            optional(:en).maybe(:string)
+            AVAILABLE_LOCALES.each do |locale|
+              optional(locale).maybe(:string)
+            end
           end
           optional(:color).maybe(:string)
         end
@@ -40,7 +41,11 @@ module SchemaForm
     ###METHODS####
     ##############
 
-    def valid_for_locale?(locale = :es)
+    def set_translation(label, locale = DEFAULT_LOCALE)
+      SuperHash::Utils.bury(self, :displayProperties, :i18n, locale, label)
+    end
+
+    def valid_for_locale?(locale = DEFAULT_LOCALE)
       !self.dig(:displayProperties, :i18n, locale).to_s.empty?
     end
 
