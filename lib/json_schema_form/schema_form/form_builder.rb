@@ -16,7 +16,7 @@ module SchemaForm
     end
   
     def method_missing(method_name, *args, &block)
-      @form.send(method_name, *args, &block)
+      @form.public_send(method_name, *args, &block)
     end
 
     def to_hash
