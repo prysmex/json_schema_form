@@ -327,10 +327,8 @@ module SchemaForm
     # @param options[:required] [Boolean] if the property should be required
     # @return [Object] Property added
     def insert_property_at_index(index, id, definition, options={})
-      response_set_id = options.delete(:response_set_id)
 
       prop = add_property(id, definition, options)
-      prop.response_set_id = response_set_id if response_set_id
       SuperHash::Utils.bury(prop, :displayProperties, :sort, (index - 0.5))
       resort!
       prop
