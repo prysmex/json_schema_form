@@ -13,7 +13,7 @@ module JsonSchema
       # @return [Object] Property added
       def add_property(id, definition, options={})
         new_definition = {}.merge(definition)
-        new_definition[:'$id'] = "/properties/#{id}" #TODO this currently only works for main form
+        new_definition[:'$id'] = "#/properties/#{id}" #TODO this currently only works for main form
         properties_hash = self[:properties]&.merge({}) || {}
         properties_hash[id] = new_definition
         if options[:required]

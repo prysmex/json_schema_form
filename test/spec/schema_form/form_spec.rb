@@ -14,10 +14,10 @@ class FormTest < Minitest::Test
   def test_property_key_must_match_property_id
     form_example = JsonSchemaForm::SchemaFormExamples.form
     form = SchemaForm::FormBuilder.build(form_example) do
-      append_property :header_1, JsonSchemaForm::SchemaFormExamples.header.merge({:$id => '/properties/header_1'})
+      append_property :header_1, JsonSchemaForm::SchemaFormExamples.header.merge({:$id => '#/properties/header_1'})
     end
     assert_empty form.errors
-    form[:properties][:header_1][:$id] = '/_properties/header_1'
+    form[:properties][:header_1][:$id] = '#/_properties/header_1'
     refute_empty form.errors
   end
 

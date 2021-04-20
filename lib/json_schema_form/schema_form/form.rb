@@ -192,7 +192,7 @@ module SchemaForm
 
       self[:properties]&.each do |k,v|
         # check property $id
-        regex = Regexp.new("\\A\/properties\/#{k}\\z")
+        regex = Regexp.new("\\A#/properties\/#{k}\\z")
         if v[:$id]&.match(regex).nil?
           errors_hash["$id_#{k}"] = "$id: '#{v[:$id]}' did not to match #{regex}"
         end
@@ -579,6 +579,9 @@ module SchemaForm
 
       #3.0.0 migrations
       if self[:schemaFormVersion] != '3.0.0'
+        self.merged_properties.each do |k,v|
+          v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
+        end
         if !meta[:is_subschema]
           new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
             anyOf = definition[:responses].map do |r|
