@@ -13,12 +13,8 @@ module SchemaForm
         Dry::Schema.define(parent: super) do
 
           before(:key_validator) do |result|
-            hash = result.to_h.inject({}) do |acum, (k,v)|
-              acum[k] = v
-              acum
-            end
-            enum_locales = hash.dig(:displayProperties, :i18n, :enum)
-            enum_locales&.each do |lang, locales|
+            hash = Marshal.load(Marshal.dump(result.to_h))
+            enum_locales = hash.dig(:displayProperties, :i18n, :enum)&.each do |lang, locales|
               locales&.clear
             end
             hash
