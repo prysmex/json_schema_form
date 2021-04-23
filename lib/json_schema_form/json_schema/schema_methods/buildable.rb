@@ -25,9 +25,14 @@ module JsonSchema
         base.update_attribute :oneOf, transform: ONE_OF_TRANSFORM
       end
 
+      def initialize(*args)
+        @builder = nil
+        super(*args)
+      end
+
       def builder(attribute, obj, meta, options)
-        if false#obj.class != ::Hash
-          obj.class.new(obj, meta, options)
+        if @builder
+          @builder.call(attribute, obj, meta, options)
         else
           self.class.new(obj, meta, options)
         end

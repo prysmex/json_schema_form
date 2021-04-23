@@ -28,9 +28,7 @@ module SchemaForm
     # Proc used to redefine an instance builder
     # This is required because JsonSchema::Schema has its own builder
     SUBSCHEMA_PROC = Proc.new do |inst|
-      inst.define_singleton_method(:builder) do |*args|
-        SchemaForm::Form::BUILDER.call(*args)
-      end
+      inst.instance_variable_set('@builder', BUILDER)
     end
     
     #defined in a Proc so it can be reused by SUBSCHEMA_PROC

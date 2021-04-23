@@ -13,11 +13,11 @@ module SchemaForm
         Dry::Schema.define(parent: super) do
 
           before(:key_validator) do |result|
-            hash = Marshal.load(Marshal.dump(result.to_h))
-            enum_locales = hash.dig(:displayProperties, :i18n, :enum)&.each do |lang, locales|
+            duplicate =result.to_h.deep_dup
+            enum_locales = duplicate.dig(:displayProperties, :i18n, :enum)&.each do |lang, locales|
               locales&.clear
             end
-            hash
+            duplicate
           end
 
           required(:type)
