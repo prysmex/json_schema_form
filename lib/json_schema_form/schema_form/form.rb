@@ -547,7 +547,7 @@ module SchemaForm
       end
 
       #compile dynamic properties
-      self.get_all_of_subschemas.each{|form| form.compile!}
+      self.get_all_of_subschemas(1).each{|form| form.compile!}
 
       self
     end
@@ -565,7 +565,7 @@ module SchemaForm
       end
       
       #migrate dynamic forms
-      self.get_all_of_subschemas.each{|form| form.migrate!}
+      self.get_all_of_subschemas(1).each{|form| form.migrate!}
 
       # migrate response sets
       self[:definitions]&.each do |id, definition|
@@ -575,12 +575,12 @@ module SchemaForm
         end
       end
 
-      #3.0.0 migrations
+      #3.0.0 migrations, remove after version
       if self[:schemaFormVersion] != '3.0.0'
-        self.merged_properties.each do |k,v|
-          v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
-        end
         if !meta[:is_subschema]
+          self.merged_properties.each do |k,v|
+            v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
+          end
           new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
             anyOf = definition[:responses].map do |r|
               hash = {
