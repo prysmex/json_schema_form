@@ -16,7 +16,7 @@ module SchemaForm
         Dry::Schema.define(parent: super) do
           required(:$ref).filled(:string)
           required(:displayProperties).hash do
-            optional(:hiddenOnCreate).maybe(:bool)
+            optional(:hideOnCreate).maybe(:bool)
             required(:isSelect).filled(Types::True)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do

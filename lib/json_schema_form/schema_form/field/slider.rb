@@ -23,7 +23,7 @@ module SchemaForm
           required(:type)
           required(:enum).array{ int? | float? }
           required(:displayProperties).hash do
-            optional(:hiddenOnCreate).maybe(:bool)
+            optional(:hideOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do

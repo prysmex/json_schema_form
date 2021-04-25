@@ -11,7 +11,7 @@ module SchemaForm
           config.validate_keys = true
           required(:$ref).filled(:string)
           required(:displayProperties).hash do
-            optional(:hiddenOnCreate).maybe(:bool)
+            optional(:hideOnCreate).maybe(:bool)
             required(:i18n).hash do
               required(:label).hash do
                 AVAILABLE_LOCALES.each do |locale|

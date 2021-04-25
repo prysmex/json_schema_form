@@ -2,7 +2,7 @@
   "title": "fecha3182",
   "type": "string",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

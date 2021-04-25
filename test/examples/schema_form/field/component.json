@@ -1,7 +1,7 @@
 {
   "$ref": "#/definitions/component1",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "sort": 0,
     "hidden": false,
     "i18n": {

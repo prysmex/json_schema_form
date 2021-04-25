@@ -2,7 +2,7 @@
   "title": "number_input",
   "type": "number",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

@@ -2,7 +2,7 @@
   "title": "checkbox",
   "type": "array",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

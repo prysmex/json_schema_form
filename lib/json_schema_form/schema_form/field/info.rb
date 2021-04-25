@@ -13,7 +13,7 @@ module SchemaForm
         Dry::Schema.define(parent: super) do
           required(:type)
           required(:displayProperties).hash do
-            optional(:hiddenOnCreate).maybe(:bool)
+            optional(:hideOnCreate).maybe(:bool)
             required(:pictures).value(:array?).array(:str?)
             required(:i18n).hash do
               required(:label).hash do

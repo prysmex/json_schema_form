@@ -2,7 +2,7 @@
   "title": "min_5_max_10_inc_15081",
   "type": "number",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

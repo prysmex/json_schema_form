@@ -2,7 +2,7 @@
   "title": "switch8196",
   "type": "boolean",
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "pictures": [],
     "i18n": {
       "label": {

@@ -3,7 +3,7 @@
   "title": "Description",
   "static": true,
   "displayProperties": {
-    "hiddenOnCreate": false,
+    "hideOnCreate": false,
     "sort": 0
   }
 }
