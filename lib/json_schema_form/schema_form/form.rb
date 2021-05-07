@@ -84,7 +84,11 @@ module SchemaForm
       when 'boolean', :boolean
         SchemaForm::Field::Switch
       when 'array', :array
-        SchemaForm::Field::Checkbox
+        if obj.dig(:items, :format) == 'uri'
+          SchemaForm::Field::FileInput
+        else
+          SchemaForm::Field::Checkbox
+        end
       when 'null', :null
         if obj&.dig(:displayProperties, :useHeader)
           SchemaForm::Field::Header

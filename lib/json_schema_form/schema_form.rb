@@ -17,6 +17,7 @@ require_relative 'schema_form/field/slider'
 require_relative 'schema_form/field/static'
 require_relative 'schema_form/field/switch'
 require_relative 'schema_form/field/text_input'
+require_relative 'schema_form/field/file_input'
 require_relative 'schema_form/field/component'
 
 #classes

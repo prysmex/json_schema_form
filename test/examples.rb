@@ -75,6 +75,10 @@ module JsonSchemaForm
       parse_example('/schema_form/field/text_input.json', options)
     end
 
+    def self.file_input(options={})
+      parse_example('/schema_form/field/file_input.json', options)
+    end
+
   end
 
 end

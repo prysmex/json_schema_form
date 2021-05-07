@@ -39,7 +39,8 @@ class FormTest < Minitest::Test
       select: JsonSchemaForm::SchemaFormExamples.select,
       slider: JsonSchemaForm::SchemaFormExamples.slider,
       static: JsonSchemaForm::SchemaFormExamples.static,
-      text_input: JsonSchemaForm::SchemaFormExamples.text_input
+      text_input: JsonSchemaForm::SchemaFormExamples.text_input,
+      file_input: JsonSchemaForm::SchemaFormExamples.file_input
     }
     form_example[:definitions] = {
       :"definition_1" => JsonSchemaForm::SchemaFormExamples.response_set
