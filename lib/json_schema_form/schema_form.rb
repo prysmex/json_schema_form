@@ -2,8 +2,6 @@ require_relative 'schema_form/form_builder'
 
 # document classes
 require_relative 'schema_form/document/document'
-require_relative 'schema_form/document/extras'
-require_relative 'schema_form/document/meta'
 
 # field classes
 require_relative 'schema_form/field/field_methods'

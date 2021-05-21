@@ -19,6 +19,9 @@ module SchemaForm
                 end
               end
             end
+            required(:visibility).hash do
+              required(:label).filled(:bool)
+            end
             required(:sort).filled(:integer)
             required(:hidden).filled(:bool)
           end

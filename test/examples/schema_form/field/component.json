@@ -9,6 +9,9 @@
         "es": "Prueba 1",
         "en": "Test 1"
       }
+    },
+    "visibility": {
+      "label": true
     }
   }
 }
