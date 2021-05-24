@@ -4,7 +4,7 @@ module SchemaForm
     include JsonSchema::SchemaMethods::Schemable
     include JsonSchema::Validations::Validatable
 
-    RESPONSE_PROC = ->(instance, responsesArray, attribute) {
+    RESPONSE_PROC = ->(attribute, responsesArray, instance) {
       if responsesArray.is_a? ::Array
         responsesArray.map.with_index do |response, index|
           path = instance.meta[:path] + [:anyOf, index]

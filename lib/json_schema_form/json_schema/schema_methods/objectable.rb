@@ -1,3 +1,5 @@
+# Methods for all schemas with json-schema 'object' type
+
 module JsonSchema
   module SchemaMethods
     module Objectable
@@ -51,9 +53,6 @@ module JsonSchema
         self[:required] = self[:required].reject{|n| n == name.to_s } unless self[:required].nil?
         self[:required]
       end
-
-      ###general###
-
 
     end
   end

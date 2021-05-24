@@ -1,10 +1,20 @@
+# Include this module to make your class 'buildable' (a recursive tree).
+# It sets the SuperHash's attributes with a transform Proc for each key that may contain a subschema.
+
+# It also defines a builder method (ultimately called by all Procs), to allow a single entry point to
+# customize how an instance can 'build' its child subschemas. This is how SchemaForm::Form
+# can easily customize how the schema tree is built.
+
+# It is important to note that all Procs are built so that the 'builder' always receive the
+# same arguments
+
 module JsonSchema
   module SchemaMethods
     module Buildable
 
       def self.included(base)
         ###########
-        #hash keys#
+        #Hash keys#
         ###########
         base.update_attribute :additionalProperties, transform: ADDITIONAL_PROPERTIES_TRANSFORM
         base.update_attribute :contains, transform: CONTAINS_TRANSFORM
@@ -25,59 +35,66 @@ module JsonSchema
         base.update_attribute :oneOf, transform: ONE_OF_TRANSFORM
       end
 
-      def initialize(*args)
-        @builder = nil
-        super(*args)
+      def initialize(obj={}, options={})
+        @builder = options.delete(:builder)
+        super(obj, options)
       end
 
-      def builder(attribute, obj, meta, options)
+      # Called by attribute Procs. It instantiates a new object by calling the instance's '@builder'
+      # proc if present, otherwise defaults to own class
+      # @param attribute [Symbol] name of the key
+      # @param subschema [Hash]
+      # @param meta [Hash]
+      # @param init_options [Hash] object initilization options
+      def builder(attribute, subschema, meta, init_options={})
         if @builder
-          @builder.call(attribute, obj, meta, options)
+          @builder.call(attribute, subschema, self, init_options.merge(meta: meta))
         else
-          self.class.new(obj, meta, options)
+          self.class.new(subschema, init_options.merge(meta: meta))
         end
       end
 
-      ###########
-      #Hash keys#
-      ###########
-      HASH_PROC = ->(attribute, instance, hash, path) {
-        instance.builder(
-          attribute,
-          hash,
-          {
-            parent: instance,
-            is_subschema: true,
-            path: (instance.meta[:path] || []) + path
-          },
-          {}#{skip_required_attrs: [:type]}
-        )
+      # Builds meta hash and calls builder method
+      CORE_PROC = ->(attribute, value, instance, path) {
+        meta = {
+          parent: instance,
+          is_subschema: true,
+          path: (instance.meta[:path] || []) + path
+        }
+        instance.builder( attribute, value, meta )
       }
 
-      ADDITIONAL_PROPERTIES_TRANSFORM = ->(instance, value, attribute) {
+      ############
+      #Hash Procs#
+      ############
+
+      # SuperHash::Hasher transform Proc
+      ADDITIONAL_PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
-          instance.class::HASH_PROC.call(attribute, instance, value, [attribute])
+          instance.class::CORE_PROC.call(attribute, value, instance, [attribute])
         else
           value
         end
       }
 
-      CONTAINS_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      CONTAINS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
-          instance.class::HASH_PROC.call(attribute, instance, value, [attribute])
+          instance.class::CORE_PROC.call(attribute, value, instance, [attribute])
         end
       }
 
-      DEFINITIONS_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      DEFINITIONS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
           value.inject({}) do |acum, (name, definition)|
-            acum[name] = instance.class::HASH_PROC.call(
+            acum[name] = instance.class::CORE_PROC.call(
               attribute, 
-              instance,
               definition,
+              instance,
               [:definitions, name]
             )
             acum
@@ -85,15 +102,16 @@ module JsonSchema
         end
       }
 
-      DEPENDENCIES_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      DEPENDENCIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
           value.inject({}) do |acum, (name, definition)|
             if definition.is_a?(::Hash)
-              acum[name] = instance.class::HASH_PROC.call(
+              acum[name] = instance.class::CORE_PROC.call(
                 attribute, 
-                instance,
                 definition,
+                instance,
                 [:dependencies, name]
               )
             else
@@ -108,25 +126,29 @@ module JsonSchema
 
       IF_TRANSFORM = CONTAINS_TRANSFORM
 
-      ITEMS_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      ITEMS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Array
-          instance.class::ARRAY_PROC.call(attribute, instance, value, [attribute])
+          value.map.with_index do |definition, index|
+            instance.class::CORE_PROC.call(attribute, definition, instance, [attribute, index])
+          end
         when ::Hash
-          instance.class::HASH_PROC.call(attribute, instance, value, [attribute])
+          instance.class::CORE_PROC.call(attribute, value, instance, [attribute])
         end
       }
 
       NOT_TRANSFORM = CONTAINS_TRANSFORM
 
-      PROPERTIES_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
           value.inject({}) do |acum, (name, definition)|
-            acum[name] = instance.class::HASH_PROC.call(
+            acum[name] = instance.class::CORE_PROC.call(
               attribute, 
-              instance,
               definition,
+              instance,
               [:properties, name]
             )
             acum
@@ -136,29 +158,17 @@ module JsonSchema
 
       THEN_TRANSFORM = CONTAINS_TRANSFORM
 
-      ############
-      #Array keys#
-      ############
-      
-      ARRAY_PROC = ->(attribute, instance, array, path) {
-        array.map.with_index do |definition, index|
-          instance.builder(
-            attribute,
-            definition,
-            {
-              parent: instance,
-              is_subschema: true,
-              path: (instance.meta[:path] || []) + path + [index]
-            },
-            {}#{skip_required_attrs: [:type]}
-          )
-        end
-      }
+      #############
+      #Array Procs#
+      #############
 
-      All_OF_TRANSFORM = ->(instance, value, attribute) {
+      # SuperHash::Hasher transform Proc
+      All_OF_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Array
-          instance.class::ARRAY_PROC.call(attribute, instance, value, [attribute])
+          value.map.with_index do |definition, index|
+            instance.class::CORE_PROC.call(attribute, definition, instance, [attribute, index])
+          end
         end
       }
 

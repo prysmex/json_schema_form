@@ -18,8 +18,12 @@ module SchemaForm
         require 'dry-schema'
       end
 
-      def hidden
+      def hidden?
         self.dig(:displayProperties, :hidden)
+      end
+
+      def hideOnCreate?
+        self.dig(:displayProperties, :hideOnCreate)
       end
 
       def hidden=(value)

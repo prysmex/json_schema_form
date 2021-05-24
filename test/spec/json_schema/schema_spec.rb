@@ -29,7 +29,7 @@ class SchemaTest < Minitest::Test
   end
 
   def test_meta_can_be_set_on_instantiation
-    instance = JsonSchema::Schema.new({type: 'string'}, {some_meta: true})
+    instance = JsonSchema::Schema.new({type: 'string'}, {meta: {some_meta: true}})
     assert_equal true, instance.meta[:some_meta]
   end
 
@@ -52,7 +52,7 @@ class SchemaTest < Minitest::Test
 
   def test_root_parent
     parent = JsonSchema::Schema.new()
-    assert_same parent, JsonSchema::Schema.new({}, {parent: parent}).root_parent
+    assert_same parent, JsonSchema::Schema.new({}, meta: {parent: parent}).root_parent
   end
 
   def test_key_name_returns_property_key

@@ -9,7 +9,6 @@ module SchemaForm
     include JsonSchema::Validations::Validatable
     include JsonSchema::SchemaMethods::Buildable
     include JsonSchema::StrictTypes::Object
-    # include SuperHash::Helpers
 
     CONDITIONAL_FIELDS = [
       SchemaForm::Field::Select,
@@ -25,93 +24,88 @@ module SchemaForm
       SchemaForm::Field::Select
     ].freeze
 
-    # Proc used to redefine an instance builder
-    # This is required because JsonSchema::Schema has its own builder
-    SUBSCHEMA_PROC = Proc.new do |inst|
-      inst.instance_variable_set('@builder', BUILDER)
+    # Proc used to redefine a subschema's instance builder.
+    # ONE reason we need this is that a when we encounter an allOf, JsonSchema::Schema
+    # objects are instantiated, but we need them to instantiate SchemaForm::Field classes,
+    # so we override their builder.
+    SUBSCHEMA_PROC = Proc.new do |instance|
+      instance.instance_variable_set('@builder', BUILDER)
     end
     
-    #defined in a Proc so it can be reused by SUBSCHEMA_PROC
-    BUILDER = ->(attribute, obj, meta, options) {
-      
-      if attribute == :responseSets #temporary for compatibility on v3.0.0 migrations
-        return Hash.new(obj)
-      end
+    # Defined in a Proc so it can be reused:
+    BUILDER = ->(attribute, subschema, instance, init_options={}) {
 
-      if attribute == :definitions
-        if obj[:isResponseSet]
-          return SchemaForm::ResponseSet.new(obj, meta, options)
-        else
-          if obj[:type] == 'object'
-            return SchemaForm::Form.new(obj, meta, options)
+      case instance
+      when SchemaForm::Form
+
+        case attribute
+        when :definitions
+          if subschema[:isResponseSet]
+            return SchemaForm::ResponseSet.new(subschema, init_options)
+          elsif subschema[:type] == 'object' #replaced schemas
+            return SchemaForm::Form.new(subschema, init_options)
+          elsif subschema.key?(:$ref) # shared definition
+            return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
           end
-          # if obj.key?(:'$ref')
-          #   return SchemaForm::ComponentRef.new(obj, meta, options)
-          # end
+        when :allOf
+          return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
+        when :properties
+          if subschema.key?(:$ref)
+            if subschema.dig(:displayProperties, :isSelect)
+              return SchemaForm::Field::Select.new(subschema, init_options)
+            else
+              return ::SchemaForm::Field::Component.new(subschema, init_options)
+            end
+          end
+
+          klass = case subschema[:type]
+            when 'string', :string
+              if subschema[:format] == 'date-time'
+                SchemaForm::Field::DateInput
+              elsif !subschema[:responseSetId].nil? #deprecated, only for compatibility before v3.0.0
+                SchemaForm::Field::Select
+              else
+                SchemaForm::Field::TextInput
+              end
+            when 'number', :number, 'integer', :integer
+              if subschema&.dig(:displayProperties, :useSlider)
+                SchemaForm::Field::Slider
+              else
+                SchemaForm::Field::NumberInput
+              end
+            when 'boolean', :boolean
+              SchemaForm::Field::Switch
+            when 'array', :array
+              if subschema.dig(:items, :format) == 'uri'
+                SchemaForm::Field::FileInput
+              else
+                SchemaForm::Field::Checkbox
+              end
+            when 'null', :null
+              if subschema&.dig(:displayProperties, :useHeader)
+                SchemaForm::Field::Header
+              elsif subschema&.dig(:displayProperties, :useInfo)
+                SchemaForm::Field::Info
+              elsif subschema[:static]
+                SchemaForm::Field::Static
+              end
+            end
+    
+          return klass.new(subschema, init_options) if klass
         end
-      end
+        
+      when JsonSchema::Schema
 
-      #ToDo be more specific
-      if [:allOf, :if, :not, :additionalProperties, :items, :definitions].include?(attribute)
-        return JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC))
-      end
-
-      if attribute == :properties && obj.key?(:$ref)
-        if obj.dig(:displayProperties, :isSelect)
-          return SchemaForm::Field::Select.new(obj, meta, options)
+        case attribute
+        when :then
+          return SchemaForm::Form.new(subschema, init_options)
         else
-          return ::SchemaForm::Field::Component.new(obj, meta, options)
+          return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC ))
         end
+        
       end
 
-      klass = case obj[:type]
-      # when 'object', :object
-      #   SchemaForm::Form
-      when 'string', :string
-        if obj[:format] == 'date-time'
-          SchemaForm::Field::DateInput
-        elsif !obj[:responseSetId].nil? #deprecated, only for compatibility before v3.0.0
-          SchemaForm::Field::Select
-        else
-          SchemaForm::Field::TextInput
-        end
-      when 'number', :number, 'integer', :integer
-        if obj&.dig(:displayProperties, :useSlider)
-          SchemaForm::Field::Slider
-        else
-          SchemaForm::Field::NumberInput
-        end
-      when 'boolean', :boolean
-        SchemaForm::Field::Switch
-      when 'array', :array
-        if obj.dig(:items, :format) == 'uri'
-          SchemaForm::Field::FileInput
-        else
-          SchemaForm::Field::Checkbox
-        end
-      when 'null', :null
-        if obj&.dig(:displayProperties, :useHeader)
-          SchemaForm::Field::Header
-        elsif obj&.dig(:displayProperties, :useInfo)
-          SchemaForm::Field::Info
-        elsif obj[:static]
-          SchemaForm::Field::Static
-        end
-      else
-        #detect by other ways than 'type' property
-        if obj.has_key?(:properties)
-          SchemaForm::Form
-        end
-      end
-
-      return klass.new(obj, meta, options) if klass
-
-      #ToDo be more specific
-      if obj.has_key?(:const) || obj.has_key?(:not) || obj.has_key?(:enum)
-        return JsonSchema::Schema.new(obj, meta, options.merge(preinit_proc: SUBSCHEMA_PROC ))
-      end
-
-      raise StandardError.new("builder conditions not met: (attribute: #{attribute}, obj: #{obj}, meta: #{meta})")
+      raise StandardError.new("builder conditions not met: (attribute: #{attribute}, subschema: #{subschema}, meta: #{instance.meta})")
     }
 
     # To prevent manually building conditions, we define this Proc
@@ -137,9 +131,12 @@ module SchemaForm
     update_attribute :required, default: ->(instance) { [].freeze }
     update_attribute :allOf, default: ->(instance) { [].freeze }
 
-    #override builder
-    def builder(*args)
-      SchemaForm::Form::BUILDER.call(*args)
+    def initialize(obj={}, options={})
+      options = {
+        builder: SchemaForm::Form::BUILDER
+      }.merge(options)
+
+      super(obj, options)
     end
 
     ##################
@@ -582,9 +579,12 @@ module SchemaForm
       #3.0.0 migrations, remove after version
       if self[:schemaFormVersion] != '3.0.0'
         if !meta[:is_subschema]
+          # prepend # to all properties $id
           self.merged_properties.each do |k,v|
             v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
           end
+
+          # migrate responseSets => definitions
           new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
             anyOf = definition[:responses].map do |r|
               hash = {

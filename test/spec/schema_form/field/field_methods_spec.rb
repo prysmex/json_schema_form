@@ -70,7 +70,7 @@ module ResponseSettableTests
   def test_response_set
     example_form = JsonSchemaForm::SchemaFormExamples.form
     field_example = self.example_for_current_field_klass
-    field_instance = field_klass.new(field_example, {parent: example_form})
+    field_instance = field_klass.new(field_example, meta: {parent: example_form})
     
     example_form[:properties][:testprop] = field_instance
     example_form[:definitions][:__test_response_set_id__] = {}
@@ -81,7 +81,7 @@ module ResponseSettableTests
   def test_i18n_value
     example_form = JsonSchemaForm::SchemaFormExamples.form
     field_example = self.example_for_current_field_klass
-    field_instance = field_klass.new(field_example, parent: example_form)
+    field_instance = field_klass.new(field_example, meta: {parent: example_form})
 
     example_form[:properties][:testprop] = field_instance
     example_form[:definitions][:__test_response_set_id__] = SchemaForm::ResponseSet.new({

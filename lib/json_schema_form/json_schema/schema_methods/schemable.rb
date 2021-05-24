@@ -25,12 +25,12 @@ module JsonSchema
         # }
       end
       
-      def initialize(obj={}, meta={}, options={})
+      def initialize(obj={}, options={})
         @meta = {
           parent: nil,
           path: [],
           is_subschema: false
-        }.merge(meta)
+        }.merge(options.delete(:meta) || {})
 
         super(obj, options)
       end
