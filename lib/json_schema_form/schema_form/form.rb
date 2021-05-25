@@ -279,28 +279,36 @@ module SchemaForm
     end
 
     # ToDo consider else key in allOf
-    # Iterates and yields each subschema along with its condition.
+    # Iterates and yields each SchemaForm along with its condition.
     # If 'skip_when_false' is true and the returned value from the yield equals false,
     # then the iteration of that tree is halted
 
-    # @param start_level [Integer] Depth of allOf nesting to ignore
+    # @param start_level [Integer] Depth of allOf nesting to ignore (0 for root)
     # @param levels [Integer] Max depth of allOf nesting to starting from start_level
     # @param skip_when_false [Boolean]
     # @return [Nil]
-    def subschema_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
+    def schema_form_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
       return if !start_level.nil? && !levels.nil? && current_level >= (start_level + levels)
       return if self[:allOf].nil?
 
+      #root
+      if current_level == 0 && current_level >= start_level
+        yield( nil, self, nil, current_level )
+      end
+      current_level += 1
+
+      #recursive allOf
       self[:allOf].each do |condition_subschema|
         if start_level.nil? || current_level >= start_level
           returned_value = yield(
-            condition_subschema,
+            condition_subschema[:if],
+            condition_subschema[:then],
             self,
             current_level
           )
           next if skip_when_false && (returned_value == false)
         end
-        condition_subschema[:then]&.subschema_iterator(
+        condition_subschema[:then]&.schema_form_iterator(
           start_level: start_level,
           levels: levels,
           skip_when_false: skip_when_false,
@@ -308,22 +316,29 @@ module SchemaForm
           &block
         )
       end
+
       nil
     end
 
-    def nil_document_with_all_visible_properties(document, &block)
+    # Calls 'schema_form_iterator' with a default start_level of 1 to include only subschemas
+    # supports same params as 'schema_form_iterator'
+    def subschema_iterator(start_level: 1, **args, &block)
+      schema_form_iterator(start_level: start_level, **args, &block)
+    end
+
+    # Builds a document with a key for each property on the schema form.
+    #   - pass {skip_when_false: true} to include only visible properties
+    def nil_document(document, **args, &block)
       #root
       obj = self[:properties].transform_values{|v| nil}
 
       #subschemas
-      subschema_iterator(skip_when_false: true) do |condition_subschema, schema, current_level|
-        key = condition_subschema[:if][:properties].keys.first
-        value = yield( condition_subschema[:if], {"#{key}".to_sym => document[key]}, schema.dig(:properties, key) ) #subschema
-        if value
-          obj.merge!(
-            condition_subschema[:then][:properties].transform_values{|v| nil}
-          )
-        end
+      subschema_iterator(**args) do |if_hash, then_hash, parent_schema, current_level|
+        key = if_hash[:properties].keys.first
+        value = yield( if_hash, {"#{key}".to_sym => document[key]}, parent_schema.dig(:properties, key) )
+
+        obj.merge!( then_hash[:properties].transform_values{|v| nil} ) if value
+
         value
       end
 
@@ -335,9 +350,8 @@ module SchemaForm
     # @return [Array] array of subschemas retrieved
     def get_all_of_subschemas(**args)
       subschemas = []
-      subschema_iterator(**args) do |condition|
-        subschema = condition[:then]
-        subschemas.push(subschema) if subschema
+      subschema_iterator(**args) do |_, then_hash|
+        subschemas.push(then_hash) if then_hash
       end
       subschemas
     end
@@ -345,8 +359,8 @@ module SchemaForm
     # get dynamic properties
     def dynamic_properties(**args)
       properties = {}
-      subschema_iterator(**args) do |condition|
-        properties.merge!(condition[:then]&.properties || {})
+      subschema_iterator(**args) do |_, then_hash|
+        properties.merge!(then_hash&.properties || {})
       end
       properties
     end
@@ -365,9 +379,8 @@ module SchemaForm
     # returns the property definition of the first matched key in subschemas
     def get_dynamic_property(property, **args)
       property = property.to_sym
-      subschema_iterator(**args) do |condition|
-        subschema = condition[:then]
-        props = subschema&.properties
+      subschema_iterator(**args) do |_, then_hash|
+        props = then_hash&.properties
         break props[property] if props&.key?(property)
       end
     end
