@@ -76,10 +76,10 @@ class SchemaTest < Minitest::Test
 
   def test_empty_dependent_conditions_no_parent
     instance = JsonSchema::Schema.new()
-    assert_empty instance.dependent_conditions
+    assert_nil instance.dependent_conditions
     assert_equal false, instance.has_dependent_conditions?
-    assert_empty instance.dependent_conditions_for_value('some_value') {false}
-    assert_empty instance.dependent_conditions_for_value('some_value') {true}
+    assert_nil instance.dependent_conditions_for_value('some_value') {false}
+    assert_nil instance.dependent_conditions_for_value('some_value') {true}
   end
 
   def test_empty_dependent_conditions_with_parent

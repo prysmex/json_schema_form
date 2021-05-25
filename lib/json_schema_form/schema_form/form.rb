@@ -13,8 +13,7 @@ module SchemaForm
     CONDITIONAL_FIELDS = [
       SchemaForm::Field::Select,
       SchemaForm::Field::Switch,
-      SchemaForm::Field::NumberInput,
-      # SchemaForm::Field::TextInput
+      SchemaForm::Field::NumberInput
     ].freeze
 
     SCORABLE_FIELDS = [
@@ -126,11 +125,11 @@ module SchemaForm
     }
 
     update_attribute :definitions, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }
-    attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
     update_attribute :properties, default: ->(instance) { {}.freeze }
     update_attribute :required, default: ->(instance) { [].freeze }
     update_attribute :allOf, default: ->(instance) { [].freeze }
-
+    attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
+    
     def initialize(obj={}, options={})
       options = {
         builder: SchemaForm::Form::BUILDER
@@ -215,7 +214,9 @@ module SchemaForm
     ###METHODS####
     ##############
 
-    # Checks if the whole form is valid for a specified locale
+    # Checks if the whole form is valid for a specified locale:
+    #   - all properties (merged_properties)
+    #   - all response sets
     # @param locale [Symbol] locale
     # @return [Boolean] if valid
     def valid_for_locale?(locale = DEFAULT_LOCALE)
@@ -233,7 +234,7 @@ module SchemaForm
     # @return
     # def merged_properties_missing_response_set(levels=nil)
     #   merged_properties(levels)&.each_with_object([]) |(k,v) array| do
-    #     array.push(v) if v.respond_to?(:response_set) && v.response_set.nil?
+    #     array.push(v) if CONDITIONAL_FIELDS.include?(v.class) && v.response_set.nil?
     #   end
     # end
 
@@ -245,7 +246,8 @@ module SchemaForm
     # @return [Hash] subset of definitions filtered
     def component_definitions
       self[:definitions].select do |k,v|
-        !v.key?(:isResponseSet) && (v.key?(:$ref) || v[:type] == 'object')
+        !v.key?(:isResponseSet) && 
+            (v.key?(:$ref) || v[:type] == 'object')
       end
     end
 
@@ -276,30 +278,108 @@ module SchemaForm
       self[:properties]
     end
 
-    # get dynamic properties
-    def dynamic_properties(levels=nil)
-      get_all_of_subschemas(levels).reduce({}) do |acum, subschema|
-        acum.merge(subschema.properties || {})
+    # ToDo consider else key in allOf
+    # Iterates and yields each subschema along with its condition.
+    # If 'skip_when_false' is true and the returned value from the yield equals false,
+    # then the iteration of that tree is halted
+
+    # @param start_level [Integer] Depth of allOf nesting to ignore
+    # @param levels [Integer] Max depth of allOf nesting to starting from start_level
+    # @param skip_when_false [Boolean]
+    # @return [Nil]
+    def subschema_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
+      return if !start_level.nil? && !levels.nil? && current_level >= (start_level + levels)
+      return if self[:allOf].nil?
+
+      self[:allOf].each do |condition_subschema|
+        if start_level.nil? || current_level >= start_level
+          returned_value = yield(
+            condition_subschema,
+            self,
+            current_level
+          )
+          next if skip_when_false && (returned_value == false)
+        end
+        condition_subschema[:then]&.subschema_iterator(
+          start_level: start_level,
+          levels: levels,
+          skip_when_false: skip_when_false,
+          current_level: current_level + 1,
+          &block
+        )
       end
+      nil
+    end
+
+    def nil_document_with_all_visible_properties(document, &block)
+      #root
+      obj = self[:properties].transform_values{|v| nil}
+
+      #subschemas
+      subschema_iterator(skip_when_false: true) do |condition_subschema, schema, current_level|
+        key = condition_subschema[:if][:properties].keys.first
+        value = yield( condition_subschema[:if], {"#{key}".to_sym => document[key]}, schema.dig(:properties, key) ) #subschema
+        if value
+          obj.merge!(
+            condition_subschema[:then][:properties].transform_values{|v| nil}
+          )
+        end
+        value
+      end
+
+      obj
+    end
+
+    # Retrieves all subforms for a specified number of recursion levels
+    # @param levels [Integer] number of recursion to apply
+    # @return [Array] array of subschemas retrieved
+    def get_all_of_subschemas(**args)
+      subschemas = []
+      subschema_iterator(**args) do |condition|
+        subschema = condition[:then]
+        subschemas.push(subschema) if subschema
+      end
+      subschemas
+    end
+
+    # get dynamic properties
+    def dynamic_properties(**args)
+      properties = {}
+      subschema_iterator(**args) do |condition|
+        properties.merge!(condition[:then]&.properties || {})
+      end
+      properties
     end
 
     # get own and dynamic properties
-    def merged_properties(levels=nil)
+    def merged_properties(**args)
       (self[:properties] || {})
-        .merge(self.dynamic_properties(levels))
+        .merge(self.dynamic_properties(**args))
     end
 
-    # returns the property JSON definition inside the properties key
+    # returns the property definition inside the properties key
     def get_property(property)
       self.dig(:properties, property.to_sym)
     end
 
-    def get_dynamic_property(property, levels=nil)
-      dynamic_properties(levels)&.[](property.to_sym)
+    # returns the property definition of the first matched key in subschemas
+    def get_dynamic_property(property, **args)
+      property = property.to_sym
+      subschema_iterator(**args) do |condition|
+        subschema = condition[:then]
+        props = subschema&.properties
+        break props[property] if props&.key?(property)
+      end
     end
 
-    def get_merged_property(property, levels=nil)
-      merged_properties(levels)&.[](property.to_sym)
+    # returns the property definition of the first match in a root or subschema property
+    def get_merged_property(property, **args)
+      property = property.to_sym
+      if self[:properties].key?(property)
+        self[:properties][property]
+      else
+        get_dynamic_property(property, **args)
+      end
     end
 
     # Adds a property with a sort value of 0 and resorts all other properties
@@ -460,23 +540,6 @@ module SchemaForm
       insert_conditional_property_at_index(:prepend, *args, &block)
     end
 
-    # Retrieves all subforms for a specified number of recursion levels
-    # @param levels [Integer] number of recursion to apply
-    # @return [Array] array of subschemas retrieved
-    #ToDo consider else key in allOf
-    def get_all_of_subschemas(levels=nil, level=0)
-      return [] if levels && level >= levels
-      schemas_array=[]
-      self[:allOf]&.each do |condition_subschema|
-        subschema = condition_subschema[:then]
-        if subschema
-          schemas_array.push(subschema)
-          schemas_array.concat(subschema.get_all_of_subschemas(levels, level + 1))
-        end
-      end
-      schemas_array
-    end
-
     # Calculates the maximum attainable score considering all possible branches
     # @return [Nil|Float]
     def max_score(&block)
@@ -626,7 +689,7 @@ module SchemaForm
 
     private
 
-    #make this private so to favor append, prepend methods
+    #make this private to favor append, prepend methods
     def add_property(*args)
       super(*args)
     end

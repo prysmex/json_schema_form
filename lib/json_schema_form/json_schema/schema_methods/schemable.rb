@@ -35,11 +35,13 @@ module JsonSchema
         super(obj, options)
       end
 
+      # Returns an array of json-schema types, even when self[:type] is a string
+      # @return [Array]
       def types
         self[:type].is_a?(::Array) ? self[:type] : [self[:type]] if self[:type]
       end
 
-      # get the uppermost parent
+      # Get the uppermost reachable parent by looping through the references in meta
       def root_parent
         parent = self.meta[:parent]
         return parent if parent.nil?
@@ -52,40 +54,48 @@ module JsonSchema
         parent
       end
 
-      # used for properties, returns true if it is required
-      # by a parent object
+      # Checks if parent schema's 'properties' array contains they key of current subschema
       def required?
         if meta.dig(:parent, :required)
           meta.dig(:parent, :required).include?(key_name)
         end
       end
 
-      # get name of key if nested inside properties or definitions
+      # Get name of key if nested inside properties or definitions by checking the path
+      # {properties: {some_key: {}}} => 'some_key'
       def key_name
-        last_2 = self.meta[:path].last(2)
-        if last_2.size == 2 && [:properties, :definitions].include?(last_2[0])
-          last_2[1]
+        attribute, key_name = self.meta[:path].last(2)
+        if [:properties, :definitions].include?(attribute)
+          key_name
         end
       end
 
       # https://json-schema.org/understanding-json-schema/reference/conditionals.html
       #ToDo missing parent if conditions
+      # Returns all conditions that depend on the schema instance
+      # @return [Nil, Array]
       def dependent_conditions
+        key = self.key_name
+        return if key.nil?
         parent_all_of = self.meta.dig(:parent, :allOf) || []
         
         parent_all_of.select do |condition|
-          key = self.key_name
-          next false if key.nil?
           condition.dig(:if, :properties).keys.include?(key)
         end
       end
 
+      # @return [Boolean] true if the schema instance has conditions that depend on it
       def has_dependent_conditions?
-        dependent_conditions.length > 0
+        (dependent_conditions || []).length > 0
       end
 
+      # Selects dependent_conditions that evaluate to true based on a input value
+      # The evaluation of the schema is not part of the scope of this gem, so a
+      # block is yielded so a json-schema compliant method can evaluate it.
+      # @param value [] value to evaluate
+      # @return [Nil, Array] 
       def dependent_conditions_for_value(value, &block)
-        dependent_conditions.select do |condition|
+        dependent_conditions&.select do |condition|
           yield(condition[:if], value, self)
         end
       end
