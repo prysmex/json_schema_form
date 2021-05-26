@@ -44,7 +44,7 @@ module SchemaForm
       ##############
 
       def max_score
-        scored_responses = self.response_set
+        self.response_set
           &.[](:anyOf)
           &.reduce(nil) do |sum,response|
             [

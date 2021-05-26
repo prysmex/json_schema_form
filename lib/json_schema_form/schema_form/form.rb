@@ -214,29 +214,30 @@ module SchemaForm
     ###METHODS####
     ##############
 
-    # Checks if the whole form is valid for a specified locale:
-    #   - all properties (merged_properties)
-    #   - all response sets
+    # Checks locale vality for the following:
+    #   - properties (recursive)
+    #   - response sets
     # @param locale [Symbol] locale
     # @return [Boolean] if valid
     def valid_for_locale?(locale = DEFAULT_LOCALE)
-      all_properties_are_valid = self.merged_properties.find do |k,v|
-        v.valid_for_locale?(locale) == false
-      end.nil?
-      all_response_sets_are_valid = self.response_sets.find do |k,v|
-        v.valid_for_locale?(locale) == false
-      end.nil?
-      all_properties_are_valid && all_response_sets_are_valid
-    end
 
-    # Retrieves all properties that are missing a response set
-    # @param
-    # @return
-    # def merged_properties_missing_response_set(levels=nil)
-    #   merged_properties(levels)&.each_with_object([]) |(k,v) array| do
-    #     array.push(v) if CONDITIONAL_FIELDS.include?(v.class) && v.response_set.nil?
-    #   end
-    # end
+      # check response_sets
+      invalid_response_set = self.response_sets.any? do |k,v|
+        v.valid_for_locale?(locale) == false
+      end
+      return false if invalid_response_set 
+
+      # check properties
+      has_invalid_property = self.schema_form_iterator do |_, then_hash|
+        invalid_prop = then_hash&.properties&.any? do |k,v|
+          v.valid_for_locale?(locale) == false
+        end
+
+        break invalid_prop if invalid_prop
+      end
+
+      !has_invalid_property
+    end
 
     ###########################
     ###COMPONENT MANAGEMENT####
@@ -343,17 +344,6 @@ module SchemaForm
       end
 
       obj
-    end
-
-    # Retrieves all subforms for a specified number of recursion levels
-    # @param levels [Integer] number of recursion to apply
-    # @return [Array] array of subschemas retrieved
-    def get_all_of_subschemas(**args)
-      subschemas = []
-      subschema_iterator(**args) do |_, then_hash|
-        subschemas.push(then_hash) if then_hash
-      end
-      subschemas
     end
 
     # get dynamic properties
@@ -554,95 +544,86 @@ module SchemaForm
     end
 
     # Calculates the maximum attainable score considering all possible branches
+    # A block is required to resolve whether a conditional field is visible or not
     # @return [Nil|Float]
-    def max_score(&block)
-      self[:properties].inject(nil) do |acum, (name, field_def)|
-        [
-          acum,
-          max_score_for_branch(name, field_def, &block)
-        ].compact.inject(&:+)
-      end
-    end
+    def max_score(skip_hidden: true, &block)
+      self[:properties].inject(nil) do |acum, (name, field)|
+        next acum if skip_hidden && field.hidden?
 
-    # Calculates the maximum attainable score for a specific branch
-    # @return [Nil|Float]
-    def max_score_for_branch(name, field, &block)
-
-      # Field may have conditional fields so we go recursive trying all possible
-      # values to calculate the max score
-      if CONDITIONAL_FIELDS.include? field.class
-        
-        # can we generalize this?
-        # - 1) when fields respond_to :possible_values
-        # - 2) when fileds don't respond_to :possible_values get values from conditions
-        possible_values = case field
-        when SchemaForm::Field::Select
-          field.response_set[:anyOf].map do |obj|
-            obj[:const]
-          end
-        when SchemaForm::Field::Switch
-          [true, false]
-        when SchemaForm::Field::NumberInput
-          field.dependent_conditions&.map do |condition|
-            condition_value = condition[:if][:properties].values[0]
-            if condition_value.key?(:not)
-              'BP8;x&/dTF2Qn[RG' #some very random text
-            else
-              condition_value[:const]
+        # Field may have conditional fields so we go recursive trying all possible
+        # values to calculate the max score
+        field_score = if CONDITIONAL_FIELDS.include?(field.class)
+          
+          # can we generalize this?
+          # - 1) when fields respond_to :possible_values
+          # - 2) when fileds don't respond_to :possible_values get values from conditions
+          possible_values = case field
+          when SchemaForm::Field::Select
+            field.response_set[:anyOf].map do |obj|
+              obj[:const]
             end
-          end || []
-        end
-    
-        #iterate all posible values and take only the max_score
-        possible_values&.map do |value|
-          dependent_conditions = field.dependent_conditions_for_value({"#{name}" => value}, &block)
-          sub_schemas_max_score = dependent_conditions.inject(nil) do |acum_score, condition|
-            [
-              acum_score,
-              condition[:then]&.max_score(&block)
-            ].compact.inject(&:+)
+          when SchemaForm::Field::Switch
+            [true, false]
+          when SchemaForm::Field::NumberInput
+            field.dependent_conditions&.map do |condition|
+              condition_value = condition[:if][:properties].values[0]
+              if condition_value.key?(:not)
+                'BP8;x&/dTF2Qn[RG' #some very random text
+              else
+                condition_value[:const]
+              end
+            end || []
           end
-          [
-            sub_schemas_max_score,
-            (field.respond_to?(:score_for_value) ? field.score_for_value(value) : nil)
-          ].compact.inject(&:+)
-        end&.compact&.max
       
-      # Field hash score but not conditional fields
-      elsif SCORABLE_FIELDS.include? field.class
-        field.max_score
-      else
-        nil
+          #iterate all posible values and take only the max_score
+          possible_values&.map do |value|
+            dependent_conditions = field.dependent_conditions_for_value({"#{name}" => value}, &block)
+            sub_schemas_max_score = dependent_conditions.inject(nil) do |acum_score, condition|
+              [
+                acum_score,
+                condition[:then]&.max_score(&block)
+              ].compact.inject(&:+)
+            end
+            [
+              sub_schemas_max_score,
+              (field.respond_to?(:score_for_value) ? field.score_for_value(value) : nil)
+            ].compact.inject(&:+)
+          end&.compact&.max
+        
+        # Field hash score but not conditional fields
+        elsif SCORABLE_FIELDS.include? field.class
+          field.max_score
+        else
+          nil
+        end
+
+        [ acum, field_score ].compact.inject(&:+)
       end
     end
 
     # @ return [Form] a mutated Form that is json schema compliant
     def compile!
-      #compile root level properties
-      self[:properties]&.each do |id, definition|
-        definition.compile! if definition&.respond_to?(:compile!)
+      self.schema_form_iterator do |_, then_hash|
+        then_hash[:properties]&.each do |id, definition|
+          definition.compile! if definition&.respond_to?(:compile!)
+        end
       end
-
-      #compile dynamic properties
-      self.get_all_of_subschemas(1).each{|form| form.compile!}
-
-      self
     end
 
     # Allows the definition of migrations to 'upgrade' schemas when the standard changes
     # The method is only the last migration script (not versioned)
     # @return [Form] a mutated instance of the Form
     def migrate!(options={})
+
       # migrate properties
-      self[:properties]&.each do |id, definition|
-        if definition&.respond_to?(:migrate!)
-          puts 'migrating ' + definition.class.to_s.demodulize
-          definition.migrate!
+      self.schema_form_iterator do |_, then_hash|
+        then_hash[:properties]&.each do |id, definition|
+          if definition&.respond_to?(:migrate!)
+            puts 'migrating ' + definition.class.to_s.demodulize
+            definition.migrate!
+          end
         end
       end
-      
-      #migrate dynamic forms
-      self.get_all_of_subschemas(1).each{|form| form.migrate!}
 
       # migrate response sets
       self[:definitions]&.each do |id, definition|
@@ -652,7 +633,7 @@ module SchemaForm
         end
       end
 
-      #3.0.0 migrations, remove after version
+      #3.0.0 migrations START, remove after version
       if self[:schemaFormVersion] != '3.0.0'
         if !meta[:is_subschema]
           # prepend # to all properties $id
@@ -692,11 +673,13 @@ module SchemaForm
         end
         self.delete(:additionalProperties)
       end
+      #3.0.0 migrations END, remove after version
 
       # migrate form object
       if !meta[:is_subschema]
         self[:schemaFormVersion] = '3.0.0'
       end
+
       self
     end
 
