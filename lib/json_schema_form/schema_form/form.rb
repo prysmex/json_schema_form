@@ -635,50 +635,52 @@ module SchemaForm
 
       #3.0.0 migrations START, remove after version
       if self[:schemaFormVersion] != '3.0.0'
-        if !meta[:is_subschema]
-          # prepend # to all properties $id
-          self.merged_properties.each do |k,v|
+
+        self.schema_form_iterator do |_, then_hash|
+          if then_hash.meta[:is_subschema]
+            then_hash.delete(:$id)
+          end
+          
+          then_hash[:properties]&.each do |k, v|
             v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
           end
-
-          # migrate responseSets => definitions
-          new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
-            anyOf = definition[:responses].map do |r|
-              hash = {
-                type: 'string',
-                const: r[:value],
-                displayProperties: r[:displayProperties]
-              }
-              if options[:is_inspection]
-                hash.merge!({
-                  enableScore: r[:enableScore],
-                  score: r[:score],
-                  failed: r[:failed]
-                })
-              end
-              hash
-            end
-            acum[id] = {
-              type: 'string',
-              isResponseSet: true,
-              anyOf: anyOf
-            }
-            acum
-          end
-          old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
-          self.delete(:responseSets)
-          self[:definitions] = old_definitions.merge(new_definitions)
-        else
-          self.delete(:$id)
         end
-        self.delete(:additionalProperties)
-      end
-      #3.0.0 migrations END, remove after version
 
-      # migrate form object
-      if !meta[:is_subschema]
+        # migrate responseSets => definitions
+        new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
+          anyOf = definition[:responses].map do |r|
+            hash = {
+              type: 'string',
+              const: r[:value],
+              displayProperties: r[:displayProperties]
+            }
+            if options[:is_inspection]
+              hash.merge!({
+                enableScore: r[:enableScore],
+                score: r[:score],
+                failed: r[:failed]
+              })
+            end
+            hash
+          end
+          acum[id] = {
+            type: 'string',
+            isResponseSet: true,
+            anyOf: anyOf
+          }
+          acum
+        end
+        old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
+        self.delete(:responseSets)
+        self[:definitions] = old_definitions.merge(new_definitions)
+
+        # remove additionalProperties
+        self.delete(:additionalProperties)
+
+        # add version
         self[:schemaFormVersion] = '3.0.0'
       end
+      #3.0.0 migrations END, remove after version
 
       self
     end
