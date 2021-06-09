@@ -214,6 +214,50 @@ module SchemaForm
     ###METHODS####
     ##############
 
+    def i18n_document(document, is_inspection: false, locale: :es)
+      merged_properties = self.merged_properties #precalculate for performance
+
+      raise StandardError.new('schema not found') if merged_properties.nil?
+      document.each_with_object({}) do|(name, v), hash|
+        next if (is_inspection && [:extras, :meta].include?(name))
+        value = self.i18n_document_value(
+          name,
+          v,
+          locale: locale,
+          property: merged_properties[name],
+        )
+        hash[name] = value unless value.nil?
+      end
+    end
+
+    def i18n_document_value(attr_name, value, is_inspection: false, locale: :es, property: nil)
+      return if value.nil?
+      
+      #for performance, allow passing the property
+      property ||= get_merged_property(attr_name)
+      return unless property.present?
+
+      case property
+      when SchemaForm::Field::Checkbox
+        value.map{|v| property.i18n_value(v, locale) }
+      when SchemaForm::Field::Slider
+        property.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s.to_sym)
+      when SchemaForm::Field::Select
+        property.i18n_value(value, locale)
+      when SchemaForm::Field::DateInput
+        value.class == DateTime ? value : DateTime.parse(value) 
+      when SchemaForm::Field::Switch
+        label = value ? :trueLabel : :falseLabel
+        property.dig(:displayProperties, :i18n, label, locale)
+      when SchemaForm::Field::Component
+        property
+          .component_definition
+          .i18n_document(value, locale: locale, is_inspection: is_inspection)
+      else
+        value
+      end
+    end
+
     # Checks locale vality for the following:
     #   - properties (recursive)
     #   - response sets
@@ -608,6 +652,7 @@ module SchemaForm
           definition.compile! if definition&.respond_to?(:compile!)
         end
       end
+      self
     end
 
     # Allows the definition of migrations to 'upgrade' schemas when the standard changes

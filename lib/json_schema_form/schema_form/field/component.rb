@@ -45,7 +45,10 @@ module SchemaForm
       #get the field's response set, only applies to certain fields
       def component_definition
         path = self.component_definition_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
-        root_parent&.dig(*path) unless path.nil? || path.empty?
+        return if path.nil? || path.empty?
+        find_parent do |current, _next|
+          current.key?(:definitions)
+        end&.dig(*path)
       end
   
     end

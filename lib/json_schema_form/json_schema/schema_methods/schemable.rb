@@ -41,17 +41,21 @@ module JsonSchema
         self[:type].is_a?(::Array) ? self[:type] : [self[:type]] if self[:type]
       end
 
+      # Iterates each parent yielding the current and next parent. 
+      # It returns the current parent if block evaluates to true
+      def find_parent
+        parent = self.meta[:parent]
+        return if parent.nil?
+        loop do
+          next_parent = parent.respond_to?(:meta) ? parent.meta[:parent] : nil
+          break parent if yield(parent, next_parent)
+          break unless next_parent
+        end
+      end
+
       # Get the uppermost reachable parent by looping through the references in meta
       def root_parent
-        parent = self.meta[:parent]
-        return parent if parent.nil?
-        loop do
-          break unless parent.respond_to?(:meta)
-          next_parent = parent.meta[:parent]
-          break if next_parent.nil?
-          parent = next_parent
-        end
-        parent
+        find_parent{|current, _next| _next.nil? }
       end
 
       # Checks if parent schema's 'properties' array contains they key of current subschema
