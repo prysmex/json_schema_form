@@ -49,7 +49,7 @@ module JsonSchema
         loop do
           next_parent = parent.respond_to?(:meta) ? parent.meta[:parent] : nil
           break parent if yield(parent, next_parent)
-          break unless next_parent
+          break unless parent = next_parent
         end
       end
 
