@@ -54,7 +54,7 @@ module SchemaForm
         Dry::Schema.JSON do
           config.validate_keys = true
           optional(:$id).filled(:string)
-          optional(:title).filled(:string)
+          optional(:title).maybe(:string)
           optional(:'$schema').filled(:string)
         end
       end
