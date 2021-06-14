@@ -27,6 +27,10 @@ module SchemaForm
         true
       end
 
+      def migrate!
+        self[:$id] = "#/properties/#{self.meta[:path].last}"
+      end
+
     end
   end
 end
