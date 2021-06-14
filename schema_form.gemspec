@@ -40,7 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest", ">= 5.14"
   spec.add_development_dependency "minitest-reporters", ">= 1.4"
   spec.add_development_dependency "byebug", "~> 9.1.0"
-  spec.add_dependency "activesupport", '5.0.1'
+  spec.add_dependency "activesupport", '6.1.3.2'
   spec.add_dependency "super_hash", '0.1.10'
   spec.add_dependency "dry-schema", "1.6.1"
 
