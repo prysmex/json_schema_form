@@ -6,6 +6,7 @@ module SchemaForm
       include JsonSchema::StrictTypes::Number
 
       MAX_ENUM_SIZE = 25
+      MAX_PRECISION = 5
 
       ##################
       ###VALIDATIONS####
@@ -71,21 +72,33 @@ module SchemaForm
         errors = super
 
         if self[:enum].is_a?(Array)
+
           # enum length
           errors['_enum_size_'] = "The max length of enum is #{MAX_ENUM_SIZE}" if self[:enum].length > MAX_ENUM_SIZE
-  
-          # enum spacing
+
+          # enum precision
+          precision_errors = self[:enum].select do |e|
+            e != e.round(MAX_PRECISION)
+          end
+          if !precision_errors.empty?
+            errors['_enum_precision_'] = "invalid enum values #{precision_errors.join(', ')}, max decimal precision is #{MAX_PRECISION}"
+          end
+
+          # check that all enums have same interval
           if self[:enum].size > 1
-            diff = (self[:enum][1] - self[:enum][0]).abs
-            self[:enum].each_with_index do |value, i|
+            big_decimal_enum = self[:enum].map{|v| BigDecimal(v.to_s) }
+            diff = (big_decimal_enum[1] - big_decimal_enum[0]).abs
+
+            big_decimal_enum.each_with_index do |value, i|
               next if i == 0
-              new_diff = (self[:enum][i] - self[:enum][i-1]).abs
+              new_diff = (big_decimal_enum[i] - big_decimal_enum[i-1]).abs
               if diff != new_diff
-                errors['_enum_spacing_'] = "found different spacing from initial at index #{i}"
+                errors['_enum_interval_'] = "found different interval from initial at index #{i}"
                 break
               end
             end
           end
+
         end
 
         errors

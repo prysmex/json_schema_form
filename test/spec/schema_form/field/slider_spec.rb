@@ -4,6 +4,13 @@ require_relative 'field_methods_spec'
 class SliderTest < Minitest::Test
 
   include BaseMethodsTests
+
+  # v => 3
+  # moves => 3
+  # @return => 0.003
+  def move_decimail_point(v, moves)
+    (v.to_f / (10 ** moves)).round(moves)
+  end
   
   def test_default_example_is_valid
     hash = JsonSchemaForm::SchemaFormExamples.slider
@@ -59,17 +66,41 @@ class SliderTest < Minitest::Test
   end
 
   def test_enum_spacing
-    enum = (0...SchemaForm::Field::Slider::MAX_ENUM_SIZE).to_a
+    integer_enum = (0...SchemaForm::Field::Slider::MAX_ENUM_SIZE).to_a
+    float_enum = (0...SchemaForm::Field::Slider::MAX_ENUM_SIZE).map do |v|
+      move_decimail_point(v, SchemaForm::Field::Slider::MAX_PRECISION)
+    end
 
+    enums = [
+      integer_enum,
+      float_enum
+    ]
+
+    enums.each do |enum|
+      instance = SchemaForm::Field::Slider.new({
+        enum: enum
+      })
+  
+      # no errors
+      assert_nil instance.errors[:_enum_interval_]
+  
+      # force errors
+      instance[:enum].map!{|v| v + rand(100)}
+      assert_instance_of String, instance.errors[:_enum_interval_]
+    end
+
+  end
+
+  def test_max_precision
     instance = SchemaForm::Field::Slider.new({
-      enum: enum
+      enum: [move_decimail_point(1, SchemaForm::Field::Slider::MAX_PRECISION)]
     })
 
-    assert_nil instance.errors[:_enum_spacing_]
+    # no error
+    assert_nil instance.errors[:_enum_precision_]
 
-    instance[:enum].map!{|v| v + rand(100)}
-
-    assert_instance_of String, instance.errors[:_enum_spacing_]
+    instance[:enum] = [move_decimail_point(1, SchemaForm::Field::Slider::MAX_PRECISION + 1)]
+    assert_instance_of String, instance.errors[:_enum_precision_]
   end
 
 end
