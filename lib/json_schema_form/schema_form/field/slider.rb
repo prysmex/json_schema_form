@@ -5,6 +5,8 @@ module SchemaForm
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Number
 
+      MAX_ENUM_SIZE = 25
+
       ##################
       ###VALIDATIONS####
       ##################
@@ -63,6 +65,30 @@ module SchemaForm
         else
           nil
         end
+      end
+
+      def own_errors(passthru)
+        errors = super
+
+        if self[:enum].is_a?(Array)
+          # enum length
+          errors['_enum_size_'] = "The max length of enum is #{MAX_ENUM_SIZE}" if self[:enum].length > MAX_ENUM_SIZE
+  
+          # enum spacing
+          if self[:enum].size > 1
+            diff = (self[:enum][1] - self[:enum][0]).abs
+            self[:enum].each_with_index do |value, i|
+              next if i == 0
+              new_diff = (self[:enum][i] - self[:enum][i-1]).abs
+              if diff != new_diff
+                errors['_enum_spacing_'] = "found different spacing from initial at index #{i}"
+                break
+              end
+            end
+          end
+        end
+
+        errors
       end
 
       def migrate!

@@ -44,4 +44,32 @@ class SliderTest < Minitest::Test
     assert_equal false, instance.valid_for_locale?(:es7)
   end
 
+  def test_enum_length
+    enum = (0...SchemaForm::Field::Slider::MAX_ENUM_SIZE).to_a
+
+    instance = SchemaForm::Field::Slider.new({
+      enum: enum
+    })
+
+    assert_nil instance.errors[:_enum_size_]
+
+    instance[:enum].push(SchemaForm::Field::Slider::MAX_ENUM_SIZE)
+
+    assert_instance_of String, instance.errors[:_enum_size_]
+  end
+
+  def test_enum_spacing
+    enum = (0...SchemaForm::Field::Slider::MAX_ENUM_SIZE).to_a
+
+    instance = SchemaForm::Field::Slider.new({
+      enum: enum
+    })
+
+    assert_nil instance.errors[:_enum_spacing_]
+
+    instance[:enum].map!{|v| v + rand(100)}
+
+    assert_instance_of String, instance.errors[:_enum_spacing_]
+  end
+
 end
