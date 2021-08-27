@@ -50,6 +50,51 @@ module SchemaForm
         )
       end
 
+      # {
+      #   definitions: {
+      #     shared_schema_template_2: {
+      #       properties: {
+      #         migrated_hazards9999: {}
+      #       },
+      #       allOf: [
+      #         {
+      #           then: {
+      #             properties: {
+      #               other_hazards_9999: {}
+      #             }
+      #           }
+      #         }
+      #       ]
+      #     }
+      #   },
+      #   properties: {
+      #     shared_schema_template_2_9999: { ref: :shared_schema_template_2}
+      #   }
+      # }
+      def document_path
+        path = self.meta[:path]
+        new_path = []
+
+        is_shared_schema_template_field = path[0] == :definitions
+
+        if is_shared_schema_template_field
+          root_form = self.root_parent
+          field = nil
+          root_form.schema_form_iterator(skip_when_false: true) do |_, form|
+            field = form.properties.find do |key, prop|
+              next unless prop.is_a?(SchemaForm::Field::Component)
+              prop.component_definition == root_form.dig(*path.slice(0..1))
+            end
+            field = field[1] if field
+            !field
+          end
+          new_path.push(field.key_name)
+        end
+
+        new_path.push(self.key_name)
+        new_path
+      end
+
       def validation_schema(passthru)
         Dry::Schema.JSON do
           config.validate_keys = true
