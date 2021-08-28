@@ -21,7 +21,7 @@ module JsonSchema
         if options[:required]
           self[:required] = ((self[:required] || []) + [id]).uniq
         end
-        self[:properties] = SuperHash::DeepKeysTransform.symbolize_recursive(properties_hash)
+        self[:properties] = properties_hash.deep_symbolize_keys
         self[:properties][id]
       end
 

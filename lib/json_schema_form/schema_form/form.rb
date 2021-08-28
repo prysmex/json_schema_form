@@ -310,7 +310,7 @@ module SchemaForm
     def add_response_set(id, definition)
       new_definitions_hash = {}.merge(self[:definitions])
       new_definitions_hash[id] = definition
-      self[:definitions] = SuperHash::DeepKeysTransform.symbolize_recursive(new_definitions_hash)
+      self[:definitions] = new_definitions_hash.deep_symbolize_keys
       self[:definitions][id]
     end
 
@@ -715,7 +715,7 @@ module SchemaForm
           }
           acum
         end
-        old_definitions = SuperHash::DeepKeysTransform.symbolize_recursive(self[:definitions].as_json)
+        old_definitions = self[:definitions].as_json.deep_symbolize_keys
         self.delete(:responseSets)
         self[:definitions] = old_definitions.merge(new_definitions)
 

@@ -1,24 +1,25 @@
 GIT
   remote: https://github.com/prysmex/super_hash.git
-  revision: 8da3d0f0886b6452114bcdea039687fc8c6dc179
+  revision: cdfa8000b816cfd8bfd99aae2ac515a9be463473
   specs:
-    super_hash (0.1.11)
+    super_hash (0.1.12)
+      activesupport (~> 5)
       dry-types
 
 PATH
   remote: .
   specs:
-    json_schema_form (0.2.29)
-      activesupport (= 5.0.1)
+    json_schema_form (0.2.30)
+      activesupport (~> 5)
       dry-schema (= 1.6.1)
-      super_hash (>= 0.1.10)
+      super_hash (>= 0.1.12)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (5.0.1)
+    activesupport (5.2.6)
       concurrent-ruby (~> 1.0, >= 1.0.2)
-      i18n (~> 0.7)
+      i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
     ansi (1.5.0)
@@ -51,7 +52,7 @@ GEM
       dry-core (~> 0.5, >= 0.5)
       dry-inflector (~> 0.1, >= 0.1.2)
       dry-logic (~> 1.0, >= 1.0.2)
-    i18n (0.9.5)
+    i18n (1.8.10)
       concurrent-ruby (~> 1.0)
     minitest (5.14.4)
     minitest-reporters (1.4.3)
@@ -75,7 +76,7 @@ DEPENDENCIES
   minitest (>= 5.14)
   minitest-reporters (>= 1.4)
   rake (~> 13.0)
-  super_hash (>= 0.1.10)!
+  super_hash (>= 0.1.12)!
 
 BUNDLED WITH
    1.17.3

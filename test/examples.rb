@@ -10,7 +10,7 @@ module JsonSchemaForm
     def parse_example(example_path, options={})
       options = {symbolized: true}.merge(options)
       hash = JSON.parse(File.read(gem_directory_path + example_path))
-      hash = SuperHash::DeepKeysTransform.symbolize_recursive(hash) if options[:symbolized]
+      hash = hash.deep_symbolize_keys if options[:symbolized]
       hash
     end
 
