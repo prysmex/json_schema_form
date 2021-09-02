@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Slider < ::SuperHash::Hasher
+    class Slider < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Number

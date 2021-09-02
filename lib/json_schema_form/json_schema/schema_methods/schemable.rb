@@ -21,7 +21,7 @@ module JsonSchema
           )
         }
         # base.attribute? :'$id', {
-        #   default: ->(instance) { "##{instance.meta[:path].join('/')}#{instance.key_name}" }
+        #   default: ->(data) { "##{self.meta[:path].join('/')}#{self.key_name}" }
         # }
       end
       

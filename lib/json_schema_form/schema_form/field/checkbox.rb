@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Checkbox < ::SuperHash::Hasher
+    class Checkbox < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Array

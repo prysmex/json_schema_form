@@ -3,7 +3,7 @@ module SchemaForm
   DEFAULT_LOCALE = :es
   AVAILABLE_LOCALES = [:es, :en]
 
-  class Form < ::SuperHash::Hasher
+  class Form < SchemaHash
 
     include JsonSchema::SchemaMethods::Schemable
     include JsonSchema::Validations::Validatable
@@ -124,11 +124,11 @@ module SchemaForm
       end
     }
 
-    update_attribute :definitions, default: ->(instance) { instance.meta[:is_subschema] ? nil : {}.freeze }
-    update_attribute :properties, default: ->(instance) { {}.freeze }
-    update_attribute :required, default: ->(instance) { [].freeze }
-    update_attribute :allOf, default: ->(instance) { [].freeze }
-    attribute? :availableLocales, default: ->(instance) { instance.meta[:is_subschema] ? nil : [].freeze }
+    update_attribute :definitions, default: ->(data) { self.meta[:is_subschema] ? nil : {}.freeze }
+    update_attribute :properties, default: ->(data) { {}.freeze }
+    update_attribute :required, default: ->(data) { [].freeze }
+    update_attribute :allOf, default: ->(data) { [].freeze }
+    attribute? :availableLocales, default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
     
     def initialize(obj={}, options={})
       options = {

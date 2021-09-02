@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Select < ::SuperHash::Hasher
+    class Select < SchemaHash
 
       include ::SchemaForm::Field::Base
       include SchemaForm::Field::ResponseSettable

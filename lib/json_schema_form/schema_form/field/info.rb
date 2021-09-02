@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Info < ::SuperHash::Hasher
+    class Info < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Null

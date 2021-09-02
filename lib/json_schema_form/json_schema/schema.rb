@@ -1,7 +1,5 @@
-require 'super_hash'
-
 module JsonSchema
-  class Schema < ::SuperHash::Hasher
+  class Schema < SchemaHash
     
     include JsonSchema::SchemaMethods::Schemable
     include JsonSchema::SchemaMethods::Buildable

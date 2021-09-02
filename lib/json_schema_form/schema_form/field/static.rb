@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Static < ::SuperHash::Hasher
+    class Static < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Null

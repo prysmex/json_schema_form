@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Header < ::SuperHash::Hasher
+    class Header < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Null

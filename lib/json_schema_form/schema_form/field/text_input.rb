@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class TextInput < ::SuperHash::Hasher
+    class TextInput < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::String

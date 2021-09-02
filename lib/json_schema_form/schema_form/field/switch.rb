@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Switch < ::SuperHash::Hasher
+    class Switch < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Boolean

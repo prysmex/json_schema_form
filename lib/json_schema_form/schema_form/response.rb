@@ -1,5 +1,5 @@
 module SchemaForm
-  class Response < ::SuperHash::Hasher
+  class Response < SchemaHash
 
     include JsonSchema::SchemaMethods::Schemable
 

@@ -1,6 +1,7 @@
 # JsonSchemaForm
 
 JsonSchemaForm is divided into two parts:
+
 1) JsonSchema, provides a simple and extensible API to create backing classes for json_schema hashes [json_schema](https://json-schema.org/) so you don't mess around with POROs.
 2) SchemaForm, provides build-in classes that provide form-like functionality that are based on json_schema. This classes are created using `JsonSchema`
 
@@ -12,8 +13,9 @@ Default validations are powered by Dry::Schema [dry-schema](https://dry-rb.org/g
 ### Modules
 
 This is the backbone and provides multiple ruby `Module`s that are used to easily create a backing class for a json_schema object
+
 - Schemable     (base methods are in a module yo avoid creatinga Base class)
-- - Buildable     (sets transforms used to create recursive tree structures)
+  - Buildable     (sets transforms used to create recursive tree structures)
 - Arrayable     (methods when type `key` equals or contains `array`)
 - Booleanable   (methods when type `key` equals or contains `boolean`)
 - Nullable      (methods when type `key` equals or contains `null`)
@@ -24,9 +26,10 @@ This is the backbone and provides multiple ruby `Module`s that are used to easil
 ### Example
 
 Lets create a new backing class for a schema using the provided modules
+
 ```ruby
 # This is how to pre-wired `JsonSchema::Schema` class is created
-class MySchema < ::SuperHash::Hasher
+class MySchema < SchemaHash
 
   include JsonSchema::SchemaMethods::Schemable
   include JsonSchema::SchemaMethods::Buildable
@@ -43,13 +46,17 @@ schema = MySchema.new({properties: {prop1: {type: 'string'}}})
 schema.class #=> MySchema
 schema[:properties][:prop1].class #=> MySchema
 ```
+
 As you can see, every time a subschema is found a new instance is serialized by using de default transforms in `JsonSchema::SchemaMethods::Buildable`
 It is important to note that the transforms are present ONLY on the following keys:
+
 ```ruby
 [:additionalProperties, :contains, :definitions, :dependencies, :else, :if, :items, :not, :properties, :then, :allOf, :anyOf, :oneOf]
 ```
+
 So if you want to add a new schema AFTER instanciation (for example another property in the `properties` key), you must to re-set the whole key
 or set an already transformed value. Here is a small demostration:
+
 ```ruby
 #WRONG
 schema = MySchema.new({properties: {}})
@@ -76,7 +83,9 @@ schema[:properties][:prop4].class # => MySchema
 ```
 
 ### Meta
+
 The schema's `meta` method contains helpful data
+
 ```ruby
 # traverse upwards in the tree
 schema[:properties][:prop1].meta[:parent] #=> {:properties=>{:prop1=>{:type=>"string"}}}
@@ -89,6 +98,7 @@ schema[:properties][:prop1].meta[:is_subschema] #=> true
 ### Custom tree
 
 If you want to customize how the tree is built, override the `builder` method provided by `JsonSchema::SchemaMethods::Buildable`
+
 ```ruby
 class MySchema2 < MySchema
   def builder(attribute, *args)
@@ -103,23 +113,25 @@ schema = MySchema2.new({if: {type: 'string'}, then: {enum: ['option_1']}})
 schema[:if].class #=> MySchema
 schema[:then].class #=> MySchema2
 ```
+
 Keep in mind that all subschemas inside `if` will be instances of `MySchema` because that is it's default builder;
 
 ### Methods
 
 - `root_parent`
+
 ```ruby
   schema = JsonSchema::Schema.new( {properties: {prop1: {type: 'string'}}, allOf:[{if: {prop1: {const: 'test'}}, then: {properties: {prop2: {type: 'string'}}}}]} )
   schema[:allOf].first[:then][:properties][:prop2].root_parent == schema #=> true
 ```
 
 ### Validations
+
 In addition to this, you can add validations to your objects by using the `JsonSchema::Validations::Validatable` module.
 A basic validation example would be this
 
 ```ruby
-class MySchema < ::SuperHash::Hasher
-   
+class MySchema < SchemaHash
   include JsonSchema::SchemaMethods::Schemable
   include JsonSchema::SchemaMethods::Buildable #required for validations
   include JsonSchema::Validations::Validatable
@@ -146,6 +158,7 @@ By adding the following line to your class, you automatically get default json_s
 ## SchemaForm
 
 A `form` is composed of the follow classes:
+
 - `SchemaForm::Form`
   - `SchemaForm::ResponseSet`
     - `SchemaForm::Response`
@@ -161,25 +174,30 @@ A `form` is composed of the follow classes:
   - `SchemaForm::Field::Switch`
   - `SchemaForm::Field::TextInput`
 
-### Form:
+### Form
+
  ToDo
- 
-### Field:
+
+### Field
+
  ToDo
-### ResponseSet:
+
+### ResponseSet
+
  ToDo
-### Response:
+
+### Response
+
 `SchemaForm::Response` is contained by `SchemaForm::ResponseSet`
  ToDo
 
-### Field:
- ToDo
- 
-## document:
+## document
+
 Backing class used by Prysmex for the 'raw data' that is created when a form is filled.
- - `JsonSchemaForm::Document::Document` main class for storing 'raw data'
- - `JsonSchemaForm::Document::Extras` used by `Inspection` only
- - `JsonSchemaForm::Document::Meta` used by `Inspection` only
+
+- `JsonSchemaForm::Document::Document` main class for storing 'raw data'
+- `JsonSchemaForm::Document::Extras` used by `Inspection` only
+- `JsonSchemaForm::Document::Meta` used by `Inspection` only
 
 ## Installation
 
@@ -198,9 +216,6 @@ Or install it yourself as:
     $ gem install json_schema_form
 
 ## Usage
-
-
-
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 

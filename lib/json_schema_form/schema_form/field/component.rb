@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class Component < ::SuperHash::Hasher
+    class Component < SchemaHash
 
       include ::SchemaForm::Field::Base
   

@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class NumberInput < ::SuperHash::Hasher
+    class NumberInput < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Number

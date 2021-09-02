@@ -1,5 +1,5 @@
 module SchemaForm
-  class ResponseSet < ::SuperHash::Hasher
+  class ResponseSet < SchemaHash
 
     include JsonSchema::SchemaMethods::Schemable
     include JsonSchema::Validations::Validatable
@@ -19,7 +19,7 @@ module SchemaForm
       end
     }
 
-    attribute? :anyOf, default: ->(instance) { [].freeze }, transform: RESPONSE_PROC
+    attribute? :anyOf, default: ->(data) { [].freeze }, transform: RESPONSE_PROC
 
     ##################
     ###VALIDATIONS####

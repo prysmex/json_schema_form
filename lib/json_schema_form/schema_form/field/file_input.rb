@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class FileInput < ::SuperHash::Hasher
+    class FileInput < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::Array

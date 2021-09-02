@@ -20,7 +20,7 @@ module JsonSchemaFormTestHelper
 
   module SampleClassHooks
     def setup
-      @new_hasher_class = Object.const_set('SampleSchema', Class.new(SuperHash::Hasher))
+      @new_hasher_class = Object.const_set('SampleSchema', Class.new(SchemaHash))
     end
   
     def teardown

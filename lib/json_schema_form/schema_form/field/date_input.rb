@@ -1,6 +1,6 @@
 module SchemaForm
   module Field
-    class DateInput < ::SuperHash::Hasher
+    class DateInput < SchemaHash
 
       include ::SchemaForm::Field::Base
       include JsonSchema::StrictTypes::String

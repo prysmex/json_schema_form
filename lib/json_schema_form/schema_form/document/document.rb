@@ -1,6 +1,6 @@
 module SchemaForm
   module Document
-    class Document < ::SuperHash::Hasher
+    class Document < SchemaHash
 
       instance_variable_set('@allow_dynamic_attributes', true)
 
