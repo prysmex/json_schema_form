@@ -1,4 +1,6 @@
 require 'active_support/core_ext/object/deep_dup'
+require 'active_support/core_ext/hash/keys'
+
 # require 'active_support/hash_with_indifferent_access'
 # require 'active_support/core_ext/hash/indifferent_access'
 
