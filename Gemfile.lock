@@ -1,18 +1,17 @@
 GIT
   remote: https://github.com/prysmex/super_hash.git
-  revision: d76896fda6c3f5c161d19541f4e33a99bc6c024c
-  branch: v0.1.16_fix
+  revision: 9161ae0e3afa3ae8c24deb718e5a0729d846c0bd
   specs:
-    super_hash (0.1.16)
+    super_hash (0.2.0)
       dry-types
 
 PATH
   remote: .
   specs:
-    json_schema_form (0.2.32)
+    json_schema_form (0.3.0)
       activesupport (~> 5)
       dry-schema (= 1.6.1)
-      super_hash (>= 0.1.16)
+      super_hash (>= 0.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -76,7 +75,7 @@ DEPENDENCIES
   minitest (>= 5.14)
   minitest-reporters (>= 1.4)
   rake (~> 13.0)
-  super_hash (>= 0.1.16)!
+  super_hash (>= 0.2.0)!
 
 BUNDLED WITH
    1.17.3
