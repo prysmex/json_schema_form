@@ -12,7 +12,7 @@ module SchemaForm
             response,
             {
               parent: instance,
-              path: path
+              path: path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
             }
           )
         end

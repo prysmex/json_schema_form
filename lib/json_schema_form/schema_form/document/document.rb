@@ -10,7 +10,7 @@ module SchemaForm
       def each_extras(hash = nil, &block)
         hash = self[:extras] if hash.nil?
         hash&.each do |k,v|
-          if ([:pictures, :score, :failed, :notes, :report_ids] & v.keys).size > 0
+          if (['pictures', 'score', 'failed', 'notes', 'report_ids'] & v.keys).size > 0
             yield(k,v)
           else
             each_extras(v, &block)
@@ -24,7 +24,7 @@ module SchemaForm
       def each_meta(hash = nil, &block)
         hash = self[:meta] if hash.nil?
         hash&.each do |k,v|
-          if ([:coordinates, :timestamp] & v.keys).size > 0
+          if (['coordinates', 'timestamp'] & v.keys).size > 0
             yield(k,v)
           else
             each_meta(v, &block)
@@ -45,7 +45,7 @@ module SchemaForm
       end
 
       def property_keys
-        self.keys.reject{|k| [:extras, :meta].include?(k)}
+        self.keys.reject{|k| ['extras', 'meta'].include?(k)}
       end
 
       private
@@ -74,7 +74,7 @@ module SchemaForm
             }
           end
 
-          data =  hash.merge(self.dig(key_name, *path) || {})
+          data = hash.merge(self.dig(key_name, *path) || {})
         
           SuperHash::Utils.bury(self, key_name, *path, data)
         end

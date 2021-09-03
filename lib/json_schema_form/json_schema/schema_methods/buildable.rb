@@ -56,10 +56,11 @@ module JsonSchema
 
       # Builds meta hash and calls builder method
       CORE_PROC = ->(attribute, value, instance, path) {
+        path = (instance.meta[:path] || []) + path
         meta = {
           parent: instance,
           is_subschema: true,
-          path: (instance.meta[:path] || []) + path
+          path: path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
         }
         instance.builder( attribute, value, meta )
       }
