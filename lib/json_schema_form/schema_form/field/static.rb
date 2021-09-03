@@ -10,8 +10,8 @@ module SchemaForm
       ##################
 
       def validation_schema(passthru)
-        can_be_hidden = (passthru[:hideable_static_fields] || []).include?(self.key_name)
-        can_be_hidden_on_create = (passthru[:hideable_on_create_static_fields] || []).include?(self.key_name)
+        can_be_hidden = (passthru[:hideable_static_fields] || []).map(&:to_s).include?(self.key_name)
+        can_be_hidden_on_create = (passthru[:hideable_on_create_static_fields] || []).map(&:to_s).include?(self.key_name)
         Dry::Schema.define(parent: super) do
           required(:type)
           required(:static).filled(Types::True)
