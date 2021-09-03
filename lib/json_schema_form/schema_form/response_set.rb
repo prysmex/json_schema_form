@@ -19,7 +19,7 @@ module SchemaForm
       end
     }
 
-    attribute? :anyOf, default: ->(data) { [].freeze }, transform: RESPONSE_PROC
+    attribute? 'anyOf', default: ->(data) { [].freeze }, transform: RESPONSE_PROC
 
     ##################
     ###VALIDATIONS####
@@ -31,7 +31,7 @@ module SchemaForm
 
         before(:key_validator) do |result|
           result.to_h.inject({}) do |acum, (k,v)|
-            if v.is_a?(::Array) && k == :anyOf
+            if v.is_a?(::Array) && k == 'anyOf'
               acum[k] = []
             else
               acum[k] = v

@@ -38,7 +38,7 @@ module SchemaForm
       when SchemaForm::Form
 
         case attribute
-        when :definitions
+        when 'definitions'
           if subschema[:isResponseSet]
             return SchemaForm::ResponseSet.new(subschema, init_options)
           elsif subschema[:type] == 'object' #replaced schemas
@@ -46,9 +46,9 @@ module SchemaForm
           elsif subschema.key?(:$ref) # shared definition
             return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
           end
-        when :allOf
+        when 'allOf'
           return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
-        when :properties
+        when 'properties'
           if subschema.key?(:$ref)
             if subschema.dig(:displayProperties, :isSelect)
               return SchemaForm::Field::Select.new(subschema, init_options)
@@ -96,7 +96,7 @@ module SchemaForm
       when JsonSchema::Schema
 
         case attribute
-        when :then
+        when 'then'
           return SchemaForm::Form.new(subschema, init_options)
         else
           return JsonSchema::Schema.new(subschema, init_options.merge(preinit_proc: SUBSCHEMA_PROC ))
@@ -124,11 +124,11 @@ module SchemaForm
       end
     }
 
-    update_attribute :definitions, default: ->(data) { self.meta[:is_subschema] ? nil : {}.freeze }
-    update_attribute :properties, default: ->(data) { {}.freeze }
-    update_attribute :required, default: ->(data) { [].freeze }
-    update_attribute :allOf, default: ->(data) { [].freeze }
-    attribute? :availableLocales, default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
+    update_attribute 'definitions', default: ->(data) { self.meta[:is_subschema] ? nil : {}.freeze }
+    update_attribute 'properties', default: ->(data) { {}.freeze }
+    update_attribute 'required', default: ->(data) { [].freeze }
+    update_attribute 'allOf', default: ->(data) { [].freeze }
+    attribute? 'availableLocales', default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
     
     def initialize(obj={}, options={})
       options = {
@@ -241,7 +241,7 @@ module SchemaForm
       when SchemaForm::Field::Checkbox
         value.map{|v| property.i18n_value(v, locale) }
       when SchemaForm::Field::Slider
-        property.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s.to_sym)
+        property.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
       when SchemaForm::Field::Select
         property.i18n_value(value, locale)
       when SchemaForm::Field::DateInput
@@ -310,7 +310,7 @@ module SchemaForm
     def add_response_set(id, definition)
       new_definitions_hash = {}.merge(self[:definitions])
       new_definitions_hash[id] = definition
-      self[:definitions] = new_definitions_hash.deep_symbolize_keys
+      self[:definitions] = new_definitions_hash
       self[:definitions][id]
     end
 
@@ -380,7 +380,7 @@ module SchemaForm
       #subschemas
       subschema_iterator(**args) do |if_hash, then_hash, parent_schema, current_level|
         key = if_hash[:properties].keys.first
-        value = yield( if_hash, {"#{key}".to_sym => document[key]}, parent_schema.dig(:properties, key) )
+        value = yield( if_hash, {"#{key}" => document[key]}, parent_schema.dig(:properties, key) )
 
         obj.merge!( then_hash[:properties].transform_values{|v| nil} ) if value
 
@@ -407,12 +407,12 @@ module SchemaForm
 
     # returns the property definition inside the properties key
     def get_property(property)
-      self.dig(:properties, property.to_sym)
+      self.dig(:properties, property)
     end
 
     # returns the property definition of the first matched key in subschemas
     def get_dynamic_property(property, **args)
-      property = property.to_sym
+      property = property
       subschema_iterator(**args) do |_, then_hash|
         props = then_hash&.properties
         break props[property] if props&.key?(property)
@@ -421,7 +421,7 @@ module SchemaForm
 
     # returns the property definition of the first match in a root or subschema property
     def get_merged_property(property, **args)
-      property = property.to_sym
+      property = property
       if self[:properties].key?(property)
         self[:properties][property]
       else
@@ -465,7 +465,7 @@ module SchemaForm
     # @param id [Symbol] name of property to move
     # @return [Object] mutated self
     def move_property(target, id)
-      prop = self[:properties]&.find{|k,v| v.key_name == id.to_sym}
+      prop = self[:properties]&.find{|k,v| v.key_name == id.to_s }
       if !prop.nil?
         current = prop[1][:displayProperties][:sort]
         range = Range.new(*[current, target].sort)
@@ -715,7 +715,7 @@ module SchemaForm
           }
           acum
         end
-        old_definitions = self[:definitions].as_json.deep_symbolize_keys
+        old_definitions = self[:definitions].as_json
         self.delete(:responseSets)
         self[:definitions] = old_definitions.merge(new_definitions)
 

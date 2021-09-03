@@ -1,17 +1,13 @@
 require 'json_schema_form_test_helper'
 
 class ResponseSetTest < Minitest::Test
-  
-  def build_example_response_set_with_example_response(type)
-    response_set_example = JsonSchemaForm::SchemaFormExamples.response_set
-    response_example = JsonSchemaForm::SchemaFormExamples.response[type]
-    response_set_example[:anyOf].push(response_example)
-    response_set_example
-  end
 
   def build_response_set_instance(type)
-    example = build_example_response_set_with_example_response(type)
-    SchemaForm::ResponseSet.new(example)
+    response_set_example = JsonSchemaForm::SchemaFormExamples.response_set
+    response_example = JsonSchemaForm::SchemaFormExamples.response(type)
+    response_set = SchemaForm::ResponseSet.new(response_set_example)
+    response_set.add_response(response_example)
+    response_set
   end
 
   def test_anyOf_transform

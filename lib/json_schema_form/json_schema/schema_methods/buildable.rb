@@ -16,23 +16,23 @@ module JsonSchema
         ###########
         #Hash keys#
         ###########
-        base.update_attribute :additionalProperties, transform: ADDITIONAL_PROPERTIES_TRANSFORM
-        base.update_attribute :contains, transform: CONTAINS_TRANSFORM
-        base.update_attribute :definitions, transform: DEFINITIONS_TRANSFORM
-        base.update_attribute :dependencies, transform: DEPENDENCIES_TRANSFORM
-        base.update_attribute :else, transform: ELSE_TRANSFORM
-        base.update_attribute :if, transform: IF_TRANSFORM
-        base.update_attribute :items, transform: ITEMS_TRANSFORM
-        base.update_attribute :not, transform: NOT_TRANSFORM
-        base.update_attribute :properties, transform: PROPERTIES_TRANSFORM
-        base.update_attribute :then, transform: THEN_TRANSFORM
+        base.update_attribute 'additionalProperties', transform: ADDITIONAL_PROPERTIES_TRANSFORM
+        base.update_attribute 'contains', transform: CONTAINS_TRANSFORM
+        base.update_attribute 'definitions', transform: DEFINITIONS_TRANSFORM
+        base.update_attribute 'dependencies', transform: DEPENDENCIES_TRANSFORM
+        base.update_attribute 'else', transform: ELSE_TRANSFORM
+        base.update_attribute 'if', transform: IF_TRANSFORM
+        base.update_attribute 'items', transform: ITEMS_TRANSFORM
+        base.update_attribute 'not', transform: NOT_TRANSFORM
+        base.update_attribute 'properties', transform: PROPERTIES_TRANSFORM
+        base.update_attribute 'then', transform: THEN_TRANSFORM
         
         ############
         #Array keys#
         ############
-        base.update_attribute :allOf, transform: All_OF_TRANSFORM
-        base.update_attribute :anyOf, transform: ANY_OF_TRANSFORM
-        base.update_attribute :oneOf, transform: ONE_OF_TRANSFORM
+        base.update_attribute 'allOf', transform: All_OF_TRANSFORM
+        base.update_attribute 'anyOf', transform: ANY_OF_TRANSFORM
+        base.update_attribute 'oneOf', transform: ONE_OF_TRANSFORM
       end
 
       def initialize(obj={}, options={})

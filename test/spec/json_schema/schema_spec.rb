@@ -57,7 +57,7 @@ class SchemaTest < Minitest::Test
 
   def test_key_name_returns_property_key
     instance = JsonSchema::Schema.new({properties: {prop1: {type: 'string'}}})
-    assert_equal :prop1, instance[:properties][:prop1].key_name
+    assert_equal 'prop1', instance[:properties][:prop1].key_name
   end
 
   def test_required?

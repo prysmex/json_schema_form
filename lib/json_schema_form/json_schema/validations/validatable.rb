@@ -6,32 +6,33 @@ module JsonSchema
     module Validatable
 
       HASH_SUBSCHEMA_KEYS = [
-        :additionalProperties,
-        :contains,
-        :definitions,
-        :dependencies,
-        :else,
-        :if,
-        :items,
-        :not,
-        :properties,
-        :then
+        'additionalProperties',
+        'contains',
+        'definitions',
+        'dependencies',
+        'else',
+        'if',
+        'items',
+        'not',
+        'properties',
+        'then'
       ].freeze
 
       NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS = [
-        :patternProperties
+        'patternProperties'
       ]
 
       ARRAY_SUBSCHEMA_KEYS = [
-        :allOf,
-        :anyOf,
-        :items,
-        :oneOf
+        'allOf',
+        'anyOf',
+        'items',
+        'oneOf'
       ].freeze
 
       BURY_ERRORS_PROC = Proc.new do |errors_to_bury, errors_hash, obj_path|
         SuperHash::Utils.flatten_to_root(errors_to_bury).each do |relative_path, errors_array|
-          path = (obj_path || []) + (relative_path.to_s.split('.')).map{|i| Integer(i) rescue i.to_sym }
+          path = (obj_path || []) + (relative_path.to_s.split('.'))
+          path.map!{|i| Integer(i) rescue i.to_sym }
           SuperHash::Utils.bury(errors_hash, *path, errors_array)
         end
       end
@@ -62,21 +63,21 @@ module JsonSchema
       def subschemas_errors(passthru, errors)
         #continue recurrsion for all subschema keys
         self.each do |key, value|
-          if key == :additionalProperties
+          if key == 'additionalProperties'
             next if !value.is_a?(::Hash)
             self[:additionalProperties]&.each do |k,v|
               call_subschema_errors(v, errors, passthru)
             end
-          elsif key == :definitions
+          elsif key == 'definitions'
             self[:definitions]&.each do |k,v|
               call_subschema_errors(v, errors, passthru)
             end
-          elsif key == :dependencies
+          elsif key == 'dependencies'
             self[:dependencies]&.each do |k,v|
               next if !v.is_a?(::Hash)
               call_subschema_errors(v, errors, passthru)
             end
-          elsif key == :properties
+          elsif key == 'properties'
             self[:properties]&.each do |k,v|
               call_subschema_errors(v, errors, passthru)
             end

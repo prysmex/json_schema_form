@@ -21,7 +21,7 @@ module JsonSchema
         if options[:required]
           self[:required] = ((self[:required] || []) + [id]).uniq
         end
-        self[:properties] = properties_hash.deep_symbolize_keys
+        self[:properties] = properties_hash
         self[:properties][id]
       end
 
@@ -29,7 +29,7 @@ module JsonSchema
       # TODO handle if other property depends on this one
       # @return [Object] mutated self
       def remove_property(id)
-        id = id.to_sym
+        id = id.to_s
         self[:properties] = self[:properties].reject{|k, v|  k == id } unless self[:properties].nil?
         self[:required] = self[:required].reject{|name| name == id} unless self[:required].nil?
         self

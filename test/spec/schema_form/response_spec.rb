@@ -3,7 +3,7 @@ require 'json_schema_form_test_helper'
 class ResponseTest < Minitest::Test
   
   def test_default_example_is_valid
-    hash = JsonSchemaForm::SchemaFormExamples.response[:default]
+    hash = JsonSchemaForm::SchemaFormExamples.response(:default)
     instance = SchemaForm::Response.new(hash)
     assert_empty instance.errors
   end
@@ -25,7 +25,7 @@ class ResponseTest < Minitest::Test
   end
 
   def test_inspection_example_is_valid
-    hash = JsonSchemaForm::SchemaFormExamples.response[:is_inspection]
+    hash = JsonSchemaForm::SchemaFormExamples.response(:is_inspection)
     instance = SchemaForm::Response.new(hash)
     assert_empty instance.errors({is_inspection: true})
   end

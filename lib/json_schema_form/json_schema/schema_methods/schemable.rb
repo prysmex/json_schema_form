@@ -14,13 +14,13 @@ module JsonSchema
       def self.included(base)
         base.instance_variable_set('@allow_dynamic_attributes', true)
 
-        base.attribute? :type, {
+        base.attribute? 'type', {
           type: (
             Types::String.enum('array','boolean','null','number','object','string') |
             Types::Array.constrained(min_size: 1).of(Types::String.enum('array','boolean','null','number','object','string'))
           )
         }
-        # base.attribute? :'$id', {
+        # base.attribute? '$id', {
         #   default: ->(data) { "##{self.meta[:path].join('/')}#{self.key_name}" }
         # }
       end
@@ -61,7 +61,7 @@ module JsonSchema
       # Checks if parent schema's 'properties' array contains they key of current subschema
       def required?
         if meta.dig(:parent, :required)
-          meta.dig(:parent, :required).include?(key_name)
+          meta.dig(:parent, :required).include?(key_name&.to_sym)
         end
       end
 
@@ -69,7 +69,7 @@ module JsonSchema
       # {properties: {some_key: {}}} => 'some_key'
       def key_name
         attribute, key_name = self.meta[:path].last(2)
-        if [:properties, :definitions].include?(attribute)
+        if [:properties, :definitions].include?(attribute&.to_sym)
           key_name
         end
       end
@@ -84,7 +84,7 @@ module JsonSchema
         parent_all_of = self.meta.dig(:parent, :allOf) || []
         
         parent_all_of.select do |condition|
-          condition.dig(:if, :properties).keys.include?(key)
+          condition.dig(:if, :properties).keys.include?(key.to_s)
         end
       end
 

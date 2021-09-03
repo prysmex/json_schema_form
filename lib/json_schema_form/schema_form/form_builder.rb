@@ -9,7 +9,7 @@ module SchemaForm
     end
 
     def initialize(form = {}, &block)
-      form = SchemaForm::Form.new(form) if form.class == Hash
+      form = SchemaForm::Form.new(form) unless form.is_a? SchemaForm::Form
       raise TypeError.new("first argument must be a SchemaForm::Form or a Hash instance, got a #{form.class}") unless form.is_a?(SchemaForm::Form) 
       @form = form
       @block = block
@@ -24,8 +24,8 @@ module SchemaForm
       @form
     end
 
-    def example(name)
-      JsonSchemaForm::SchemaFormExamples.send(name)
+    def example(name, *args)
+      JsonSchemaForm::SchemaFormExamples.send(name, *args)
     end
   
   end

@@ -4,7 +4,7 @@ module JsonSchema
     module Array
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Arrayable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('array')
         }
@@ -14,7 +14,7 @@ module JsonSchema
     module Boolean
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Booleanable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('boolean')
         }
@@ -24,7 +24,7 @@ module JsonSchema
     module Null
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Nullable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('null')
         }
@@ -34,7 +34,7 @@ module JsonSchema
     module Number
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Numberable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('number')
         }
@@ -44,7 +44,7 @@ module JsonSchema
     module Object
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Objectable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('object')
         }
@@ -54,7 +54,7 @@ module JsonSchema
     module String
       def self.included(base)
         base.include(JsonSchema::SchemaMethods::Stringable)
-        base.update_attribute :type, {
+        base.update_attribute 'type', {
           # required: true,
           type: Types::String.enum('string')
         }

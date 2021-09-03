@@ -14,7 +14,7 @@ class FormTest < Minitest::Test
   def test_property_key_must_match_property_id
     form_example = JsonSchemaForm::SchemaFormExamples.form
     form = SchemaForm::FormBuilder.build(form_example) do
-      append_property :header_1, JsonSchemaForm::SchemaFormExamples.header.merge({:$id => '#/properties/header_1'})
+      append_property :header_1, example('header').merge({:$id => '#/properties/header_1'})
     end
     assert_empty form.errors
     form[:properties][:header_1][:$id] = '#/_properties/header_1'
@@ -28,39 +28,23 @@ class FormTest < Minitest::Test
   #########
 
   def test_builder
-    form_example = JsonSchemaForm::SchemaFormExamples.form
-    form_example[:properties] = {
-      checkbox: JsonSchemaForm::SchemaFormExamples.checkbox,
-      component: JsonSchemaForm::SchemaFormExamples.component,
-      date_input: JsonSchemaForm::SchemaFormExamples.date_input,
-      header: JsonSchemaForm::SchemaFormExamples.header,
-      info: JsonSchemaForm::SchemaFormExamples.info,
-      number_input: JsonSchemaForm::SchemaFormExamples.number_input,
-      select: JsonSchemaForm::SchemaFormExamples.select,
-      slider: JsonSchemaForm::SchemaFormExamples.slider,
-      static: JsonSchemaForm::SchemaFormExamples.static,
-      text_input: JsonSchemaForm::SchemaFormExamples.text_input,
-      file_input: JsonSchemaForm::SchemaFormExamples.file_input
-    }
-    form_example[:definitions] = {
-      :"definition_1" => JsonSchemaForm::SchemaFormExamples.response_set
-    }
-    form_example[:allOf] = [
-      {
-        if: {
-          properties: {
-            select: {const: 1}
-          }
-        },
-        then: {
-          properties: {
-            checkbox2: JsonSchemaForm::SchemaFormExamples.checkbox
-          }
-        }
-      }
-    ]
+    form = SchemaForm::FormBuilder.build() do
+      add_response_set(:response_set_1, example('response_set'))
 
-    form = SchemaForm::Form.new(form_example)
+      # properties
+      append_property(:checkbox, example('checkbox'))
+      append_property(:component, example('component'))
+      append_property(:date_input, example('date_input'))
+      append_property(:header, example('header'))
+      append_property(:info, example('info'))
+      append_property(:number_input, example('number_input'))
+      append_property(:select, example('select'))
+      append_property(:slider, example('slider'))
+      append_property(:static, example('static'))
+      append_property(:text_input, example('text_input'))
+      append_property(:file_input, example('file_input'))
+      append_conditional_property(:checkbox2, example('checkbox'), dependent_on: :select, type: :const, value: 1)
+    end
 
     #test all field types
     form[:properties].each do |name, field|
@@ -69,7 +53,7 @@ class FormTest < Minitest::Test
     end
 
     #test definitions
-    assert_instance_of SchemaForm::ResponseSet, form[:definitions][:definition_1]
+    assert_instance_of SchemaForm::ResponseSet, form[:definitions][:response_set_1]
 
     #test allOf
     assert_instance_of JsonSchema::Schema, form[:allOf].first
@@ -103,26 +87,15 @@ class FormTest < Minitest::Test
   end
 
   def test_get_condition
-    form_example = JsonSchemaForm::SchemaFormExamples.form
-    form_example[:properties][:prop1] = JsonSchemaForm::SchemaFormExamples.select
-    form_example[:allOf] = [
-      {
-        if: {properties: {prop1: {const: 'const'}}},
-        then: {properties:{}}
-      },
-      {
-        if: {properties: {prop1: {not: {const: 'not_const'}}}},
-        then: {properties:{}}
-      },
-      {
-        if: {properties: {prop1: {enum: ['enum']}}},
-        then: {properties:{}}
-      },{
-        if: {properties: {prop1: {not: {enum: ['not_enum']}}}},
-        then: {properties:{}}
-      }
-    ]
-    form = SchemaForm::Form.new(form_example)
+
+    form = SchemaForm::FormBuilder.build() do
+      append_property(:prop1, example('select'))
+      add_or_get_condition('prop1', :const, 'const')
+      add_or_get_condition('prop1', :not_const, 'not_const')
+      add_or_get_condition('prop1', :enum, ['enum'])
+      add_or_get_condition('prop1', :not_enum, ['not_enum'])
+    end
+
     assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
     assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
     assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first

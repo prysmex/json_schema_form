@@ -10,8 +10,11 @@ module FieldHelpers
     Object.const_get("SchemaForm::Field::#{field_klass_name}")
   end
 
+  def underscored_klass_name
+    field_klass_name.split(/(?=[A-Z])/).map(&:downcase).join('_')
+  end
+
   def example_for_current_field_klass
-    underscored_klass_name = field_klass_name.split(/(?=[A-Z])/).map(&:downcase).join('_')
     JsonSchemaForm::SchemaFormExamples.send(underscored_klass_name)
   end
 
@@ -68,36 +71,30 @@ module ResponseSettableTests
   end
   
   def test_response_set
-    example_form = JsonSchemaForm::SchemaFormExamples.form
-    field_example = self.example_for_current_field_klass
-    field_instance = field_klass.new(field_example, meta: {parent: example_form})
-    
-    example_form[:properties][:testprop] = field_instance
-    example_form[:definitions][:__test_response_set_id__] = {}
+    name = self.underscored_klass_name
+    prop = nil
+    SchemaForm::FormBuilder.build() do
+      add_response_set(:__test_response_set_id__, example('response_set'))
+      prop = append_property(:testprop, example(name))
+    end
 
-    refute_nil example_form[:properties][:testprop].response_set
+    refute_nil prop.response_set
   end
 
   def test_i18n_value
-    example_form = JsonSchemaForm::SchemaFormExamples.form
-    field_example = self.example_for_current_field_klass
-    field_instance = field_klass.new(field_example, meta: {parent: example_form})
+    name = self.underscored_klass_name
+    prop = nil
+    SchemaForm::FormBuilder.build() do
+      add_response_set(:__test_response_set_id__, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :default)).tap do |r|
+          r[:const] = 'test'
+          r[:displayProperties] = { i18n: { es: "score_1_es" } }
+        end
+      end
+      prop = append_property(:testprop, example(name))
+    end
 
-    example_form[:properties][:testprop] = field_instance
-    example_form[:definitions][:__test_response_set_id__] = SchemaForm::ResponseSet.new({
-      anyOf: [
-        {
-          const: 'test',
-          displayProperties: {
-            i18n: {
-              es: "score_1_es"
-            }
-          }
-        }
-      ]
-    })
-
-    assert_equal 'score_1_es', example_form[:properties][:testprop].i18n_value('test', :es)
+    assert_equal 'score_1_es', prop.i18n_value('test', :es)
   end
 
 end

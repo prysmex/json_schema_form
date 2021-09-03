@@ -6,15 +6,15 @@ class FormbuilderTest < Minitest::Test
     form = SchemaForm::FormBuilder.build() do
 
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response')[:default]).tap do |r|
+        response_set.add_response(example('response', :default)).tap do |r|
           r[:const] = 'option1'
           r[:score] = 0
         end
-        response_set.add_response(example('response')[:default]).tap do |r|
+        response_set.add_response(example('response', :default)).tap do |r|
           r[:const] = 'option2'
           r[:score] = 2
         end
-        response_set.add_response(example('response')[:default]).tap do |r|
+        response_set.add_response(example('response', :default)).tap do |r|
           r[:const] = 'option3'
           r[:score] = 5
         end

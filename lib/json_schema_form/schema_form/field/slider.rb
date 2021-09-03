@@ -111,7 +111,7 @@ module SchemaForm
         label_is_valid = super
 
         missing_locale = self[:enum].find do |value|
-          self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s&.to_sym).to_s.empty?
+          self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s).to_s.empty?
         end
         
         label_is_valid && !missing_locale
