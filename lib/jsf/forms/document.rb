@@ -33,16 +33,17 @@ module JSF
 
       # Filters keywords to return hash that can be validated against JSF::Forms::Form
       #
-      # @return [Hash] self without ROOT_KEYWORDS
-      def validatable_hash
+      # @return [Document] self without ROOT_KEYWORDS
+      def without_keywords
         self.select{|k,v| !ROOT_KEYWORDS.include?(k) }
       end
 
       # Returns all keys except ROOT_KEYWORDS
+      # It flattens 'shared' fields
       #
       # @return [Array<String>]
       def property_keys
-        SuperHash::Utils.flatten_to_root(validatable_hash)
+        SuperHash::Utils.flatten_to_root(without_keywords)
           .keys
           .map{|k| k.to_s.split('.').last}
       end

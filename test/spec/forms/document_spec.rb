@@ -7,10 +7,10 @@ class DocumentTest < Minitest::Test
     assert_equal document[:some_key], 'value'
   end
 
-  # validatable_hash
+  # without_keywords
 
-  def test_validatable_hash
-    hash = JSF::Forms::Document.new(some_key: 'value', extras: {}, meta: {}).validatable_hash
+  def test_without_keywords
+    hash = JSF::Forms::Document.new(some_key: 'value', extras: {}, meta: {}).without_keywords
     assert_equal 1, hash.keys.size
     assert_equal 'some_key', hash.keys.first
   end

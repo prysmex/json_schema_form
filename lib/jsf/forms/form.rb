@@ -219,19 +219,30 @@ module JSF
       ###METHODS####
       ##############
     
+      # Builds a new localized hash based on the Form's fields responses
+      #
+      # @param [Hash{String}, Document] document 
+      # @param [Boolean] is_inspection <description>
+      # @param [Symbol] locale <description>
+      #
+      # @return [Hash{String}]
       def i18n_document(document, is_inspection: false, locale: :es)
         merged_properties = self.merged_properties #precalculate for performance
     
         raise StandardError.new('schema not found') if merged_properties.nil?
         document.each_with_object({}) do|(name, v), hash|
-          next if (is_inspection && [:extras, :meta].include?(name))
-          value = self.i18n_document_value(
-            name,
-            v,
-            locale: locale,
-            property: merged_properties[name],
-          )
-          hash[name] = value unless value.nil?
+          name = name.to_s
+          if v.nil? || is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(name)
+            hash[name] = value
+          else
+            value = self.i18n_document_value(
+              name,
+              v,
+              locale: locale,
+              property: merged_properties[name],
+            )
+            hash[name] = value.nil? ? 'Missing Translation' : value
+          end
         end
       end
     

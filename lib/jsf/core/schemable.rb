@@ -111,10 +111,9 @@ module JSF
         end
       
         # https://json-schema.org/understanding-json-schema/reference/conditionals.html
+        # Returns all conditions that depend on the schema instance
         #
         # @todo missing parent if conditions
-        #
-        # Returns all conditions that depend on the schema instance
         #
         # @return [Nil, Array]
         def dependent_conditions
