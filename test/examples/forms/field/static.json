@@ -1,0 +1,10 @@
+{
+  "type": "null",
+  "title": "Description",
+  "static": true,
+  "displayProperties": {
+    // "hideOnCreate": false,
+    // "hidden": false
+    "sort": 0
+  }
+}

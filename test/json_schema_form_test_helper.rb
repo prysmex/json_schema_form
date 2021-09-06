@@ -18,9 +18,12 @@ module JsonSchemaFormTestHelper
     'string'
   ].freeze
 
+  # Module used for testing schema classes, it creates/removes a new schema class that inherits from
+  # `JSF::BaseHash`
   module SampleClassHooks
     def setup
-      @new_hasher_class = Object.const_set('SampleSchema', Class.new(SchemaHash))
+      @new_hasher_class = Object.const_set('SampleSchema', Class.new(JSF::BaseHash))
+      @new_hasher_class.include JSF::Core::Schemable
     end
   
     def teardown

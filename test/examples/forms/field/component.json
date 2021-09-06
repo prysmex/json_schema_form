@@ -1,0 +1,18 @@
+{
+  "$ref": "#/definitions/component1",
+  "displayProperties": {
+    // "hideOnCreate": false,
+    // "hidden": false
+    "sort": 0,
+    "hidden": false,
+    "i18n": {
+      "label": {
+        "es": "Prueba 1",
+        "en": "Test 1"
+      }
+    },
+    "visibility": {
+      "label": true
+    }
+  }
+}

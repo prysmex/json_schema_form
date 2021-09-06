@@ -28,11 +28,11 @@ This is the backbone and provides multiple ruby `Module`s that are used to easil
 Lets create a new backing class for a schema using the provided modules
 
 ```ruby
-# This is how to pre-wired `JsonSchema::Schema` class is created
-class MySchema < SchemaHash
+# This is how to pre-wired `JSF::Schema` class is created
+class MySchema < BaseHash
 
-  include JsonSchema::SchemaMethods::Schemable
-  include JsonSchema::SchemaMethods::Buildable
+  include JSF::Core::Schemable
+  include JSF::Core::Buildable
   include JsonSchema::SchemaMethods::Objectable
   include JsonSchema::SchemaMethods::Stringable
   include JsonSchema::SchemaMethods::Numberable
@@ -47,7 +47,7 @@ schema.class #=> MySchema
 schema[:properties][:prop1].class #=> MySchema
 ```
 
-As you can see, every time a subschema is found a new instance is serialized by using de default transforms in `JsonSchema::SchemaMethods::Buildable`
+As you can see, every time a subschema is found a new instance is serialized by using de default transforms in `JSF::Core::Buildable`
 It is important to note that the transforms are present ONLY on the following keys:
 
 ```ruby
@@ -97,12 +97,12 @@ schema[:properties][:prop1].meta[:is_subschema] #=> true
 
 ### Custom tree
 
-If you want to customize how the tree is built, override the `builder` method provided by `JsonSchema::SchemaMethods::Buildable`
+If you want to customize how the tree is built, override the `attributes_transform` method provided by `JSF::Core::Buildable`
 
 ```ruby
 class MySchema2 < MySchema
-  def builder(attribute, *args)
-    if attribute == :if
+  def attributes_transform(attribute, *args)
+    if attribute == 'if'
       MySchema.new(*args)
     else
       super(attribute, *args) #defaults to own class
@@ -114,27 +114,27 @@ schema[:if].class #=> MySchema
 schema[:then].class #=> MySchema2
 ```
 
-Keep in mind that all subschemas inside `if` will be instances of `MySchema` because that is it's default builder;
+Keep in mind that all subschemas inside `if` will be instances of `MySchema` because that is it's default `attributes_transform`;
 
 ### Methods
 
 - `root_parent`
 
 ```ruby
-  schema = JsonSchema::Schema.new( {properties: {prop1: {type: 'string'}}, allOf:[{if: {prop1: {const: 'test'}}, then: {properties: {prop2: {type: 'string'}}}}]} )
+  schema = JSF::Schema.new( {properties: {prop1: {type: 'string'}}, allOf:[{if: {prop1: {const: 'test'}}, then: {properties: {prop2: {type: 'string'}}}}]} )
   schema[:allOf].first[:then][:properties][:prop2].root_parent == schema #=> true
 ```
 
 ### Validations
 
-In addition to this, you can add validations to your objects by using the `JsonSchema::Validations::Validatable` module.
+In addition to this, you can add validations to your objects by using the `JSF::Validations::Validatable` module.
 A basic validation example would be this
 
 ```ruby
-class MySchema < SchemaHash
-  include JsonSchema::SchemaMethods::Schemable
-  include JsonSchema::SchemaMethods::Buildable #required for validations
-  include JsonSchema::Validations::Validatable
+class MySchema < BaseHash
+  include JSF::Core::Schemable
+  include JSF::Core::Buildable #required for validations
+  include JSF::Validations::Validatable
 
   def own_errors(passthru)
     errors_hash = {}
@@ -153,26 +153,26 @@ schema.errors #=> {:$id=>"id must be present", :items=>{0=>{:$id=>"id must be pr
 #### Dry-Schema Validations
 
 By adding the following line to your class, you automatically get default json_schema validations.
-`include JsonSchema::Validations::DrySchemaValidatable`
+`include JSF::Validations::DrySchemaValidatable`
 
 ## SchemaForm
 
 A `form` is composed of the follow classes:
 
-- `SchemaForm::Form`
-  - `SchemaForm::ResponseSet`
-    - `SchemaForm::Response`
-  - `SchemaForm::Field::Checkbox`
-  - `SchemaForm::Field::Component`
-  - `SchemaForm::Field::DateInput`
-  - `SchemaForm::Field::Header`
-  - `SchemaForm::Field::Info`
-  - `SchemaForm::Field::NumberInput`
-  - `SchemaForm::Field::Select`
-  - `SchemaForm::Field::Slider`
-  - `SchemaForm::Field::Static`
-  - `SchemaForm::Field::Switch`
-  - `SchemaForm::Field::TextInput`
+- `JSF::Forms::Form`
+  - `JSF::Forms::ResponseSet`
+    - `JSF::Forms::Response`
+  - `JSF::Forms::Field::Checkbox`
+  - `JSF::Forms::Field::Component`
+  - `JSF::Forms::Field::DateInput`
+  - `JSF::Forms::Field::Header`
+  - `JSF::Forms::Field::Info`
+  - `JSF::Forms::Field::NumberInput`
+  - `JSF::Forms::Field::Select`
+  - `JSF::Forms::Field::Slider`
+  - `JSF::Forms::Field::Static`
+  - `JSF::Forms::Field::Switch`
+  - `JSF::Forms::Field::TextInput`
 
 ### Form
 
@@ -188,7 +188,7 @@ A `form` is composed of the follow classes:
 
 ### Response
 
-`SchemaForm::Response` is contained by `SchemaForm::ResponseSet`
+`JSF::Forms::Response` is contained by `JSF::Forms::ResponseSet`
  ToDo
 
 ## document

@@ -1,11 +1,11 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "json_schema_form/version"
+require "jsf/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "json_schema_form"
-  spec.version       = JsonSchemaForm::VERSION
+  spec.version       = JSF::VERSION
   spec.authors       = ["Pato"]
   spec.email         = ["pato_devilla@hotmail.com"]
 
