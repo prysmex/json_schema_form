@@ -6,13 +6,8 @@ class FormTest < Minitest::Test
   #validations#
   #############
 
-  def test_example_is_valid
-    form_example = JSF::FormExamples.form
-    assert_empty JSF::Forms::Form.new(form_example).errors
-  end
-
   def test_property_key_must_match_property_id
-    form_example = JSF::FormExamples.form
+    form_example = JSF::Forms::FormBuilder.example('form')
     form = JSF::Forms::FormBuilder.build(form_example) do
       append_property :header_1, example('header').merge({:$id => '#/properties/header_1'})
     end
@@ -72,7 +67,7 @@ class FormTest < Minitest::Test
   #########
 
   def test_valid_for_locale
-    form_example = JSF::FormExamples.form
+    form_example = JSF::Forms::FormBuilder.example('form')
     form = JSF::Forms::Form.new(form_example)
 
     #default example is valid
@@ -80,7 +75,7 @@ class FormTest < Minitest::Test
 
     #ToDo more examples
     # JSF::Forms::FormBuilder.new(form) do
-    #   append_property :prop1, JSF::FormExamples.select
+    #   append_property :prop1, JSF::Forms::FormBuilder.example('select')
     # end
 
     # form[:properties][:prop1].set_label_for_locale('')
@@ -105,7 +100,7 @@ class FormTest < Minitest::Test
   end
 
   # def test_add_or_get_condition
-  #   form_example = JSF::FormExamples.form
+  #   form_example = JSF::Forms::FormBuilder.example('form')
   #   form = JSF::Forms::Form.new(form_example)
   #   assert_raises(ArgumentError){ form.add_or_get_condition(:prop1, :const, 'const') }
 

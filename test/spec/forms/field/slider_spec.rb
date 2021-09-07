@@ -11,12 +11,6 @@ class SliderTest < Minitest::Test
   def move_decimail_point(v, moves)
     (v.to_f / (10 ** moves)).round(moves)
   end
-  
-  def test_default_example_is_valid
-    hash = JSF::FormExamples.slider
-    instance = JSF::Forms::Field::Slider.new(hash)
-    assert_empty instance.errors
-  end
 
   # @override
   def test_valid_for_locale

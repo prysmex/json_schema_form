@@ -60,8 +60,10 @@ module JSF
             1
           when false
             0
-          else
+          when nil
             nil
+          else
+            raise TypeError.new("value must be boolean or nil, got: #{value.class}")
           end
         end
   

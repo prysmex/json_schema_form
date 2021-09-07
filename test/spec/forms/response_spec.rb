@@ -1,12 +1,6 @@
 require 'json_schema_form_test_helper'
 
 class ResponseTest < Minitest::Test
-  
-  def test_default_example_is_valid
-    hash = JSF::FormExamples.response(:default)
-    instance = JSF::Forms::Response.new(hash)
-    assert_empty instance.errors
-  end
 
   def test_valid_for_locale
     instance = JSF::Forms::Response.new({
@@ -22,12 +16,6 @@ class ResponseTest < Minitest::Test
     assert_equal false, instance.valid_for_locale?(:en)
     assert_equal false, instance.valid_for_locale?(:de)
     assert_equal false, instance.valid_for_locale?(:ru)
-  end
-
-  def test_inspection_example_is_valid
-    hash = JSF::FormExamples.response(:is_inspection)
-    instance = JSF::Forms::Response.new(hash)
-    assert_empty instance.errors({is_inspection: true})
   end
 
   # def test_type_must_be_present

@@ -2,7 +2,52 @@ require 'json_schema_form_test_helper'
 
 class FormbuilderTest < Minitest::Test
 
-  def test_examples
+  # fixtures
+
+  # tests .errors and .valid_for_locale?
+  def test_fixtures
+    klasses = {
+      JSF::Forms::Form => {},
+      JSF::Forms::ResponseSet => {},
+      JSF::Forms::Response => {
+        default: [{is_inspection: false}],
+        is_inspection: [{is_inspection: true}]
+      },
+      JSF::Forms::Field::Checkbox => {},
+      JSF::Forms::Field::Component => {},
+      JSF::Forms::Field::DateInput => {},
+      JSF::Forms::Field::Header => {},
+      JSF::Forms::Field::Info => {},
+      JSF::Forms::Field::NumberInput => {},
+      JSF::Forms::Field::Select => {},
+      JSF::Forms::Field::Slider => {},
+      JSF::Forms::Field::Static => {},
+      JSF::Forms::Field::Switch => {},
+      JSF::Forms::Field::TextInput => {},
+      JSF::Forms::Field::FileInput => {}
+    }
+    
+    klasses.each do |klass, traits_hash|
+      if traits_hash.empty?
+        hash = JSF::Forms::FormBuilder.example_for(klass)
+        instance = klass.new(hash)
+        assert_equal true, instance.valid_for_locale?
+        assert_empty instance.errors
+      else
+        traits_hash.each do |trait, arguments|
+          hash = JSF::Forms::FormBuilder.example_for(klass, trait)
+          instance = klass.new(hash)
+          assert_equal true, instance.valid_for_locale?
+          assert_empty instance.errors(*arguments)
+        end
+      end
+    end
+
+  end
+
+  # builder
+
+  def test_builder_example
     JSF::Forms::FormBuilder.build() do
 
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|

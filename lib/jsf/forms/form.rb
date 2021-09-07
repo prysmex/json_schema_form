@@ -188,7 +188,7 @@ module JSF
       # @param passthru [Hash] Options passed
       # @return [Hash] Errors
       def own_errors(passthru)
-        errors_hash = own_errors = JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+        errors_hash = JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
           validation_schema(passthru),
           self
         )

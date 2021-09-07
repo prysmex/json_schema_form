@@ -4,22 +4,10 @@ require_relative 'methods/base_spec'
 class SwitchTest < Minitest::Test
 
   include BaseMethodsTests
-  
-  def test_default_example_is_valid
-    example = JSF::FormExamples.switch
-    instance = JSF::Forms::Field::Switch.new(example)
-    assert_empty instance.errors
-  end
-
-  def test_default_example_is_valid_for_locale
-    example = JSF::FormExamples.switch
-    instance = JSF::Forms::Field::Switch.new(example)
-    assert_equal true, instance.valid_for_locale?
-  end
 
   # @override
   def test_valid_for_locale
-    hash = JSF::FormExamples.switch
+    hash = JSF::Forms::FormBuilder.example('switch')
     
     [:label, :trueLabel, :falseLabel].each do |label_key|
       instance = JSF::Forms::Field::Switch.new(hash)
@@ -41,8 +29,11 @@ class SwitchTest < Minitest::Test
 
   def test_max_score_for_value
     instance = JSF::Forms::Field::Switch.new
+
     assert_equal 1, instance.score_for_value(true)
     assert_equal 0, instance.score_for_value(false)
+    assert_nil instance.score_for_value(nil)
+    assert_raises(TypeError){instance.score_for_value(1)}
   end
 
 end

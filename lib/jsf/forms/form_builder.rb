@@ -1,9 +1,108 @@
-
-require_relative '../../../test/examples'
+require 'json'
 
 module JSF
   module Forms
+
+    #
+    # Methods for loading examples used by FormBuilder
+    #
+    module FormExamples
+  
+      # Returns an example for a class
+      #
+      # @param [Class, String] klass
+      # @param [Proc] &block <description>
+      # @return [Hash]
+      def example_for(klass, *args, &block)
+        klass_name = klass.is_a?(String) ? klass : klass.name
+
+        # demodulize and underscore class name
+        underscore_name = klass_name.split('::').last.split(/(?=[A-Z])/).map(&:downcase).join('_')
+        example(underscore_name, *args, &block)
+      end
+
+      # Returns an example based on a name
+      #
+      # @param [Class, String] klass
+      # @param [Proc] &block
+      # @return [Hash]
+      def example(ex_name, *args, &block)
+        path = case ex_name.to_s
+          when 'form'
+            '/form.json'
+          when 'response_set'
+            '/response_set.json'
+          when 'response'
+            response_path(*args)
+          when 'checkbox'
+            '/field/checkbox.json'
+          when 'component'
+            '/field/component.json'
+          when 'date_input'
+            '/field/date_input.json'
+          when 'header'
+            '/field/header.json'
+          when 'info'
+            '/field/info.json'
+          when 'number_input'
+            '/field/number_input.json'
+          when 'select'
+            '/field/select.json'
+          when 'slider'
+            '/field/slider.json'
+          when 'static'
+            '/field/static.json'
+          when 'switch'
+            '/field/switch.json'
+          when 'text_input'
+            '/field/text_input.json'
+          when 'file_input'
+            '/field/file_input.json'
+          else
+            raise StandardError.new("invalid example name: #{ex_name}")
+          end
+
+        parse_example(path, &block)
+      end
+
+      private
+
+      # Returns a path for a path
+      #
+      # @param [Symbol] type
+      # @return [String]
+      def response_path(type)
+        if type == :is_inspection
+          '/response_inspection.json'
+        else
+          '/response.json'
+        end
+      end
+
+      # @param [String]
+      def gem_directory_path
+        File.expand_path(File.dirname(__FILE__)) + '/fixtures'
+      end
+      
+      # Loads an example
+      #
+      # @param [String] example_path
+      # @return [Hash]
+      def parse_example(example_path)
+        hash = JSON.parse(File.read(gem_directory_path + example_path))
+        hash = yield (hash) if block_given?
+        hash = hash.deep_symbolize_keys # change to deep_stringify_keys to run tests with string keys
+        hash
+      end
+  
+    end
+
+    #
+    # Used to easily create JSF::Forms::Form instances
+    #
     class FormBuilder
+
+      extend JSF::Forms::FormExamples
     
       def self.build(*args, &block)
         new(*args, &block).to_hash
@@ -25,10 +124,11 @@ module JSF
         @form
       end
     
-      def example(name, *args)
-        JSF::FormExamples.send(name, *args)
+      def example(*args, &block)
+        self.class.example(*args, &block)
       end
     
     end
+
   end
 end

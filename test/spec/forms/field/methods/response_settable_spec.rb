@@ -1,12 +1,12 @@
 module ResponseSettableTests
 
-  include FieldHelpers
+  include FieldExampleHelpers
 
   # response_set_id and response_set_id=
 
   def test_response_set_id
-    example = self.example_for_current_field_klass
-    instance = field_klass.new(example)
+    example = self.tested_klass_example
+    instance = tested_klass.new(example)
 
     refute_equal '#/definitions/h12jb3k', instance.response_set_id
     instance.response_set_id = 'h12jb3k'
@@ -16,11 +16,11 @@ module ResponseSettableTests
   # response_set
   
   def test_response_set
-    name = self.underscored_klass_name
+    klass_example = tested_klass_example
     prop = nil
     JSF::Forms::FormBuilder.build() do
       add_response_set(:sdfuio, example('response_set'))
-      prop = append_property(:testprop, example(name)).tap do |field|
+      prop = append_property(:testprop, klass_example).tap do |field|
         field.response_set_id = :sdfuio
       end
     end
@@ -31,7 +31,7 @@ module ResponseSettableTests
   # i18n_value
 
   def test_i18n_value
-    klass_name = self.underscored_klass_name
+    klass_example = tested_klass_example
     prop = nil
 
     JSF::Forms::FormBuilder.build() do
@@ -42,7 +42,7 @@ module ResponseSettableTests
         end
       end
 
-      prop = append_property(:testprop, example(klass_name)).tap do |field|
+      prop = append_property(:testprop, klass_example).tap do |field|
         field.response_set_id = :jsdflkj3
       end
     end
