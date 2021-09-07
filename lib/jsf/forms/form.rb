@@ -233,7 +233,7 @@ module JSF
         document.each_with_object({}) do|(name, v), hash|
           name = name.to_s
           if v.nil? || is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(name)
-            hash[name] = value
+            hash[name] = v
           else
             value = self.i18n_document_value(
               name,
