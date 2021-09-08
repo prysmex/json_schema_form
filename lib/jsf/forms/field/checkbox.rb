@@ -21,7 +21,7 @@ module JSF
             required(:type)
             required(:uniqueItems)
             required(:items).hash do
-              required(:'$ref').filled(:string)
+              required(:'$ref').maybe(:string)
             end
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
@@ -46,6 +46,9 @@ module JSF
         ###METHODS####
         ##############
   
+        # Returns the maximum attainable score based on the field's ResponseSet
+        #
+        # @return [NilClass, Integer, Float]
         def max_score
           self.response_set
             &.[](:anyOf)
@@ -56,24 +59,21 @@ module JSF
               ].compact.inject(&:+)
             end
         end
-  
+
         def score_for_value(value)
-          case value
-          when ::Array
-            self.response_set
-              &.[](:anyOf)
-              &.select {|response| value.include? response[:const]}
-              &.reduce(nil) do |sum,response|
-                [
-                  sum,
-                  response[:score]
-                ].compact.inject(&:+)
-              end
-          else
-            nil
-          end
+          self.response_set
+            &.[](:anyOf)
+            &.select {|response| value.include? response[:const]}
+            &.reduce(nil) do |sum,response|
+              [
+                sum,
+                response[:score]
+              ].compact.inject(&:+)
+            end
         end
   
+        # @param [String] value
+        # @return [Boolean]
         def value_fails?(value)
           response_set = self.response_set
           return false if response_set.nil? || value.nil?
@@ -84,11 +84,6 @@ module JSF
         end
   
         def migrate!
-          self[:items] = JSF::Schema.new({'$ref': "#/definitions/#{self[:responseSetId]}"})
-          self.delete(:minItems)
-          self.delete(:maxItems)
-          self[:uniqueItems] = true
-          self.delete(:responseSetId)
         end
   
       end

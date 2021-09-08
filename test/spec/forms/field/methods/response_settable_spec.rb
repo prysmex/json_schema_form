@@ -14,6 +14,13 @@ module ResponseSettableTests
   end
 
   # response_set
+
+  def test_returns_nil_when_no_response_set
+    example = self.tested_klass_example
+    instance = tested_klass.new(example)
+
+    assert_nil instance.response_set
+  end
   
   def test_response_set
     klass_example = tested_klass_example

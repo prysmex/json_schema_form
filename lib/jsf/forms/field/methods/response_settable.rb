@@ -16,8 +16,6 @@ module JSF
         
           # Set the response set id, each field class should implement its own `RESPONSE_SET_PATH`
           #
-          # @todo should this raise an error if JSF::Forms::ResponseSet does not exists?
-          #
           # @param id [String] id of the JSF::Forms::ResponseSet
           # @return [String]
           def response_set_id=(id)
@@ -44,17 +42,36 @@ module JSF
           def i18n_value(value, locale = DEFAULT_LOCALE)
             self
               .response_set
-              .get_response_from_value(value)
+              &.get_response_from_value(value)
               &.dig(:displayProperties, :i18n, locale)
           end
+
+          # def valid_for_locale?(locale = DEFAULT_LOCALE)
+          #   label_is_valid = super
+
+          #   set = self.response_set
+          #   label_is_valid && (set.nil? || set.valid_for_locale?(locale))
+          # end
         
-          # Add response set validations
+          # Augment with response set validations
           def own_errors(passthru)
             errors = super
-            # validate response_set_id
+
             resp_id = self.response_set_id
-            errors['$ref_path'] = "$ref must match this regex #{REF_REGEX}" if resp_id&.match(REF_REGEX).nil?
-            errors['missing_response_set'] = "response set #{resp_id} was not found" if self.meta[:parent] && response_set.nil?
+
+            if resp_id.nil?
+              errors['$ref_required'] = "$ref must be present" unless passthru[:skip_ref_presence]
+            else
+              # regex should match
+              if resp_id&.match(REF_REGEX).nil?
+                errors['invalid_ref_path'] = "$ref must match this regex #{REF_REGEX}"
+              end
+              # response should be found
+              if response_set.nil?
+                errors['response_set_not_found'] = "response set #{resp_id} was not found"
+              end
+            end
+
             errors
           end
         

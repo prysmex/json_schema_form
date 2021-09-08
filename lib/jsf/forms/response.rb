@@ -3,6 +3,7 @@ module JSF
     class Response < BaseHash
   
       include JSF::Core::Schemable
+      include JSF::Validations::Validatable
   
       ##################
       ###VALIDATIONS####
@@ -24,18 +25,17 @@ module JSF
           end
           if is_inspection
             required(:enableScore).value(Types::True)
-            required(:score) { int? | float? | nil? }
+            required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
             required(:failed).value(:bool)
           end
         end
       end
   
-      def errors(passthru={}, errors={})
-        own_errors = JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+      def own_errors(passthru)
+        JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
         )
-        JSF::Validations::Validatable::BURY_ERRORS_PROC.call(own_errors, errors, self.meta[:path])
       end
   
       ##############

@@ -50,7 +50,7 @@ module JSF
       end
   
       def own_errors(passthru)
-        JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(validation_schema(passthru), self)
+        JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
       end
   
       ##############

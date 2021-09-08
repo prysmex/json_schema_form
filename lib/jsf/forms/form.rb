@@ -157,7 +157,7 @@ module JSF
           config.validate_keys = true
     
           before(:key_validator) do |result|
-            JSF::Validations::DrySchemaValidatable::BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
+            JSF::Validations::DrySchemaValidatable::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
     
           required(:properties).value(:hash)
@@ -188,7 +188,7 @@ module JSF
       # @param passthru [Hash] Options passed
       # @return [Hash] Errors
       def own_errors(passthru)
-        errors_hash = JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+        errors_hash = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
         )
@@ -693,55 +693,6 @@ module JSF
             definition.migrate!
           end
         end
-    
-        #3.0.0 migrations START, remove after version
-        if self[:schemaFormVersion] != '3.0.0'
-    
-          self.schema_form_iterator do |_, then_hash|
-            if then_hash.meta[:is_subschema]
-              then_hash.delete(:$id)
-            end
-            
-            then_hash[:properties]&.each do |k, v|
-              v[:$id] = "##{v[:$id]}" unless v[:$id]&.start_with?('#')
-            end
-          end
-    
-          # migrate responseSets => definitions
-          new_definitions = self[:responseSets].inject({}) do |acum, (id, definition)|
-            anyOf = definition[:responses].map do |r|
-              hash = {
-                type: 'string',
-                const: r[:value],
-                displayProperties: r[:displayProperties]
-              }
-              if options[:is_inspection]
-                hash.merge!({
-                  enableScore: r[:enableScore],
-                  score: r[:score],
-                  failed: r[:failed]
-                })
-              end
-              hash
-            end
-            acum[id] = {
-              type: 'string',
-              isResponseSet: true,
-              anyOf: anyOf
-            }
-            acum
-          end
-          old_definitions = self[:definitions].as_json
-          self.delete(:responseSets)
-          self[:definitions] = old_definitions.merge(new_definitions)
-    
-          # remove additionalProperties
-          self.delete(:additionalProperties)
-    
-          # add version
-          self[:schemaFormVersion] = '3.0.0'
-        end
-        #3.0.0 migrations END, remove after version
     
         self
       end

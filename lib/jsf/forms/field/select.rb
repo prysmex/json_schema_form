@@ -15,7 +15,7 @@ module JSF
         def validation_schema(passthru)
           #TODO find a way to prevent enum from being valid
           Dry::Schema.define(parent: super) do
-            required(:$ref).filled(:string)
+            required(:$ref).maybe(:string)
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
               required(:isSelect).filled(Types::True)
@@ -64,10 +64,6 @@ module JSF
         end
   
         def migrate!
-          self[:'$ref'] = "#/definitions/#{self[:responseSetId]}"
-          SuperHash::Utils.bury(self, :displayProperties, :isSelect, true)
-          self.delete(:type)
-          self.delete(:responseSetId)
         end
   
       end

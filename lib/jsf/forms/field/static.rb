@@ -31,7 +31,6 @@ module JSF
         end
   
         def migrate!
-          self[:$id] = "#/properties/#{self.meta[:path].last}"
         end
   
       end

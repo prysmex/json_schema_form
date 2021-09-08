@@ -50,10 +50,15 @@ module JSF
         #####METHODS######
         ##################
   
+        # @return [1]
         def max_score
           1
         end
   
+        # Returns a score for a value
+        #
+        # @param [Boolean, Nilclass]
+        # @return [1,0,nil]
         def score_for_value(value)
           case value
           when true
@@ -66,14 +71,16 @@ module JSF
             raise TypeError.new("value must be boolean or nil, got: #{value.class}")
           end
         end
-  
-        def migrate!
-        end
-  
+
+        # @param [String, Symbol] locale
+        # @return [Boolean]
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           super &&
             !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
             !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
+        end
+
+        def migrate!
         end
   
       end

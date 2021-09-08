@@ -1,7 +1,14 @@
-# limitations:
-# - assumes all transforms exist (otherwise nested validations are ignored)
 module JSF
   module Validations
+
+    # Module that contains a `validation_schema` that can be used to validate a hash
+    # according with basic json-schema specs.
+    #
+    # limitations:
+    #
+    # - requires Buildable (otherwise nested validations are ignored)
+    # - requires Validatable
+
     module DrySchemaValidatable
 
       def self.included(base)
@@ -39,7 +46,12 @@ module JSF
       
       end
 
-      BEFORE_KEY_VALIDATOR_PROC = Proc.new do |hash|
+      # Since the dry-schema validations are always done at a 'single' schema (without recursion),
+      # we need to 'clear' all keys that may contain subschemas since dry-schema always validates
+      # for unknown keys inside hashes and arrays
+      #
+      # @return [Hash]
+      WITHOUT_SUBSCHEMAS_PROC = Proc.new do |hash|
         hash.inject({}) do |acum, (k,v)|
           if v.is_a?(::Array) && JSF::Validations::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
             acum[k] = []
@@ -52,14 +64,23 @@ module JSF
         end
       end
 
-      OWN_ERRORS_PROC = Proc.new do |validation_schema, instance|
+      # @param [Dry::Schema::JSON] validation_schema
+      # @param [Hash] hash_or_schema
+      # @return [Hash]
+      SCHEMA_ERRORS_PROC = Proc.new do |validation_schema, hash_or_schema|
         validation_schema
-          .(instance)
+          .(hash_or_schema)
           .errors
           .to_h
           .merge({})
       end
       
+      # Returns a Dry::Schema.JSON that can validate a Hash according to the
+      # JSON Schema spec.
+      #
+      # @param [Hash] passthru
+      #
+      # @return [Dry::Schema.JSON]
       def validation_schema(passthru)
         instance = self
 
@@ -70,7 +91,7 @@ module JSF
           # need to clear data because jsonschema always tries to validate
           # for unknown keys inside hashes and arrays
           before(:key_validator) do |result|
-            BEFORE_KEY_VALIDATOR_PROC.call(result.to_h)
+            WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
 
           optional(:type) do
@@ -148,10 +169,12 @@ module JSF
         end
       end
 
-      # private
-
+      # Returns a hash of errors
+      #
+      # @param [Hash] passthru
+      # @return [Hash]
       def own_errors(passthru)
-        OWN_ERRORS_PROC.call(validation_schema(passthru), self)
+        SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
       end
 
     end

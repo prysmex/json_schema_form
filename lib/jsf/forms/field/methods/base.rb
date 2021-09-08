@@ -141,7 +141,7 @@ module JSF
           # Errors
     
           def own_errors(passthru)
-            JSF::Validations::DrySchemaValidatable::OWN_ERRORS_PROC.call(
+            JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
               validation_schema(passthru),
               self
             )

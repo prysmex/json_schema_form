@@ -23,11 +23,15 @@ class SwitchTest < Minitest::Test
     end
   end
 
+  # max_score
+
   def test_max_score
     assert_equal 1, JSF::Forms::Field::Switch.new.max_score
   end
 
-  def test_max_score_for_value
+  # score_for_value
+
+  def test_score_for_value
     instance = JSF::Forms::Field::Switch.new
 
     assert_equal 1, instance.score_for_value(true)

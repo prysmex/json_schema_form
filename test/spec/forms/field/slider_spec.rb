@@ -5,12 +5,20 @@ class SliderTest < Minitest::Test
 
   include BaseMethodsTests
 
+  #########
+  #helpers#
+  #########
+
   # v => 3
   # moves => 3
   # @return => 0.003
   def move_decimail_point(v, moves)
     (v.to_f / (10 ** moves)).round(moves)
   end
+
+  #######
+  #tests#
+  #######
 
   # @override
   def test_valid_for_locale
@@ -106,5 +114,8 @@ class SliderTest < Minitest::Test
     instance[:enum] = [move_decimail_point(1, JSF::Forms::Field::Slider::MAX_PRECISION + 1)]
     assert_instance_of String, instance.errors[:_enum_precision_]
   end
+
+  # def test_max_score
+  # end
 
 end
