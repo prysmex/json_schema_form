@@ -5,6 +5,16 @@ class StaticTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
+
   # @override
   def test_valid_for_locale
   end

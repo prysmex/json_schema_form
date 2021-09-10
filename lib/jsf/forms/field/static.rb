@@ -25,6 +25,10 @@ module JSF
             end
           end
         end
+
+        ##################
+        #####METHODS######
+        ##################
   
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           true

@@ -7,6 +7,16 @@ class CheckboxTest < Minitest::Test
   include BaseMethodsTests
   include ResponseSettableTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
+
   # max_score
 
   def test_max_score_no_response_set

@@ -47,8 +47,6 @@ module BaseMethodsTests
 
   # overriden in Static, Switch, Slider
   def test_valid_for_locale
-    klass = tested_klass
-
     example = self.tested_klass_example
     instance = tested_klass.new(example)
 

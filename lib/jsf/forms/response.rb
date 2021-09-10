@@ -1,5 +1,26 @@
 module JSF
   module Forms
+
+    #
+    # Represents a 'single' response in a JSF::Forms::ResponseSet.
+    #
+    # @example
+    #   {
+    #     "type": "string",
+    #     "const": "value1",
+    #     "displayProperties": {
+    #       "i18n": {
+    #         "en": "Your translated value",
+    #       }
+    #     }
+    #   }
+    #
+    # If 'is_inspection', it also contains the following keys:
+    #
+    # - enableScore
+    # - score
+    # - failed
+    #
     class Response < BaseHash
   
       include JSF::Core::Schemable
@@ -30,7 +51,8 @@ module JSF
           end
         end
       end
-  
+
+      # @param passthru [Hash{Symbol => *}]
       def own_errors(passthru)
         JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
@@ -42,10 +64,19 @@ module JSF
       ###METHODS####
       ##############
   
+      # Sets a locale
+      #
+      # @param [String] label
+      # @param [String,Symbol] locale
+      # @return [void]
       def set_translation(label, locale = DEFAULT_LOCALE)
         SuperHash::Utils.bury(self, :displayProperties, :i18n, locale, label)
       end
   
+      # Checks if locale is valid
+      #
+      # @param [String, Symbol] locale
+      # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE)
         !self.dig(:displayProperties, :i18n, locale).to_s.empty?
       end

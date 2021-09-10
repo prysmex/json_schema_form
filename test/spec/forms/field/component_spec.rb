@@ -5,4 +5,15 @@ class ComponentTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
+
+  # @todo
 end

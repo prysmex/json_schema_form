@@ -1,8 +1,14 @@
 module JSF
   module Validations
 
-    # requires to include Schemable
-    # requires to include Buildable
+    # Adds the ability to recursively build an errors hash by calling `errors`.
+    # Each encountered subschema should respond to `own_errors` (by default not defined) and return its own errors hash.
+    # The `errors` method will use the hash returned by `own_errors` to add the errors of all subschemas recursively.
+    #
+    # requirements:
+    #
+    # - `JSF::Core::Schemable`
+    # - `JSF::Core::Buildable`
 
     module Validatable
 
@@ -35,8 +41,9 @@ module JSF
       # @param [Array<String>] obj_path
       # @return [void]
       BURY_ERRORS_PROC = Proc.new do |own_errors, acum_errors, obj_path|
-        SuperHash::Utils.flatten_to_root(own_errors).each do |relative_path, errors_array|
-          path = (obj_path || []) + (relative_path.to_s.split('.'))
+        SuperHash::Utils.flatten_to_root(own_errors).each do |error_path_str, errors_array|
+          error_path = error_path_str.to_s.split('.')
+          path = (obj_path || []) + error_path
           path.map!{|i| Integer(i) rescue i.to_sym }
           SuperHash::Utils.bury(acum_errors, *path, errors_array)
         end
@@ -44,8 +51,8 @@ module JSF
 
       # recursively build errors hash
       #
-      # @param [Hash] passthru options to be passed
-      # @param [Hash] acum_errors
+      # @param passthru [Hash{Symbol => *}] options to be passed
+      # @param [Hash] [Hash{Symbol => *}] acum_errors
       # @return [Hash] errors of instance and all sub instances
       def errors(passthru={}, acum_errors={})
         
@@ -60,8 +67,8 @@ module JSF
       end
 
       # override to implement schema errors
-      # @param [Hash] passthru options to be passed
-      # @return [Hash] errors
+      # @param passthru [Hash{Symbol => *}] options to be passed
+      # @return [Hash{Symbol => *}] errors
       def own_errors(passthru)
         raise NoMethodError.new("need to override 'own_errors' method")
       end
@@ -70,8 +77,8 @@ module JSF
 
       # Run errors in subschemas
       #
-      # @param [Hash] passthru options to be passed
-      # @param [Hash] acum_errors
+      # @param passthru [Hash{Symbol => *}] options to be passed
+      # @param [Hash] [Hash{Symbol => *}] acum_errors
       # @return [void]
       def subschemas_errors(passthru, acum_errors)
         # continue recurrsion for all subschema keys
@@ -110,7 +117,6 @@ module JSF
       end
 
       # Wrapper method, used only to DRY code by not adding respond_to? validation many times
-      #
       def call_subschema_errors(subschema, errors, passthru)
         subschema.errors(passthru, errors) if subschema.respond_to?(:errors)
       end

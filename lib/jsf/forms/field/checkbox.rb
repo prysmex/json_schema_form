@@ -17,11 +17,16 @@ module JSF
         
         def validation_schema(passthru)
           #TODO find a way to prevent enum from being valid
+          skip_ref_presence = passthru[:skip_ref_presence]
           Dry::Schema.define(parent: super) do
             required(:type)
             required(:uniqueItems)
             required(:items).hash do
-              required(:'$ref').maybe(:string)
+              if skip_ref_presence
+                required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+              else
+                required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+              end
             end
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
@@ -60,6 +65,10 @@ module JSF
             end
         end
 
+        # Returns the sum of the score matching JSF::Forms::Response
+        #
+        # @param [Array]
+        # @return [Integer, Float]
         def score_for_value(value)
           self.response_set
             &.[](:anyOf)
@@ -72,7 +81,9 @@ module JSF
             end
         end
   
-        # @param [String] value
+        # Checks if any of the matching JSF::Forms::Response are considered 'failed'
+        #
+        # @param [Array] value
         # @return [Boolean]
         def value_fails?(value)
           response_set = self.response_set

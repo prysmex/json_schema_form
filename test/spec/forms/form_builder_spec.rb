@@ -16,7 +16,9 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Checkbox => [
         {errors_args: [{skip_ref_presence: true}]}
       ],
-      JSF::Forms::Field::Component => [],
+      JSF::Forms::Field::Component => [
+        {errors_args: [{skip_ref_presence: true}]}
+      ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
@@ -81,9 +83,9 @@ class FormbuilderTest < Minitest::Test
       append_conditional_property(:depedendent_select3, example('select'), dependent_on: :select1, type: :const, value: 'option2') do |form, field|
         field.response_set_id = :response_set_1
         field.hidden = true
-        form.prepend_property(:depedendent_select4, example('select'), {required: true}).tap do |field|
-          field.response_set_id = :response_set_1
-          field.hidden = true
+        form.prepend_property(:depedendent_select4, example('select'), {required: true}).tap do |field2|
+          field2.response_set_id = :response_set_1
+          field2.hidden = true
         end
       end
     

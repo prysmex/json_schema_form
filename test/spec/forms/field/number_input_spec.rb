@@ -5,4 +5,9 @@ class NumberInputTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
 end

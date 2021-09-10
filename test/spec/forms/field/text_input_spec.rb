@@ -5,4 +5,14 @@ class TextInputTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
+
 end

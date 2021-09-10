@@ -5,4 +5,9 @@ class InfoTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
 end

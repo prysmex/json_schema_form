@@ -57,9 +57,11 @@ module JSF
         end
       end
 
-      # Main proc called by all attribute transforms, it serves two purposes
+      # Main proc called by all attribute transforms, it serves two purposes:
+      #
       # - Builds meta hash
       # - Drying code
+      #
       # It calls the attributes_transform, which can easily be overriden
       #
       # @param [String] name of the key
@@ -76,9 +78,9 @@ module JSF
         instance.attributes_transform(attribute, value, meta)
       }
 
-      #################
-      #Hash TRANSFORMS#
-      #################
+      ###################
+      ##Hash transforms##
+      ###################
 
       # SuperHash::Hasher attribute transform
       ADDITIONAL_PROPERTIES_TRANSFORM = ->(attribute, value, instance) {

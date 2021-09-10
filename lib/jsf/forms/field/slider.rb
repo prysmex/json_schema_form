@@ -27,7 +27,7 @@ module JSF
             end
   
             required(:type)
-            required(:enum).array{ int? | float? }
+            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
               required(:pictures).value(:array?).array(:str?)
@@ -53,35 +53,17 @@ module JSF
             end
           end
         end
-  
-        ##################
-        #####METHODS######
-        ##################
-  
-        def max_score
-          self[:enum]&.max
-        end
-  
-        def score_for_value(value)
-          case value
-          when ::Integer, ::Float
-            value
-          else
-            nil
-          end
-        end
-  
+
+        # @param passthru [Hash{Symbol => *}]
         def own_errors(passthru)
           errors = super
   
+          # extra enum validations
           if self[:enum].is_a?(Array)
-  
-            # enum length
-            errors['_enum_size_'] = "The max length of enum is #{MAX_ENUM_SIZE}" if self[:enum].length > MAX_ENUM_SIZE
-  
+
             # enum precision
-            precision_errors = self[:enum].select do |e|
-              e != e.round(MAX_PRECISION)
+            precision_errors = self[:enum].select do |value|
+              value != value.round(MAX_PRECISION)
             end
             if !precision_errors.empty?
               errors['_enum_precision_'] = "invalid enum values #{precision_errors.join(', ')}, max decimal precision is #{MAX_PRECISION}"
@@ -101,15 +83,40 @@ module JSF
                 end
               end
             end
-  
+
           end
   
           errors
         end
   
-        def migrate!
+        ##################
+        #####METHODS######
+        ##################
+  
+        # @retun [Integer, Float]
+        def max_score
+          self[:enum]&.max
         end
   
+        # Returns the score, which is equal to the value if number
+        #
+        # @todo should it validate inclusion of value in enum key?
+        #
+        # @param [String]
+        # @return [Integer, Float]
+        def score_for_value(value)
+          case value
+          when ::Integer, ::Float
+            value
+          else
+            nil
+          end
+        end
+
+        # Checks if field is valid for a locale
+        #
+        # @param [String,Symbol] locale
+        # @return [Boolean]
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           label_is_valid = super
   
@@ -118,6 +125,9 @@ module JSF
           end
           
           label_is_valid && !missing_locale
+        end
+  
+        def migrate!
         end
   
       end

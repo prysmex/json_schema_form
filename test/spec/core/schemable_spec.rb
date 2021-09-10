@@ -162,7 +162,6 @@ class StrictTypesTest < Minitest::Test
     assert_equal 1, child_with_conditions.dependent_conditions.size
     assert_same instance[:allOf][0], child_with_conditions.dependent_conditions.first
     assert_equal true, child_with_conditions.has_dependent_conditions?
-    assert_empty = child_with_conditions.dependent_conditions_for_value('other_value'){ true }
     assert_empty child_with_conditions.dependent_conditions_for_value('correct_value'){ false }
     assert_equal 1, child_with_conditions.dependent_conditions_for_value('correct_value'){ true }.size
 

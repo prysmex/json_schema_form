@@ -37,7 +37,7 @@ module JSF
           # get the translation for a value in the field's response set
           #
           # @param [Object] value
-          # @param [String] locale
+          # @param [String,Symbol] locale
           # @return [String]
           def i18n_value(value, locale = DEFAULT_LOCALE)
             self
@@ -54,20 +54,15 @@ module JSF
           # end
         
           # Augment with response set validations
+          #
+          # @param passthru [Hash{Symbol => *}]
           def own_errors(passthru)
             errors = super
 
             resp_id = self.response_set_id
-
-            if resp_id.nil?
-              errors['$ref_required'] = "$ref must be present" unless passthru[:skip_ref_presence]
-            else
-              # regex should match
-              if resp_id&.match(REF_REGEX).nil?
-                errors['invalid_ref_path'] = "$ref must match this regex #{REF_REGEX}"
-              end
+            if !resp_id.nil?
               # response should be found
-              if response_set.nil?
+              if self.response_set.nil?
                 errors['response_set_not_found'] = "response set #{resp_id} was not found"
               end
             end

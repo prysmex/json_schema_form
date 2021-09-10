@@ -5,6 +5,16 @@ class SwitchTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
+
   # @override
   def test_valid_for_locale
     hash = JSF::Forms::FormBuilder.example('switch')

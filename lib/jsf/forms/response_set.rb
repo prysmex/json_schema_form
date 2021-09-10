@@ -1,11 +1,15 @@
 module JSF
   module Forms
+    
+    #
+    # Represents a collection of 'response values' that a JSF::Forms::Field class may be associated with.
+    #
     class ResponseSet < BaseHash
 
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
   
-      RESPONSE_PROC = ->(attribute, responsesArray, instance) {
+      RESPONSE_TRANSFORM = ->(attribute, responsesArray, instance) {
         if responsesArray.is_a? ::Array
           responsesArray.map.with_index do |response, index|
             path = instance.meta[:path] + [:anyOf, index]
@@ -20,7 +24,7 @@ module JSF
         end
       }
   
-      attribute? 'anyOf', default: ->(data) { [].freeze }, transform: RESPONSE_PROC
+      attribute? 'anyOf', default: ->(data) { [].freeze }, transform: RESPONSE_TRANSFORM
   
       ##################
       ###VALIDATIONS####
@@ -48,7 +52,8 @@ module JSF
           end
         end
       end
-  
+
+      # @param passthru [Hash{Symbol => *}]
       def own_errors(passthru)
         JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
       end
@@ -57,18 +62,35 @@ module JSF
       ###METHODS####
       ##############
   
+      # Adds a new response
+      #
+      # @param [Hash] definition
+      # @return [Hash] added response
       def add_response(definition)
         self[:anyOf] = (self[:anyOf] || []) << definition
         self[:anyOf].last
       end
   
-      # def remove_response
-      # end
+      # Removes a response based on a value
+      #
+      # @param [String] value
+      # @return [NilClass, Hash]
+      def get_response_from_value(value)
+        self[:anyOf] = self[:anyOf]&.reject{|r| r[:const] == value }
+      end
   
+      # Finds a response for a value
+      #
+      # @param [String] value
+      # @return [NilClass, Hash]
       def get_response_from_value(value)
         self[:anyOf].find{|r| r[:const] == value }
       end
-  
+
+      # Checks if all JSF::Forms::Response are valid for a locale
+      #
+      # @param [String,Symbol] locale
+      # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE)
         self[:anyOf].find{|r| r.valid_for_locale?(locale) == false }.nil?
       end

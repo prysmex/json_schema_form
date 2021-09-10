@@ -6,11 +6,21 @@ module JSF
         include ::JSF::Forms::Field::Methods::Base
     
         REF_REGEX = /\A#\/definitions\/\w+\z/
+
+        ##################
+        ###VALIDATIONS####
+        ##################
     
         def validation_schema(passthru)
+          skip_ref_presence = passthru[:skip_ref_presence]
+
           Dry::Schema.define(parent: super) do
             config.validate_keys = true
-            required(:$ref).filled(:string)
+            if skip_ref_presence
+              required(:$ref).maybe{ str? & format?(/\A#\/definitions\/\w+\z/) }
+            else
+              required(:$ref).filled{ str? & format?(/\A#\/definitions\/\w+\z/) }
+            end
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
@@ -29,11 +39,23 @@ module JSF
           end
         end
     
+        # @param passthru [Hash{Symbol => *}]
         def own_errors(passthru)
           errors = super
-          errors['$ref_path'] = "$ref must match this regex #{REF_REGEX}" if self[:$ref]&.match(REF_REGEX).nil?
+
+          if !component_definition_id.nil?
+            # response should be found
+            if self.component_definition.nil?
+              errors['component_definition_not_found'] = "component #{component_definition_id} was not found"
+            end
+          end
+
           errors
         end
+
+        ##############
+        ###METHODS####
+        ##############
   
         def component_definition_id
           self.dig(*[:$ref])
@@ -43,7 +65,6 @@ module JSF
           SuperHash::Utils.bury(self, *[:$ref], "#/definitions/#{id}")
         end
   
-        #get the field's response set, only applies to certain fields
         def component_definition
           path = self.component_definition_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
           return if path.nil? || path.empty?

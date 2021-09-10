@@ -11,19 +11,20 @@ module JSF
   
         # Adds a property to the 'properties' hash
         #
-        # @param id [Symbol] name of the property
+        # @param id [String,Symbol] name of the property
         # @param definition [Hash] the schema to add
         # @param options[:required] [Boolean] if the property should be required
         # @return [Object] Property added
         def add_property(id, definition, options={})
-          new_definition = {}.merge(definition)
-          new_definition[:'$id'] = "#/properties/#{id}" #TODO this currently only works for main form
-          properties_hash = self[:properties]&.merge({}) || {}
-          properties_hash[id] = new_definition
+          id = id.to_s
+          dup_definition = definition.deep_dup
+          dup_definition[:'$id'] = "#/properties/#{id}" #TODO this currently only works for main form
+          self[:properties] = (self[:properties] || {}).merge({id => dup_definition})
+          
+          # add to required array
           if options[:required]
             self[:required] = ((self[:required] || []) + [id]).uniq
           end
-          self[:properties] = properties_hash
           self[:properties][id]
         end
   
@@ -31,6 +32,7 @@ module JSF
         #
         # @todo handle if other property depends on this one
         #
+        # @param [String,Symbol]
         # @return [Object] mutated self
         def remove_property(id)
           id = id.to_s

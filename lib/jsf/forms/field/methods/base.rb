@@ -21,6 +21,32 @@ module JSF
     
         module InstanceMethods
 
+          ##################
+          ###VALIDATIONS####
+          ##################
+
+          # @param passthru [Hash{Symbol => *}]
+          def own_errors(passthru)
+            JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
+              validation_schema(passthru),
+              self
+            )
+          end
+
+          # @param passthru[Hash{Symbol => *}]
+          def validation_schema(passthru)
+            Dry::Schema.JSON do
+              config.validate_keys = true
+              optional(:$id).filled(:string)
+              optional(:title).maybe(:string)
+              optional(:'$schema').filled(:string)
+            end
+          end
+
+          ##############
+          ###METHODS####
+          ##############
+
           # Get hidden display property
           #
           # @return [Boolean] true when hidden
@@ -53,7 +79,7 @@ module JSF
           
           # get the field's i18n label
           #
-          # @param [String] locale
+          # @param [String,Symbol] locale
           # @return [String]
           def i18n_label(locale = DEFAULT_LOCALE)
             self.dig(:displayProperties, :i18n, :label, locale)
@@ -61,7 +87,7 @@ module JSF
     
           # set the field's i18n label
           #
-          # @param [String] label
+          # @param [String,Symbol] locale
           # @param [String] locale
           # @return [String]
           def set_label_for_locale(label, locale = DEFAULT_LOCALE)
@@ -72,7 +98,8 @@ module JSF
           # The simplest case is where the label exists, but each field
           # may implement more validations
           #
-          # @param [String] label
+          # @param [String,Symbol] locale
+          # @return [Boolean]
           def valid_for_locale?(locale = DEFAULT_LOCALE)
             !i18n_label(locale).to_s.empty?
           end
@@ -136,24 +163,6 @@ module JSF
           # @return [void]
           def compile!
             self.delete(:displayProperties)
-          end
-
-          # Errors
-    
-          def own_errors(passthru)
-            JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
-              validation_schema(passthru),
-              self
-            )
-          end
-    
-          def validation_schema(passthru)
-            Dry::Schema.JSON do
-              config.validate_keys = true
-              optional(:$id).filled(:string)
-              optional(:title).maybe(:string)
-              optional(:'$schema').filled(:string)
-            end
           end
     
         end

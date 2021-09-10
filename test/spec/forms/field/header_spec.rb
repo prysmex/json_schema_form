@@ -5,4 +5,10 @@ class HeaderTest < Minitest::Test
 
   include BaseMethodsTests
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
 end

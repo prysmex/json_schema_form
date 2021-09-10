@@ -1,5 +1,5 @@
 {
-  "$ref": "#/definitions/component1",
+  "$ref": null,
   "displayProperties": {
     // "hideOnCreate": false,
     // "hidden": false

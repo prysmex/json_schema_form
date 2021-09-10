@@ -1,13 +1,12 @@
 module JSF
   module Validations
 
-    # Module that contains a `validation_schema` that can be used to validate a hash
+    # Module that contains a `validation_schema` powered by 'dry-schema' that can be used to validate a hash
     # according with basic json-schema specs.
     #
-    # limitations:
+    # requirements:
     #
-    # - requires Buildable (otherwise nested validations are ignored)
-    # - requires Validatable
+    # - `JSF::Validations::Validatable`
 
     module DrySchemaValidatable
 
@@ -171,7 +170,7 @@ module JSF
 
       # Returns a hash of errors
       #
-      # @param [Hash] passthru
+      # @param passthru [Hash{Symbol => *}]
       # @return [Hash]
       def own_errors(passthru)
         SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)

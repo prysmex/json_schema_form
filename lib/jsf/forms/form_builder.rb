@@ -4,7 +4,7 @@ module JSF
   module Forms
 
     #
-    # Methods for loading examples used by FormBuilder
+    # Methods for loading examples used by JSF::Forms::FormBuilder
     #
     module FormExamples
   
@@ -98,7 +98,7 @@ module JSF
     end
 
     #
-    # Used to easily create JSF::Forms::Form instances
+    # Class that can be used to easily create JSF::Forms::Form instances
     #
     class FormBuilder
 

@@ -5,10 +5,6 @@ class SliderTest < Minitest::Test
 
   include BaseMethodsTests
 
-  #########
-  #helpers#
-  #########
-
   # v => 3
   # moves => 3
   # @return => 0.003
@@ -16,9 +12,15 @@ class SliderTest < Minitest::Test
     (v.to_f / (10 ** moves)).round(moves)
   end
 
-  #######
-  #tests#
-  #######
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # @todo
+
+  ##############
+  ###METHODS####
+  ##############
 
   # @override
   def test_valid_for_locale
@@ -63,18 +65,44 @@ class SliderTest < Minitest::Test
 
   end
 
-  def test_enum_length
-    enum = (0...JSF::Forms::Field::Slider::MAX_ENUM_SIZE).to_a
+  # max_score
 
+  def test_max_score
     instance = JSF::Forms::Field::Slider.new({
-      enum: enum
+      enum: [1,2,4]
     })
 
-    assert_nil instance.errors[:_enum_size_]
+    assert_equal 4, instance.max_score
+  end
 
-    instance[:enum].push(JSF::Forms::Field::Slider::MAX_ENUM_SIZE)
+  # score for value
 
-    assert_instance_of String, instance.errors[:_enum_size_]
+  def test_score_for_value
+    instance = JSF::Forms::Field::Slider.new({
+      enum: [1,2,4]
+    })
+
+    assert_equal 2, instance.score_for_value(2)
+  end
+
+  def test_enum_values_must_be_positive
+    instance = JSF::Forms::Field::Slider.new({
+      enum: [-1, 2, 3]
+    })
+    refute_nil instance.errors[:enum]
+  end
+  
+  def test_enum_length
+    enum = (0...JSF::Forms::Field::Slider::MAX_ENUM_SIZE).to_a
+    instance = JSF::Forms::Field::Slider.new({
+      enum: [0]
+    })
+
+    refute_nil instance.errors[:enum]               # min
+    instance[:enum] = enum
+    assert_nil instance.errors[:enum]
+    instance[:enum].push(instance[:enum].last + 1)
+    refute_nil instance.errors[:enum]               # max
   end
 
   def test_enum_spacing
@@ -114,8 +142,5 @@ class SliderTest < Minitest::Test
     instance[:enum] = [move_decimail_point(1, JSF::Forms::Field::Slider::MAX_PRECISION + 1)]
     assert_instance_of String, instance.errors[:_enum_precision_]
   end
-
-  # def test_max_score
-  # end
 
 end

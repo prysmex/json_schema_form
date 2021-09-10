@@ -1,21 +1,20 @@
 module JSF
   module Core
     
-    
     # - contains all the base logic for any schema class
-    # - sets the 'type' attribute that validates the value
+    # - sets the 'type' attribute that validates a valid json schema type
     # - support 'meta'
-    #   - support navigating to parent
-    #   - check if subschema
-    #   - track absolute path to current schema
+    #   - parent: support navigating to parent
+    #   - is_subschema: boolean
+    #   - path: absolute path to current schema
     #
     module Schemable
     
-      # OBJECT_KEYS = [:properties, :required, :required, :propertyNames, :if, :then, :else, :additionalProperties, :minProperties, :maxProperties, :dependencies, :patternProperties]
-      # STRING_KEYS = [:minLength, :maxLength, :pattern, :format, :enum, :const]
-      # NUMBER_KEYS = [:multipleOf, :minimum, :maximum, :exclusiveMinimum, :exclusiveMaximum]
+      # OBJECT_KEYS = ['properties', 'required', 'required', 'propertyNames', 'if', 'then', 'else', 'additionalProperties', 'minProperties', 'maxProperties', 'dependencies', 'patternProperties']
+      # STRING_KEYS = ['minLength', 'maxLength', 'pattern', 'format', 'enum', 'const']
+      # NUMBER_KEYS = ['multipleOf', 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum']
       # BOOLEAN_KEYS = []
-      # ARRAY_KEYS = [:items, :contains, :additionalItems, :minItems, :maxItems, :uniqueItems]
+      # ARRAY_KEYS = ['items', 'contains', 'additionalItems', 'minItems', 'maxItems', 'uniqueItems']
       # NULL_KEYS = []
     
       def self.included(base)
