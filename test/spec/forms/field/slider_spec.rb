@@ -18,10 +18,6 @@ class SliderTest < Minitest::Test
 
   # @todo
 
-  ##############
-  ###METHODS####
-  ##############
-
   # @override
   def test_valid_for_locale
     options = ['text', '', nil]
@@ -64,6 +60,10 @@ class SliderTest < Minitest::Test
     assert_equal false, instance.valid_for_locale?(:locale1)
 
   end
+  
+  ##############
+  ###METHODS####
+  ##############
 
   # max_score
 

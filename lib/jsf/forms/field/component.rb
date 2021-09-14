@@ -40,7 +40,7 @@ module JSF
         end
     
         # @param passthru [Hash{Symbol => *}]
-        def own_errors(passthru)
+        def own_errors(passthru={})
           errors = super
 
           if !component_definition_id.nil?

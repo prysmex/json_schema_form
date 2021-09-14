@@ -54,8 +54,16 @@ module JSF
       end
 
       # @param passthru [Hash{Symbol => *}]
-      def own_errors(passthru)
+      def own_errors(passthru={})
         JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
+      end
+
+      # Checks if all JSF::Forms::Response are valid for a locale
+      #
+      # @param [String,Symbol] locale
+      # @return [Boolean]
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
+        !!self[:anyOf].find{|r| r.valid_for_locale?(locale) }
       end
   
       ##############
@@ -85,14 +93,6 @@ module JSF
       # @return [NilClass, Hash]
       def get_response_from_value(value)
         self[:anyOf].find{|r| r[:const] == value }
-      end
-
-      # Checks if all JSF::Forms::Response are valid for a locale
-      #
-      # @param [String,Symbol] locale
-      # @return [Boolean]
-      def valid_for_locale?(locale = DEFAULT_LOCALE)
-        self[:anyOf].find{|r| r.valid_for_locale?(locale) == false }.nil?
       end
   
       # def get_failing_responses

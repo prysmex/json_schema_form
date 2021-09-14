@@ -21,8 +21,8 @@ module JsonSchemaFormTestHelper
   # `JSF::BaseHash`
   module SampleClassHooks
     def setup
-      @new_hasher_class = Object.const_set('SampleSchema', Class.new(JSF::BaseHash))
-      @new_hasher_class.include JSF::Core::Schemable
+      @sample_schema_class = Object.const_set('SampleSchema', Class.new(JSF::BaseHash))
+      @sample_schema_class.include JSF::Core::Schemable
     end
   
     def teardown

@@ -2,6 +2,7 @@ module JSF
   module Forms
     DEFAULT_LOCALE = 'es'
     AVAILABLE_LOCALES = ['es', 'en']
+    VERSION = '3.0.0'
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -149,6 +150,9 @@ module JSF
       update_attribute 'properties', default: ->(data) { {}.freeze }
       update_attribute 'required', default: ->(data) { [].freeze }
       update_attribute 'allOf', default: ->(data) { [].freeze }
+      update_attribute 'type', default: ->(data) { self.meta[:is_subschema] ? nil : 'object' }
+      update_attribute 'schemaFormVersion', default: ->(data) { self.meta[:is_subschema] ? nil : VERSION }
+      update_attribute '$schema', default: ->(data) { self.meta[:is_subschema] ? nil : "http://json-schema.org/draft-07/schema#" }
       attribute? 'availableLocales', default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
       
       def initialize(obj={}, options={})
@@ -182,7 +186,7 @@ module JSF
           required(:allOf).array(:hash)
           if !is_subschema
             optional(:'$id').filled(:string)
-            required(:'title').maybe(:string)
+            optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
             required(:schemaFormVersion).value(:string)
             required(:definitions).value(:hash)
@@ -206,32 +210,60 @@ module JSF
       #
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
-      def own_errors(passthru)
+      def own_errors(passthru={})
         errors_hash = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
         )
     
         self[:properties]&.each do |k,v|
-          # check property $id
+          # check property $id key
           regex = Regexp.new("\\A#/properties\/#{k}\\z")
           if v[:$id]&.match(regex).nil?
             errors_hash["$id_#{k}"] = "$id: '#{v[:$id]}' did not to match #{regex}"
           end
-    
-          if v.respond_to?(:response_set) && v.response_set.nil?
-            errors_hash["response_set_#{k}"] = 'response set is not present'
+
+          # ensure response sets exist
+          if v.respond_to?(:response_set) && v.response_set_id && v.response_set.nil?
+            errors_hash["response_set_#{k}"] = "response set #{v.response_set_id} not found"
           end
     
           if CONDITIONAL_FIELDS.include?(v.class)
           else
             if v.dependent_conditions.size > 0
-              errors_hash["conditionals_#{k}"] = "only the following fields can have conditionals (#{JSF::Forms::Form::CONDITIONAL_FIELDS.map{|name| name.name.demodulize}.join(', ')})"
+              fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
+              msg = "only the following fields can have conditionals (#{fields})"
+              errors_hash["conditionals_#{k}"] = msg
             end
           end
         end
         
         errors_hash
+      end
+
+      # Checks locale vality for the following:
+      #
+      #   - JSF::Forms::Field::* (recursive)
+      #     - JSF::Forms::ResponseSet
+      #
+      # @param locale [String,Symbol] locale
+      # @return [Boolean] if valid
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
+    
+        # check properties and their response_sets
+        prop = self.schema_form_iterator do |_, then_hash|
+          invalid_property = then_hash&.properties&.any? do |k,v|
+            if v.respond_to?(:response_set)
+              !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
+            else
+              !v.valid_for_locale?(locale)
+            end
+          end
+    
+          break invalid_property if invalid_property
+        end
+
+        !prop
       end
     
       ##############
@@ -692,33 +724,6 @@ module JSF
         else
           value
         end
-      end
-    
-      # Checks locale vality for the following:
-      #
-      #   - JSF::Forms::Field::* (recursive)
-      #   - JSF::Forms::ResponseSet
-      #
-      # @param locale [String,Symbol] locale
-      # @return [Boolean] if valid
-      def valid_for_locale?(locale = DEFAULT_LOCALE)
-    
-        # check response_sets
-        invalid_response_set = self.response_sets.any? do |k,v|
-          v.valid_for_locale?(locale) == false
-        end
-        return false if invalid_response_set 
-    
-        # check properties
-        has_invalid_property = self.schema_form_iterator do |_, then_hash|
-          invalid_prop = then_hash&.properties&.any? do |k,v|
-            v.valid_for_locale?(locale) == false
-          end
-    
-          break invalid_prop if invalid_prop
-        end
-    
-        !has_invalid_property
       end
 
       # Builds a document with a key for each property on the schema form.

@@ -136,7 +136,7 @@ class MySchema < BaseHash
   include JSF::Core::Buildable #required for validations
   include JSF::Validations::Validatable
 
-  def own_errors(passthru)
+  def own_errors(passthru={})
     errors_hash = {}
     errors_hash[:$id] = 'id must be present' if self[:$id].nil?
     errors_hash

@@ -7,6 +7,21 @@ module JSF
           # used for validation
           REF_REGEX = /\A#\/definitions\/[a-z0-9\-_]+\z/
 
+          ##################
+          ###VALIDATIONS####
+          ##################
+
+          # def valid_for_locale?(locale = DEFAULT_LOCALE)
+          #   label_is_valid = super
+
+          #   set = self.response_set
+          #   label_is_valid && (set.nil? || set.valid_for_locale?(locale))
+          # end
+
+          ##############
+          ###METHODS####
+          ##############
+
           # get the response_set_id, each field class should implement its own `RESPONSE_SET_PATH`
           #
           # @return [String]
@@ -44,30 +59,6 @@ module JSF
               .response_set
               &.get_response_from_value(value)
               &.dig(:displayProperties, :i18n, locale)
-          end
-
-          # def valid_for_locale?(locale = DEFAULT_LOCALE)
-          #   label_is_valid = super
-
-          #   set = self.response_set
-          #   label_is_valid && (set.nil? || set.valid_for_locale?(locale))
-          # end
-        
-          # Augment with response set validations
-          #
-          # @param passthru [Hash{Symbol => *}]
-          def own_errors(passthru)
-            errors = super
-
-            resp_id = self.response_set_id
-            if !resp_id.nil?
-              # response should be found
-              if self.response_set.nil?
-                errors['response_set_not_found'] = "response set #{resp_id} was not found"
-              end
-            end
-
-            errors
           end
         
         end

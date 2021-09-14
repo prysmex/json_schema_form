@@ -26,13 +26,13 @@ module JSF
           end
         end
 
-        ##################
-        #####METHODS######
-        ##################
-  
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           true
         end
+
+        ##################
+        #####METHODS######
+        ##################
   
         def migrate!
         end

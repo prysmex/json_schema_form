@@ -7,6 +7,33 @@ module BaseMethodsTests
 
   include FieldExampleHelpers
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
+  # valid_for_locale?
+
+  # overriden in Static, Switch, Slider
+  def test_valid_for_locale
+    example = self.tested_klass_example
+    instance = tested_klass.new(example)
+
+    instance.set_label_for_locale('opciones')
+    assert_equal true, instance.valid_for_locale?
+
+    instance.set_label_for_locale('')
+    assert_equal false, instance.valid_for_locale?
+
+    instance.set_label_for_locale(nil)
+    assert_equal false, instance.valid_for_locale?
+
+    assert_equal false, instance.valid_for_locale?(:random)
+  end
+
+  ##############
+  ###METHODS####
+  ##############
+
   # hidden? and hidden=
 
   def test_hidden
@@ -41,25 +68,6 @@ module BaseMethodsTests
     instance.set_label_for_locale('__some_label__')
 
     assert_equal '__some_label__', instance.i18n_label
-  end
-
-  # valid_for_locale?
-
-  # overriden in Static, Switch, Slider
-  def test_valid_for_locale
-    example = self.tested_klass_example
-    instance = tested_klass.new(example)
-
-    instance.set_label_for_locale('opciones')
-    assert_equal true, instance.valid_for_locale?
-
-    instance.set_label_for_locale('')
-    assert_equal false, instance.valid_for_locale?
-
-    instance.set_label_for_locale(nil)
-    assert_equal false, instance.valid_for_locale?
-
-    assert_equal false, instance.valid_for_locale?(:random)
   end
 
   # document_path

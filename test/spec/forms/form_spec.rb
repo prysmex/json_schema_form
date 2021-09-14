@@ -6,6 +6,8 @@ class FormTest < Minitest::Test
   #validations#
   #############
 
+  # @todo
+  # conditional fields
   def test_property_key_must_match_property_id
     form_example = JSF::Forms::FormBuilder.example('form')
     form = JSF::Forms::FormBuilder.build(form_example) do
@@ -16,7 +18,90 @@ class FormTest < Minitest::Test
     refute_empty form.errors
   end
 
-  # ToDo add more
+  def test_valid_subschema_form
+    form = JSF::Forms::Form.new(
+      {
+        "required": [],
+        "properties": {},
+        "allOf": [],
+      },
+      meta: {
+        is_subschema: true
+      }
+    )
+    assert_empty form.errors
+  end
+
+  def test_property_response_sets_must_exist
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:select1, example('select')).tap do |field|
+        field.response_set_id = :response_set_1
+      end
+    end
+
+    refute_empty form.errors
+    form.add_response_set(:response_set_1, JSF::Forms::FormBuilder.example('response_set'))
+    assert_empty form.errors
+  end
+
+  def test_conditional_fields_whitelist
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:text_input1, example('text_input')) # cannot have conditional
+      append_property(:switch1, example('switch'))
+      append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: :switch1, type: :const, value: true
+    end
+
+    assert_empty form.errors
+    form.append_conditional_property(:dependent_text_input2, JSF::Forms::FormBuilder.example('text_input'), dependent_on: :text_input1, type: :const, value: true)
+    refute_empty form.errors
+  end
+
+  # valid_for_locale?
+
+  def test_not_valid_for_locale_when_field_is_not_valid
+    form = JSF::Forms::FormBuilder.build do
+      append_property :prop1, JSF::Forms::FormBuilder.example('info')
+    end
+
+    assert_equal true, form.valid_for_locale?
+    form.get_property(:prop1).set_label_for_locale(nil)
+    assert_equal false, form.valid_for_locale?
+  end
+
+  def test_not_valid_for_locale_when_conditional_field_is_not_valid
+    form = JSF::Forms::FormBuilder.build do
+      append_property :switch1, JSF::Forms::FormBuilder.example('switch')
+      append_conditional_property :dependent_info, example('info'), dependent_on: :switch1, type: :const, value: true
+    end
+
+    assert_equal true, form.valid_for_locale?
+    form.get_dynamic_property(:dependent_info).set_label_for_locale(nil)
+    assert_equal false, form.valid_for_locale?
+  end
+
+  def test_not_valid_for_locale_when_response_set_invalid
+    form = JSF::Forms::FormBuilder.build do
+      add_response_set(:response_set_1, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :default))
+      end
+
+      append_property(:select1, example('select'), {required: true}).tap do |field|
+        field.response_set_id = :response_set_1
+      end
+    end
+
+    assert_equal true, form.valid_for_locale?
+    form.response_sets[:response_set_1][:anyOf] = []
+    assert_equal false, form.valid_for_locale?
+  end
+
+  def test_valid_for_locale_when_invalid_unused_response_set
+    form = JSF::Forms::FormBuilder.build do
+      add_response_set(:response_set_1, example('response_set'))
+    end
+    assert_equal true, form.valid_for_locale?
+    assert_equal false, form.response_sets[:response_set_1].valid_for_locale?
+  end
 
   ############
   #transforms#
@@ -166,21 +251,6 @@ class FormTest < Minitest::Test
 
   # def test_i18n_document_value
   # end
-
-  def test_valid_for_locale
-    form_example = JSF::Forms::FormBuilder.example('form')
-    form = JSF::Forms::Form.new(form_example)
-
-    #default example is valid
-    assert_equal true, form.valid_for_locale?
-
-    #ToDo more examples
-    # JSF::Forms::FormBuilder.new(form) do
-    #   append_property :prop1, JSF::Forms::FormBuilder.example('select')
-    # end
-
-    # form[:properties][:prop1].set_label_for_locale('')
-  end
 
   # def test_nil_document
   # end

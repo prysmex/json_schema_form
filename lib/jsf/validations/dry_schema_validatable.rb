@@ -172,7 +172,7 @@ module JSF
       #
       # @param passthru [Hash{Symbol => *}]
       # @return [Hash]
-      def own_errors(passthru)
+      def own_errors(passthru={})
         SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
       end
 

@@ -45,6 +45,14 @@ module JSF
             end
           end
         end
+
+        # @param [String, Symbol] locale
+        # @return [Boolean]
+        def valid_for_locale?(locale = DEFAULT_LOCALE)
+          super &&
+            !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
+            !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
+        end
   
         ##################
         #####METHODS######
@@ -70,14 +78,6 @@ module JSF
           else
             raise TypeError.new("value must be boolean or nil, got: #{value.class}")
           end
-        end
-
-        # @param [String, Symbol] locale
-        # @return [Boolean]
-        def valid_for_locale?(locale = DEFAULT_LOCALE)
-          super &&
-            !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
-            !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
         end
 
         def migrate!

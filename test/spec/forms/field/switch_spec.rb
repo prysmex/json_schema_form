@@ -11,10 +11,6 @@ class SwitchTest < Minitest::Test
 
   # @todo
 
-  ##############
-  ###METHODS####
-  ##############
-
   # @override
   def test_valid_for_locale
     hash = JSF::Forms::FormBuilder.example('switch')
@@ -32,6 +28,10 @@ class SwitchTest < Minitest::Test
       assert_equal false, instance.valid_for_locale?
     end
   end
+
+  ##############
+  ###METHODS####
+  ##############
 
   # max_score
 

@@ -23,7 +23,7 @@ module JSF
     # override this for validations
     #
     # @param passthru [Hash{Symbol => *}]
-    def own_errors(passthru)
+    def own_errors(passthru={})
       {}
     end
 

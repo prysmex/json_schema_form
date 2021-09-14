@@ -11,12 +11,12 @@ class StaticTest < Minitest::Test
 
   # @todo
 
-  ##############
-  ###METHODS####
-  ##############
-
   # @override
   def test_valid_for_locale
   end
+  
+  ##############
+  ###METHODS####
+  ##############
 
 end

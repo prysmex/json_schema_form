@@ -26,7 +26,7 @@ module JSF
           ##################
 
           # @param passthru [Hash{Symbol => *}]
-          def own_errors(passthru)
+          def own_errors(passthru={})
             JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
               validation_schema(passthru),
               self
@@ -41,6 +41,16 @@ module JSF
               optional(:title).maybe(:string)
               optional(:'$schema').filled(:string)
             end
+          end
+
+          # Check if field is valid for a locale
+          # The simplest case is where the label exists, but each field
+          # may implement more validations
+          #
+          # @param [String,Symbol] locale
+          # @return [Boolean]
+          def valid_for_locale?(locale = DEFAULT_LOCALE)
+            !i18n_label(locale).to_s.empty?
           end
 
           ##############
@@ -92,16 +102,6 @@ module JSF
           # @return [String]
           def set_label_for_locale(label, locale = DEFAULT_LOCALE)
             SuperHash::Utils.bury(self, :displayProperties, :i18n, :label, locale, label)
-          end
-          
-          # Check if field is valid for a locale
-          # The simplest case is where the label exists, but each field
-          # may implement more validations
-          #
-          # @param [String,Symbol] locale
-          # @return [Boolean]
-          def valid_for_locale?(locale = DEFAULT_LOCALE)
-            !i18n_label(locale).to_s.empty?
           end
 
           # Returns the path where the data of the field is in a JSF::Forms::Document

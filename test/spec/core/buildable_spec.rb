@@ -5,7 +5,7 @@ class BuildableTest < Minitest::Test
 
   def setup
     super
-    @new_hasher_class.include JSF::Core::Buildable
+    @sample_schema_class.include JSF::Core::Buildable
   end
 
   # hash attributes

@@ -55,7 +55,7 @@ module JSF
         end
 
         # @param passthru [Hash{Symbol => *}]
-        def own_errors(passthru)
+        def own_errors(passthru={})
           errors = super
   
           # extra enum validations
@@ -88,6 +88,20 @@ module JSF
   
           errors
         end
+
+        # Checks if field is valid for a locale
+        #
+        # @param [String,Symbol] locale
+        # @return [Boolean]
+        def valid_for_locale?(locale = DEFAULT_LOCALE)
+          label_is_valid = super
+  
+          missing_locale = self[:enum].find do |value|
+            self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s).to_s.empty?
+          end
+          
+          label_is_valid && !missing_locale
+        end
   
         ##################
         #####METHODS######
@@ -111,20 +125,6 @@ module JSF
           else
             nil
           end
-        end
-
-        # Checks if field is valid for a locale
-        #
-        # @param [String,Symbol] locale
-        # @return [Boolean]
-        def valid_for_locale?(locale = DEFAULT_LOCALE)
-          label_is_valid = super
-  
-          missing_locale = self[:enum].find do |value|
-            self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s).to_s.empty?
-          end
-          
-          label_is_valid && !missing_locale
         end
   
         def migrate!

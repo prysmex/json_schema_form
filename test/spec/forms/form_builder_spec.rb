@@ -37,7 +37,11 @@ class FormbuilderTest < Minitest::Test
       if traits_array.empty?
         hash = JSF::Forms::FormBuilder.example_for(klass)
         instance = klass.new(hash)
-        assert_equal true, instance.valid_for_locale?
+        if klass == JSF::Forms::ResponseSet
+          assert_equal false, instance.valid_for_locale?
+        else
+          assert_equal true, instance.valid_for_locale?
+        end
         assert_empty instance.errors
       else
         traits_array.each do |obj|

@@ -69,8 +69,8 @@ module JSF
       # override to implement schema errors
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [Hash{Symbol => *}] errors
-      def own_errors(passthru)
-        raise NoMethodError.new("need to override 'own_errors' method")
+      def own_errors(passthru={})
+        raise NoMethodError.new("to use errors, you need to override 'own_errors' method and return a hash of errors")
       end
 
       private

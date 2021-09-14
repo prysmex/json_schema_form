@@ -2,6 +2,10 @@ require 'json_schema_form_test_helper'
 
 class ResponseTest < Minitest::Test
 
+  ##################
+  ###VALIDATIONS####
+  ##################
+
   def test_valid_for_locale
     instance = JSF::Forms::Response.new({
       displayProperties: {
@@ -17,6 +21,10 @@ class ResponseTest < Minitest::Test
     assert_equal false, instance.valid_for_locale?(:de)
     assert_equal false, instance.valid_for_locale?(:ru)
   end
+
+  ##############
+  ###METHODS####
+  ##############
 
   def test_score_values
     # valid_values
