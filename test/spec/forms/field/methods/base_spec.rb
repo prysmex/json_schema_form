@@ -30,6 +30,12 @@ module BaseMethodsTests
     assert_equal false, instance.valid_for_locale?(:random)
   end
 
+  # validation_schema
+
+  def test_no_unknown_keys_allowed
+    refute_nil tested_klass.new({some_key: []}).errors[:some_key]
+  end
+
   ##############
   ###METHODS####
   ##############

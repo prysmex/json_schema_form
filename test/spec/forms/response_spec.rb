@@ -6,6 +6,10 @@ class ResponseTest < Minitest::Test
   ###VALIDATIONS####
   ##################
 
+  def test_no_unknown_keys_allowed
+    refute_nil JSF::Forms::Response.new({some_key: []}).errors[:some_key]
+  end
+
   def test_valid_for_locale
     instance = JSF::Forms::Response.new({
       displayProperties: {

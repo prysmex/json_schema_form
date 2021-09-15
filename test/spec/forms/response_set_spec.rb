@@ -6,6 +6,10 @@ class ResponseSetTest < Minitest::Test
   ###VALIDATIONS####
   ##################
 
+  def test_no_unknown_keys_allowed
+    refute_nil JSF::Forms::ResponseSet.new({some_key: []}).errors[:some_key]
+  end
+
   def test_valid_for_locale
     instance = build_response_set_instance(:default)
     assert_equal true, instance.valid_for_locale?

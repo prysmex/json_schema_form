@@ -6,6 +6,10 @@ class FormTest < Minitest::Test
   #validations#
   #############
 
+  def test_no_unknown_keys_allowed
+    refute_nil JSF::Forms::Form.new({some_key: []}).errors[:some_key]
+  end
+
   # @todo
   # conditional fields
   def test_property_key_must_match_property_id
