@@ -16,8 +16,10 @@ module JSF
             JSF::Forms::Response.new(
               response,
               {
-                parent: instance,
-                path: path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
+                meta: {
+                  parent: instance,
+                  path: path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
+                }
               }
             )
           end

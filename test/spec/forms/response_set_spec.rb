@@ -48,4 +48,9 @@ class ResponseSetTest < Minitest::Test
     assert_nil instance.get_response_from_value('something_random')
   end
 
+  def test_response_path
+    instance = build_response_set_instance(:default)
+    assert_equal ["anyOf", 0], instance.get_response_from_value('no_score_1').meta[:path]
+  end
+
 end
