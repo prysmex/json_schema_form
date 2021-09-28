@@ -26,8 +26,7 @@ module JSF
       META_TEMPLATE = Proc.new do
         {
           coordinates: {},
-          timestamp: nil,
-          failed: nil
+          timestamp: nil
         }
       end
 
@@ -76,7 +75,7 @@ module JSF
       # @return [void]
       def each_extras(hash = self[:extras], &block)
         hash&.each do |k,v|
-          if property_keys.include?(k) #(EXTRAS_KEYS & v.keys).size == 0
+          if property_keys.include?(k) || (EXTRAS_KEYS & v.keys).size > 0
             yield(k,v)
           else
             each_extras(v, &block)
@@ -92,7 +91,7 @@ module JSF
       # @return [void]
       def each_meta(hash = self[:meta], &block)
         hash&.each do |k,v|
-          if property_keys.include?(k) #(META_KEYS & v.keys).size == 0
+          if property_keys.include?(k) || (META_KEYS & v.keys).size > 0
             yield(k,v)
           else
             each_meta(v, &block)

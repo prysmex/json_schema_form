@@ -46,7 +46,7 @@ class DocumentTest < Minitest::Test
     document = JSF::Forms::Document.new(some_key: 'value', shared: { prop_1: 1 })
     document.set_missing_meta
 
-    expected = "{\"some_key\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil, \"failed\"=>nil}, \"shared\"=>{\"prop_1\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil, \"failed\"=>nil}}}"
+    expected = "{\"some_key\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil}, \"shared\"=>{\"prop_1\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil}}}"
     assert_equal expected, document[:meta].to_s
   end
 
@@ -55,13 +55,12 @@ class DocumentTest < Minitest::Test
   def test_each_extras
     document = JSF::Forms::Document.new({
       some_key: 'value',
-      other_key: 'test',
       shared_template: {
         prop_1: 1
       },
       extras: {
         some_key: {},
-        other_key: {},
+        other_key: { pictures: [] },
         shared_template: {
           prop_1: {}
         }
@@ -78,13 +77,12 @@ class DocumentTest < Minitest::Test
   def test_each_meta
     document = JSF::Forms::Document.new({
       some_key: 'value',
-      other_key: 'test',
       shared_template: {
         prop_1: 1
       },
       meta: {
         some_key: {},
-        other_key: {},
+        other_key: { timestamp: 'some timestamp' },
         shared_template: {
           prop_1: {}
         }
