@@ -136,7 +136,7 @@ module JSF
             path = self.meta[:path]
             new_path = []
     
-            is_shared_schema_template_field = path[0] == :definitions
+            is_shared_schema_template_field = path[0] == 'definitions'
     
             if is_shared_schema_template_field
               root_form = self.root_parent
