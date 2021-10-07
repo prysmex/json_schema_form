@@ -35,6 +35,21 @@ module BaseMethodsTests
   def test_no_unknown_keys_allowed
     refute_nil tested_klass.new({some_key: []}).errors[:some_key]
   end
+  
+  # other
+
+  def test_hide_on_create_and_required
+    example = self.tested_klass_example
+    prop = nil
+
+    form = JSF::Forms::FormBuilder.build do
+      prop = append_property(:prop1, example, {required: true}).tap do |field|
+        field.hideOnCreate = true
+      end
+    end
+    
+    refute_nil prop.own_errors['_hidden_required_']
+  end
 
   ##############
   ###METHODS####
@@ -53,7 +68,7 @@ module BaseMethodsTests
     assert_equal false, instance.hidden?
   end
 
-  # hideOnCreate? and hiddenOnCreate=
+  # hideOnCreate? and hideOnCreate=
 
   def test_hidden_on_create
     example = self.tested_klass_example
@@ -62,7 +77,7 @@ module BaseMethodsTests
     assert_equal false, instance.hideOnCreate?
     instance['displayProperties']['hideOnCreate'] = true
     assert_equal true, instance.hideOnCreate?
-    instance.hiddenOnCreate = false
+    instance.hideOnCreate = false
     assert_equal false, instance.hideOnCreate?
   end
 

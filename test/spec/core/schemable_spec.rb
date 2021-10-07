@@ -114,7 +114,7 @@ class StrictTypesTest < Minitest::Test
   def test_required?
     SampleSchema.include JSF::Core::Buildable
 
-    instance = SampleSchema.new({required: [:prop1], properties: {prop1: {type: 'string'}}})
+    instance = SampleSchema.new({required: ['prop1'], properties: {prop1: {type: 'string'}}})
     assert_equal true, instance[:properties][:prop1].required?
   end
 

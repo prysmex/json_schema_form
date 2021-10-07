@@ -96,7 +96,7 @@ module JSF
         # Checks if parent schema's 'properties' array contains they key of current subschema
         def required?
           if meta.dig(:parent, :required)
-            meta.dig(:parent, :required).include?(key_name&.to_sym)
+            meta.dig(:parent, :required).include?(key_name&.to_s)
           end
         end
       

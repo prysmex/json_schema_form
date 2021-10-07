@@ -27,10 +27,16 @@ module JSF
 
           # @param passthru [Hash{Symbol => *}]
           def own_errors(passthru={})
-            JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
+            errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
               validation_schema(passthru),
               self
             )
+
+            if self.hideOnCreate? && self.required?
+              errors['_hidden_required_'] = 'cannot be hideOnCreate and required'
+            end
+
+            errors
           end
 
           # @param passthru[Hash{Symbol => *}]
@@ -83,7 +89,7 @@ module JSF
           #
           # @param [Boolean] value
           # @return [Boolean]
-          def hiddenOnCreate=(value)
+          def hideOnCreate=(value)
             SuperHash::Utils.bury(self, :displayProperties, :hideOnCreate, value)
           end
           
