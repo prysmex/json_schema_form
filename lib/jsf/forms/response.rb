@@ -53,11 +53,12 @@ module JSF
       end
 
       # @param passthru [Hash{Symbol => *}]
-      def own_errors(passthru={})
-        JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
+      def errors(passthru={})
+        errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
         )
+        super.merge(errors)
       end
 
       # Checks if locale is valid
@@ -79,6 +80,10 @@ module JSF
       # @return [void]
       def set_translation(label, locale = DEFAULT_LOCALE)
         SuperHash::Utils.bury(self, :displayProperties, :i18n, locale, label)
+      end
+
+      def compile!
+        self.delete(:displayProperties)
       end
   
     end

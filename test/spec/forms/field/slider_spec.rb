@@ -122,11 +122,11 @@ class SliderTest < Minitest::Test
       })
   
       # no errors
-      assert_nil instance.errors[:_enum_interval_]
+      assert_nil instance.errors['_enum_interval_']
   
       # force errors
       instance[:enum].map!{|v| v + rand(100)}
-      assert_instance_of String, instance.errors[:_enum_interval_]
+      assert_instance_of String, instance.errors['_enum_interval_']
     end
 
   end
@@ -137,10 +137,10 @@ class SliderTest < Minitest::Test
     })
 
     # no error
-    assert_nil instance.errors[:_enum_precision_]
+    assert_nil instance.errors['_enum_precision_']
 
     instance[:enum] = [move_decimail_point(1, JSF::Forms::Field::Slider::MAX_PRECISION + 1)]
-    assert_instance_of String, instance.errors[:_enum_precision_]
+    assert_instance_of String, instance.errors['_enum_precision_']
   end
 
 end

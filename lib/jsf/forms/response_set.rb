@@ -56,8 +56,9 @@ module JSF
       end
 
       # @param passthru [Hash{Symbol => *}]
-      def own_errors(passthru={})
-        JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
+      def errors(passthru={})
+        errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
+        super.merge(errors)
       end
 
       # Checks if all JSF::Forms::Response are valid for a locale
@@ -102,6 +103,10 @@ module JSF
   
       # def get_passing_responses
       # end
+
+      def compile!
+        self[:anyOf]&.each{|r| r.compile! }
+      end
   
     end
   end

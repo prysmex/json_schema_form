@@ -69,11 +69,11 @@ module JSF
       # @param [Object] instance
       # @param [Array<String>] path
       CORE_TRANSFORM = ->(attribute, value, instance, path) {
-        path = (instance.meta[:path] || []) + path
+        path = path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
         meta = {
           parent: instance,
           is_subschema: true,
-          path: path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
+          path: (instance.meta[:path] || []) + path
         }
         instance.attributes_transform(attribute, value, meta)
       }

@@ -210,7 +210,7 @@ module JSF
       #
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
-      def own_errors(passthru={})
+      def errors(passthru={})
         errors_hash = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
@@ -238,7 +238,7 @@ module JSF
           end
         end
         
-        errors_hash
+        super.merge(errors_hash)
       end
 
       # Checks locale vality for the following:
@@ -749,11 +749,20 @@ module JSF
       #
       # @ return [JSF::Forms::Form] a mutated Form
       def compile!
+        self.response_sets.each do |_, response_set|
+          response_set.compile! if response_set&.respond_to?(:compile!)
+        end
+
+        self.component_definitions do |_, comp_def|
+          comp_def.compile! if definition&.respond_to?(:compile!)
+        end
+
         self.schema_form_iterator do |_, then_hash|
           then_hash[:properties]&.each do |id, definition|
             definition.compile! if definition&.respond_to?(:compile!)
           end
         end
+
         self
       end
     
