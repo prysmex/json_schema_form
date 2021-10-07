@@ -48,7 +48,7 @@ module BaseMethodsTests
       end
     end
     
-    refute_nil prop.own_errors['_hidden_required_']
+    refute_nil prop.errors['_hidden_required_']
   end
 
   ##############

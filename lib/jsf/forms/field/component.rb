@@ -40,8 +40,8 @@ module JSF
         end
     
         # @param passthru [Hash{Symbol => *}]
-        def own_errors(passthru={})
-          errors = super
+        def errors(passthru={})
+          errors = {}
 
           if !component_definition_id.nil?
             # response should be found
@@ -50,7 +50,7 @@ module JSF
             end
           end
 
-          errors
+          super.merge(errors)
         end
 
         ##############

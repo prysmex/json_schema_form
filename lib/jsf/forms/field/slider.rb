@@ -55,8 +55,8 @@ module JSF
         end
 
         # @param passthru [Hash{Symbol => *}]
-        def own_errors(passthru={})
-          errors = super
+        def errors(passthru={})
+          errors = {}
   
           # extra enum validations
           if self[:enum].is_a?(Array)
@@ -86,7 +86,7 @@ module JSF
 
           end
   
-          errors
+          super.merge(errors)
         end
 
         # Checks if field is valid for a locale

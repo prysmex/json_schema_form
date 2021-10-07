@@ -5,8 +5,8 @@ class ValidatableTest < Minitest::Test
 
   # Used to test validations
   module IdValidation
-    def own_errors(passthru={})
-      errors_hash = {}
+    def errors(passthru={})
+      errors_hash = super
       errors_hash[:$id] = 'id must be present' if self[:$id].nil?
       errors_hash
     end
@@ -20,11 +20,7 @@ class ValidatableTest < Minitest::Test
 
   # errors
 
-  def test_errors_raises_no_method_error_when_own_errors_not_defined
-    assert_raises(NoMethodError){ SampleSchema.new({}).errors }
-  end
-
-  def test_errors_has_own_errors
+  def test_errors
     SampleSchema.include IdValidation
     refute_nil SampleSchema.new({}).errors[:$id]
     assert_nil SampleSchema.new({'$id': 'some_id'}).errors[:$id]
@@ -46,12 +42,6 @@ class ValidatableTest < Minitest::Test
     refute_nil schema.errors.dig(:allOf, 0, :properties, :prop_1, :$id)
     schema[:allOf].first[:properties][:prop_1][:$id] = 'some_id'
     assert_empty schema.errors
-  end
-
-  # own_errors
-
-  def test_own_errors_raises_error_when_not_defiend
-    assert_raises(NoMethodError){ SampleSchema.new({}).own_errors }
   end
 
 end

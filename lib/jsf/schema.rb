@@ -20,12 +20,5 @@ module JSF
     include JSF::Core::Type::Nullable
     include JSF::Validations::Validatable
 
-    # override this for validations
-    #
-    # @param passthru [Hash{Symbol => *}]
-    def own_errors(passthru={})
-      {}
-    end
-
   end
 end

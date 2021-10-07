@@ -26,7 +26,7 @@ module JSF
           ##################
 
           # @param passthru [Hash{Symbol => *}]
-          def own_errors(passthru={})
+          def errors(passthru={})
             errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
               validation_schema(passthru),
               self
@@ -36,7 +36,7 @@ module JSF
               errors['_hidden_required_'] = 'cannot be hideOnCreate and required'
             end
 
-            errors
+            super.merge(errors)
           end
 
           # @param passthru[Hash{Symbol => *}]
