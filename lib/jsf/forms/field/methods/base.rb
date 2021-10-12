@@ -146,16 +146,19 @@ module JSF
     
             if is_shared_schema_template_field
               root_form = self.root_parent
-              field = nil
-              root_form.schema_form_iterator(skip_when_false: true) do |_, form|
-                field = form.properties.find do |key, prop|
+              component_field = nil
+              root_form.schema_form_iterator do |_, form|
+                found_prop = form.properties.find do |key, prop|
                   next unless prop.is_a?(JSF::Forms::Field::Component)
                   prop.component_definition == root_form.dig(*path.slice(0..1))
                 end
-                field = field[1] if field
-                !field
+                if found_prop
+                  component_field = found_prop[1]
+                  break
+                end
               end
-              new_path.push(field.key_name)
+              raise StandardError.new("JSF::Forms::Field::Component not found for property: #{self.key_name}") unless component_field
+              new_path.push(component_field.key_name)
             end
     
             new_path.push(self.key_name)
