@@ -42,6 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "byebug", "~> 9.1.0"
   spec.add_dependency "activesupport", '~> 6'
   spec.add_dependency "super_hash", '>= 0.2.0'
-  spec.add_dependency "dry-schema", "1.7.1"
+  spec.add_dependency "dry-schema", "1.6.1"
 
 end
