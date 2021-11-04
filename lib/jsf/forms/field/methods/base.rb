@@ -43,7 +43,7 @@ module JSF
           def validation_schema(passthru)
             Dry::Schema.JSON do
               config.validate_keys = true
-              optional(:$id).filled(:string)
+              optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }
               optional(:title).maybe(:string)
               optional(:'$schema').filled(:string)
             end
@@ -111,13 +111,13 @@ module JSF
           end
 
           # Returns the path where the data of the field is in a JSF::Forms::Document
-          # It supports both properties inside the schema or properties added by a shared
-          # schema inside definitions
+          # It supports both properties inside the schema or properties added by a JSF::Forms::Form
+          # inside 'definitions'
           #
           # @example
           #   {
           #     definitions: {
-          #       shared_schema_template_2: {
+          #       some_key_2: {
           #         properties: {
           #           migrated_hazards9999: {}
           #         },
@@ -133,7 +133,7 @@ module JSF
           #       }
           #     },
           #     properties: {
-          #       shared_schema_template_2_9999: { ref: :shared_schema_template_2}
+          #       some_key_2_9999: { ref: :some_key_2}
           #     }
           #   }
           #
@@ -141,16 +141,14 @@ module JSF
           def document_path
             path = self.meta[:path]
             new_path = []
-    
-            is_shared_schema_template_field = path[0] == 'definitions'
-    
-            if is_shared_schema_template_field
+        
+            if path[0] == 'definitions' # fields inside 'definitions'
               root_form = self.root_parent
               component_field = nil
               root_form.schema_form_iterator do |_, form|
                 found_prop = form.properties.find do |key, prop|
                   next unless prop.is_a?(JSF::Forms::Field::Component)
-                  prop.component_definition == root_form.dig(*path.slice(0..1))
+                  prop.component_definition == root_form.dig(*path.slice(0..1)) #match the field
                 end
                 if found_prop
                   component_field = found_prop[1]

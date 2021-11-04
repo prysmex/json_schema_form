@@ -66,6 +66,7 @@ module JSF
       # @param [String,Symbol] locale
       # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE)
+        self[:anyOf].empty? ||
         !!self[:anyOf].find{|r| r.valid_for_locale?(locale) }
       end
   

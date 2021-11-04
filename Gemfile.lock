@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    json_schema_form (0.3.17)
+    json_schema_form (0.3.18)
       activesupport (~> 6)
       dry-schema (= 1.6.1)
       super_hash (>= 0.2.0)
@@ -64,7 +64,7 @@ GEM
     ruby-progressbar (1.11.0)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
-    zeitwerk (2.4.2)
+    zeitwerk (2.5.1)
 
 PLATFORMS
   ruby

@@ -44,4 +44,9 @@ class ValidatableTest < Minitest::Test
     assert_empty schema.errors
   end
 
+  # add_error_on_path
+
+  # def test_add_error_on_path
+  # end
+
 end

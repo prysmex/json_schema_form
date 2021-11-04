@@ -14,40 +14,40 @@ class FormbuilderTest < Minitest::Test
         {trait: :is_inspection, errors_args: [{is_inspection: true}]}
       ],
       JSF::Forms::Field::Checkbox => [
-        {errors_args: [{skip_ref_presence: true}]}
+        {errors_args: [{skip: [:ref_presence]}]}
       ],
       JSF::Forms::Field::Component => [
-        {errors_args: [{skip_ref_presence: true}]}
+        {errors_args: [{skip: [:ref_presence]}]}
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
-        {errors_args: [{skip_ref_presence: true}]}
+        {errors_args: [{skip: [:ref_presence]}]}
       ],
       JSF::Forms::Field::Slider => [],
       JSF::Forms::Field::Static => [],
       JSF::Forms::Field::Switch => [],
       JSF::Forms::Field::TextInput => [],
-      JSF::Forms::Field::FileInput => []
+      JSF::Forms::Field::FileInput => [],
+      JSF::Forms::ComponentRef => [
+        {errors_args: [{skip: [:ref_presence]}]}
+      ]
     }
     
     klasses.each do |klass, traits_array|
+      skip_valid_for_locale = klass == JSF::Forms::ComponentRef
       if traits_array.empty?
         hash = JSF::Forms::FormBuilder.example_for(klass)
         instance = klass.new(hash)
-        if klass == JSF::Forms::ResponseSet
-          assert_equal false, instance.valid_for_locale?
-        else
-          assert_equal true, instance.valid_for_locale?
-        end
+        assert_equal true, instance.valid_for_locale? unless skip_valid_for_locale
         assert_empty instance.errors
       else
         traits_array.each do |obj|
           hash = JSF::Forms::FormBuilder.example_for(klass, obj[:trait])
           instance = klass.new(hash)
-          assert_equal true, instance.valid_for_locale?
+          assert_equal true, instance.valid_for_locale? unless skip_valid_for_locale
           assert_empty instance.errors(*obj[:errors_args])
         end
       end

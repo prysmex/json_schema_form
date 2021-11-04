@@ -28,6 +28,8 @@ module JSF
       # @return [Hash]
       def example(ex_name, *args, &block)
         path = case ex_name.to_s
+          when 'component_ref'
+            '/component_ref.json'
           when 'form'
             '/form.json'
           when 'response_set'
@@ -90,7 +92,7 @@ module JSF
       # @return [Hash]
       def parse_example(example_path)
         hash = JSON.parse(File.read(gem_directory_path + example_path))
-        hash = yield (hash) if block_given?
+        yield (hash) if block_given?
         hash = hash.deep_symbolize_keys # change to deep_stringify_keys to run tests with string keys
         hash
       end
@@ -120,7 +122,7 @@ module JSF
       end
     
       def to_hash
-        instance_eval(&@block)
+        instance_eval(&@block) if @block
         @form
       end
     

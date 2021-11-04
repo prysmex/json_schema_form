@@ -40,6 +40,15 @@ module JSF
         JSF::Forms::Field::Switch,
         JSF::Forms::Field::Select
       ].freeze
+
+      # converts and Integer into a string that can be used for
+      # JSF::Forms::ComponentRef and JSF::Forms::Form inside 'definitions'
+      #
+      # @param [Integer] id
+      # @return [String]
+      def self.component_ref_key(id)
+        "shared_schema_template_#{id}"
+      end
     
       # Proc used to redefine a subschema's instance attributes_transform_proc.
       # ONE reason we need this is that a when we encounter an allOf, JSF::Schema
@@ -64,7 +73,7 @@ module JSF
             elsif value[:type] == 'object' #replaced schemas
               return JSF::Forms::Form.new(value, init_options)
             elsif value.key?(:$ref) # shared definition
-              return JSF::Schema.new(value, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
+              return JSF::Forms::ComponentRef.new(value, init_options)
             end
           when 'allOf'
             return JSF::Schema.new(value, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
@@ -202,11 +211,15 @@ module JSF
         end
       end
       
-      # Build instance's erros hash
+      # Build instance's erros hash from the validation_schema. It also validates
+      # the following:
       #
-      # - get errors from validation_schema
-      # - ensure each property key matches the property's $id
-      # - ensure only whitelisted properties have conditional properties
+      # - ensure referenced component properties exist
+      # - ensure property $id key matches with field key
+      # - ensure referenced response sets exist
+      # - ensure JSF::Forms::Field::Component only exist in root form
+      # - ensure components have a pair in 'definitions'
+      # - ensure only allowed fields contain (conditional) fields
       #
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
@@ -215,30 +228,89 @@ module JSF
           validation_schema(passthru),
           self
         )
-    
-        self[:properties]&.each do |k,v|
-          # check property $id key
-          regex = Regexp.new("\\A#/properties\/#{k}\\z")
-          if v[:$id]&.match(regex).nil?
-            errors_hash["$id_#{k}"] = "$id: '#{v[:$id]}' did not to match #{regex}"
-          end
 
-          # ensure response sets exist
-          if v.respond_to?(:response_set) && v.response_set_id && v.response_set.nil?
-            errors_hash["response_set_#{k}"] = "response set #{v.response_set_id} not found"
-          end
-    
-          if CONDITIONAL_FIELDS.include?(v.class)
-          else
-            if v.dependent_conditions.size > 0
-              fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
-              msg = "only the following fields can have conditionals (#{fields})"
-              errors_hash["conditionals_#{k}"] = msg
+        children_errors = super
+
+        self[:definitions]&.each do |k, v|
+          # ensure referenced component properties exist
+          if !key_contains?(passthru, :skip, :component_presence)
+            if v.is_a?(JSF::Forms::ComponentRef) && v.component.nil?
+              add_error_on_path(
+                errors_hash,
+                ['base'],
+                "missing component field for component reference (#{k})"
+              )
             end
           end
         end
-        
-        super.merge(errors_hash)
+    
+        self[:properties]&.each do |k, field|
+
+          # ensure property $id key matches with field key
+          if !key_contains?(passthru, :skip, :match_key)
+            if field['$id'] != "#/properties/#{k}"
+              add_error_on_path(
+                children_errors,
+                ['properties', 'k', '$id'],
+                "'#{field['$id']}' did not match property key '#{k}'"
+              )
+            end
+          end
+
+          # ensure referenced response sets exist
+          if !key_contains?(passthru, :skip, :response_set_presence)
+            if field.respond_to?(:response_set) && field.response_set_id && field.response_set.nil?
+              add_error_on_path(
+                children_errors,
+                (['properties', 'k'] + field.class::RESPONSE_SET_PATH),
+                "response set #{field.response_set_id} not found"
+              )
+            end
+          end
+
+          # ensure JSF::Forms::Field::Component only exist in root form
+          if !key_contains?(passthru, :skip, :component_in_root)
+            if self.meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Component)
+              add_error_on_path(
+                errors_hash,
+                ['base'],
+                "components can only exist in root schema (#{k})"
+              )
+            end
+          end
+
+          # ensure components have a pair in 'definitions'
+          if !key_contains?(passthru, :skip, :component_ref_presence)
+            if field.is_a?(JSF::Forms::Field::Component)
+              # response should be found
+              if field.component_definition.nil?
+                add_error_on_path(
+                  errors_hash,
+                  ['base'],
+                  "missing component reference for field #{field.component_definition_pointer}"
+                )
+              end
+            end
+          end
+
+          # ensure only allowed fields contain (conditional) fields
+          if CONDITIONAL_FIELDS.include?(field.class)
+          else
+            if !key_contains?(passthru, :skip, :conditional_fields)
+              if field.dependent_conditions.size > 0
+                fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
+                add_error_on_path(
+                  errors_hash,
+                  ['base'],
+                  "only the following fields can have conditionals (#{fields})"
+                )
+              end
+            end
+          end
+
+        end
+
+        children_errors.merge(errors_hash)
       end
 
       # Checks locale vality for the following:
@@ -273,16 +345,96 @@ module JSF
       ###########################
       ###COMPONENT MANAGEMENT####
       ###########################
+
+      # Util
+      #
+      # @see .component_ref_key
+      def component_ref_key(*args)
+        self.class.component_ref_key(*args)
+      end
     
-      # Gets all component definitions, which may be only the referenced
+      # Gets all component definitions, which may be only the reference
       # or the replaced form
       #
-      # @return [Hash{String => JSF::Forms::Form, JSF::Schema}]
+      # @return [Hash{String => JSF::Forms::Form, JSF::Forms::ComponentRef}]
       def component_definitions
         self[:definitions].select do |k,v|
-          !v.key?(:isResponseSet) && 
-              (v.key?(:$ref) || v[:type] == 'object')
+          v.is_a?(JSF::Forms::ComponentRef) || v.is_a?(JSF::Forms::Form)
         end
+      end
+
+      # Adds a JSF::Forms::ComponentRef to the 'definitions' key
+      #
+      # @param [Integer] db_id (DB id)
+      # @return [JSF::Forms::ComponentRef]
+      def add_component_ref(db_id:)
+        raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
+        
+        component_ref = JSF::Forms::FormBuilder.example('component_ref') do |obj|
+          obj['$ref'] = db_id
+        end
+        key = component_ref_key(db_id)
+        self.add_definition(key, component_ref)
+      end
+
+      # Removes a JSF::Forms::ComponentRef or JSF::Forms::Form from the 'definitions' key
+      #
+      # @param [Integer] db_id (DB id)
+      # @return [JSF::Forms::Form] mutated self
+      def remove_component_ref(db_id:)
+        raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
+        key = component_ref_key(db_id)
+
+        self.remove_definition(key)
+      end
+
+      # Adds a component. If index is passed, it will also add a JSF::Forms::Field::Component
+      # on the properties key
+      #
+      # @param [Integer] db_id (DB id)
+      # @param [Integer] index
+      # @return [JSF::Forms::ComponentRef]
+      def add_component_pair(db_id:, index:, options: {})
+        raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
+        key = component_ref_key(db_id)
+
+        # add property
+        component = JSF::Forms::FormBuilder.example('component') do |obj|
+          obj['$ref'] = "#/definitions/#{key}"
+        end
+        case index
+        when Integer
+          insert_property_at_index(index, key, component, options)
+        when :append
+          append_property(key, component, options)
+        when :prepend
+          prepend_property(key, component, options)
+        else
+          raise ArgumentError.new("invalid index argument #{index}")
+        end
+
+        # add definition
+        add_component_ref(db_id: db_id)
+      end
+
+      # Removes a component ref. If remove_component is true, it will also remove the matching JSF::Forms::Field::Component
+      #
+      # @param [Integer] db_id (DB id)
+      # @param [Boolean] remove_component set to true to also remove related JSF::Forms::Field::Component
+      # @return [JSF::Forms::Form] mutated self
+      def remove_component_pair(db_id:)
+        raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
+        key = component_ref_key(db_id)
+
+        # remove property
+        # self.remove_property(key)
+        self[:properties].reject! do |k,v|
+          v == JSF::Forms::Field::Component && v.component_ref_id == db_id
+        end
+        resort!
+
+        # remove definition
+        self.remove_definition(key)
       end
     
       ##############################
@@ -302,12 +454,9 @@ module JSF
       #
       # @param [String] id
       # @param [Hash] definition
-      # @return [String] passed id
+      # @return [JSF::Forms::ResponseSet]
       def add_response_set(id, definition)
-        new_definitions_hash = {}.merge(self[:definitions])
-        new_definitions_hash[id] = definition
-        self[:definitions] = new_definitions_hash
-        self[:definitions][id]
+        self.add_definition(id, definition)
       end
     
       ##########################
@@ -403,6 +552,15 @@ module JSF
         SuperHash::Utils.bury(prop, :displayProperties, :sort, (index - 0.5))
         resort!
         prop
+      end
+
+      # calls remove_property and resorts the form
+      #
+      # @return [<Type>] <description>
+      def remove_property(*args)
+        val = super
+        resort!
+        val
       end
     
       # Moves a property to a specific sort value and resorts needed properties
@@ -678,7 +836,7 @@ module JSF
       # @param [Symbol] locale <description>
       #
       # @return [Hash{String}]
-      def i18n_document(document, is_inspection: false, locale: :es)
+      def i18n_document(document, is_inspection: false, locale: DEFAULT_LOCALE)
         merged_properties = self.merged_properties #precalculate for performance
     
         raise StandardError.new('schema not found') if merged_properties.nil?
@@ -698,7 +856,7 @@ module JSF
         end
       end
     
-      def i18n_document_value(attr_name, value, is_inspection: false, locale: :es, property: nil)
+      def i18n_document_value(attr_name, value, is_inspection: false, locale: DEFAULT_LOCALE, property: nil)
         return if value.nil?
         
         #for performance, allow passing the property

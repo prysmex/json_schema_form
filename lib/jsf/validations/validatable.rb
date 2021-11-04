@@ -36,23 +36,33 @@ module JSF
       ].freeze
 
       # @note
-      # Override this method to implement own errors
+      # Override this method to implement own errors, always call super to support recursive errors
       #
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
-      def errors(passthru={})
-        subschemas_errors(passthru)
+      def errors(recursive: true, **passthru)
+        passthru[:recursive] = recursive
+
+        if recursive
+          subschemas_errors(passthru)
+        else
+          ActiveSupport::HashWithIndifferentAccess.new({})
+        end
       end
 
       # Builds errors hash for all subschemas
       #
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
-      def subschemas_errors(passthru)
-        errors = {}
+      def subschemas_errors(**passthru)
 
+        errors = {}
         # continue recurrsion for all subschema keys
         self.each do |key, value|
+
+          next if passthru.key?(:only) && !key_contains?(passthru, :only, key)
+          next if key_contains?(passthru, :except, key)
+
           if key == 'additionalProperties'
             next if !value.is_a?(::Hash)
             self[:additionalProperties]&.each do |k,v|
@@ -88,6 +98,13 @@ module JSF
         ActiveSupport::HashWithIndifferentAccess.new(errors)
       end
 
+      # Util for safely checking if a key with an array contains an element
+      #
+      # @return [Boolean]
+      def key_contains?(hash, key, value)
+        hash[key]&.include?(value)
+      end
+
       private
 
       # Wrapper method, used only to DRY code
@@ -111,6 +128,26 @@ module JSF
 
         # add errors
         subschemas_errors.dig(*relative_path).merge!(errors)
+      end
+
+      
+      # Utility to add errors on nested paths
+      #
+      # @param Hash obj <description>
+      # @param [Array<String,Symbol>] path
+      # @param [String] str error to add
+      # @return [String] added error
+      def add_error_on_path(obj, path, str)
+        current = obj
+        path.each.with_index do |key, i|
+          if (i + 1) == path.size
+            current[key] ||= []
+            current[key] << str
+          else
+            current = current[key] ||= {}
+          end
+        end
+        str
       end
 
     end

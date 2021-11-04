@@ -7,7 +7,9 @@ class ResponseSetTest < Minitest::Test
   ##################
 
   def test_no_unknown_keys_allowed
-    refute_nil JSF::Forms::ResponseSet.new({some_key: []}).errors[:some_key]
+    errors = JSF::Forms::ResponseSet.new({array_key: [], other_key: 1}).errors
+    refute_nil errors[:array_key]
+    refute_nil errors[:other_key]
   end
 
   def test_valid_for_locale

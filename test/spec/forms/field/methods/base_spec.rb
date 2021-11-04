@@ -33,7 +33,15 @@ module BaseMethodsTests
   # validation_schema
 
   def test_no_unknown_keys_allowed
-    refute_nil tested_klass.new({some_key: []}).errors[:some_key]
+    errors = tested_klass.new({array_key: [], other_key: 1}).errors
+    refute_nil errors[:array_key]
+    refute_nil errors[:other_key]
+  end
+
+  def test_id_regex
+    assert_nil tested_klass.new({'$id': '#/properties/hello_10-wow'}).errors[:'$id']
+    refute_nil tested_klass.new({'$id': '/definitions/hello'}).errors[:'$id']
+    refute_nil tested_klass.new({'$id': '#/definitions/hello'}).errors[:'$id']
   end
   
   # other

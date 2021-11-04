@@ -12,14 +12,14 @@ module JSF
         ##################
     
         def validation_schema(passthru)
-          skip_ref_presence = passthru[:skip_ref_presence]
+          skip_ref_presence = key_contains?(passthru, :skip, :ref_presence)
 
           Dry::Schema.define(parent: super) do
             config.validate_keys = true
             if skip_ref_presence
-              required(:$ref).maybe{ str? & format?(/\A#\/definitions\/\w+\z/) }
+              required(:$ref).maybe{ str? & format?(REF_REGEX) }
             else
-              required(:$ref).filled{ str? & format?(/\A#\/definitions\/\w+\z/) }
+              required(:$ref).filled{ str? & format?(REF_REGEX) }
             end
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
@@ -38,35 +38,38 @@ module JSF
             end
           end
         end
-    
-        # @param passthru [Hash{Symbol => *}]
-        def errors(passthru={})
-          errors = {}
-
-          if !component_definition_id.nil?
-            # response should be found
-            if self.component_definition.nil?
-              errors['component_definition_not_found'] = "component #{component_definition_id} was not found"
-            end
-          end
-
-          super.merge(errors)
-        end
 
         ##############
         ###METHODS####
         ##############
   
-        def component_definition_id
+        # Gets json pointer $ref, should point to its pair (JSF::Forms::ComponentRef, JSF::Forms::Form)
+        # inside the form's 'definitions' key
+        #
+        # @return [String]
+        def component_definition_pointer
           self.dig(*[:$ref])
         end
-  
-        def component_definition_id=(id)
-          SuperHash::Utils.bury(self, *[:$ref], "#/definitions/#{id}")
+        
+        # Sets json pointer $ref, should point to its pair (JSF::Forms::ComponentRef, JSF::Forms::Form)
+        # inside the form's 'definitions' key
+        #
+        # @param [<Type>] pointer <description>
+        # @return [String]
+        def component_definition_pointer=(pointer)
+          SuperHash::Utils.bury(self, *[:$ref], pointer)
+        end
+
+        # Extracts the id from the json pointer
+        #
+        # @return [Integer]
+        def component_ref_id
+          self.component_definition_pointer&.match(/\d+\z/)&.to_s&.to_i
         end
   
+        # @return [JSF::Forms::ComponentRef, JSF::Forms::Form]
         def component_definition
-          path = self.component_definition_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
+          path = self.component_definition_pointer&.sub('#/', '')&.split('/')&.map(&:to_sym)
           return if path.nil? || path.empty?
           find_parent do |current, _next|
             current.key?(:definitions)
