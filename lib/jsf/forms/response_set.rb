@@ -50,13 +50,12 @@ module JSF
           required(:type).filled(Types::String.enum('string'))
           optional(:title).maybe(:string)
           required(:isResponseSet).filled(Types::True)
-          required(:anyOf).array(:hash) do
-          end
+          required(:anyOf).array(:hash)
         end
       end
 
       # @param passthru [Hash{Symbol => *}]
-      def errors(passthru={})
+      def errors(**passthru)
         errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
         super.merge(errors)
       end
@@ -87,7 +86,7 @@ module JSF
       #
       # @param [String] value
       # @return [NilClass, Hash]
-      def get_response_from_value(value)
+      def remove_response_from_value(value)
         self[:anyOf] = self[:anyOf]&.reject{|r| r[:const] == value }
       end
   

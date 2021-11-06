@@ -5,7 +5,7 @@ class ValidatableTest < Minitest::Test
 
   # Used to test validations
   module IdValidation
-    def errors(passthru={})
+    def errors(**passthru)
       errors_hash = super
       errors_hash[:$id] = 'id must be present' if self[:$id].nil?
       errors_hash

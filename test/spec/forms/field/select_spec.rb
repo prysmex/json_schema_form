@@ -71,7 +71,7 @@ class SelectTest < Minitest::Test
     end
 
     assert_nil form[:properties][:select1].score_for_value('option0')
-    assert_equal -3, form[:properties][:select1].score_for_value('option1')
+    assert_equal(-3 , form[:properties][:select1].score_for_value('option1'))
     assert_nil form[:properties][:select1].score_for_value('random')
   end
 

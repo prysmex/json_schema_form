@@ -36,22 +36,28 @@ module JSF
       ].freeze
 
       # @note
-      # Override this method to implement own errors, always call super to support recursive errors
+      # Override this method to implement own errors,
+      # always call super to support recursive errors
       #
+      # @example schema.errors(recursive: true, only: ['properties', 'allOf'])
+      #
+      # @param [Array<String>] only allowlist of subschema keys
+      # @param [Array<String>] except denylist of subschema keys
+      # @param [Boolean] recursive if true, calls errors for all subschemas
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
       def errors(recursive: true, **passthru)
         passthru[:recursive] = recursive
+        return ActiveSupport::HashWithIndifferentAccess.new({}) unless recursive
 
-        if recursive
-          subschemas_errors(passthru)
-        else
-          ActiveSupport::HashWithIndifferentAccess.new({})
-        end
+        subschemas_errors(**passthru)
       end
 
-      # Builds errors hash for all subschemas
+      # Builds errors hash for all subschemas. It support two keys to
+      # filter which subschemas' errors will be called
       #
+      # @param [Array<String>] only allowlist of subschema keys
+      # @param [Array<String>] except denylist of subschema keys
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
       def subschemas_errors(**passthru)
@@ -116,7 +122,7 @@ module JSF
       def bury_subschema_errors(subschema, subschemas_errors, passthru)
         return unless subschema.respond_to?(:errors)
 
-        errors = subschema.errors(passthru)
+        errors = subschema.errors(**passthru)
         return if errors.empty?
 
         relative_path = subschema.meta[:path].slice((self.meta[:path].size)..-1)

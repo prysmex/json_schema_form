@@ -50,7 +50,7 @@ module BaseMethodsTests
     example = self.tested_klass_example
     prop = nil
 
-    form = JSF::Forms::FormBuilder.build do
+    JSF::Forms::FormBuilder.build do
       prop = append_property(:prop1, example, {required: true}).tap do |field|
         field.hideOnCreate = true
       end

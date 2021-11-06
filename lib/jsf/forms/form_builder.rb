@@ -117,7 +117,7 @@ module JSF
         @block = block
       end
     
-      def method_missing(method_name, *args, &block)
+      ruby2_keywords def method_missing(method_name, *args, &block)
         @form.public_send(method_name, *args, &block)
       end
     

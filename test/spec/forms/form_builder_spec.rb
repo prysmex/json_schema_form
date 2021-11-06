@@ -10,21 +10,21 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Form => [],
       JSF::Forms::ResponseSet => [],
       JSF::Forms::Response => [
-        {trait: :default, errors_args: [{is_inspection: false}]},
-        {trait: :is_inspection, errors_args: [{is_inspection: true}]}
+        {trait: :default, errors_args: {is_inspection: false}},
+        {trait: :is_inspection, errors_args: {is_inspection: true}}
       ],
       JSF::Forms::Field::Checkbox => [
-        {errors_args: [{skip: [:ref_presence]}]}
+        {errors_args: {skip: [:ref_presence]}}
       ],
       JSF::Forms::Field::Component => [
-        {errors_args: [{skip: [:ref_presence]}]}
+        {errors_args: {skip: [:ref_presence]}}
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
-        {errors_args: [{skip: [:ref_presence]}]}
+        {errors_args: {skip: [:ref_presence]}}
       ],
       JSF::Forms::Field::Slider => [],
       JSF::Forms::Field::Static => [],
@@ -32,7 +32,7 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::TextInput => [],
       JSF::Forms::Field::FileInput => [],
       JSF::Forms::ComponentRef => [
-        {errors_args: [{skip: [:ref_presence]}]}
+        {errors_args: {skip: [:ref_presence]}}
       ]
     }
     
@@ -48,7 +48,7 @@ class FormbuilderTest < Minitest::Test
           hash = JSF::Forms::FormBuilder.example_for(klass, obj[:trait])
           instance = klass.new(hash)
           assert_equal true, instance.valid_for_locale? unless skip_valid_for_locale
-          assert_empty instance.errors(*obj[:errors_args])
+          assert_empty instance.errors(**obj[:errors_args])
         end
       end
     end

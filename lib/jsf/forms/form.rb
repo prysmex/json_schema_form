@@ -215,7 +215,7 @@ module JSF
       # the following:
       #
       # - ensure referenced component properties exist
-      # - ensure property $id key matches with field key
+      # - ensure property $id key matches with field id
       # - ensure referenced response sets exist
       # - ensure JSF::Forms::Field::Component only exist in root form
       # - ensure components have a pair in 'definitions'
@@ -223,7 +223,7 @@ module JSF
       #
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
-      def errors(passthru={})
+      def errors(**passthru)
         errors_hash = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
           validation_schema(passthru),
           self
@@ -246,7 +246,7 @@ module JSF
     
         self[:properties]&.each do |k, field|
 
-          # ensure property $id key matches with field key
+          # ensure property $id key matches with field id
           if !key_contains?(passthru, :skip, :match_key)
             if field['$id'] != "#/properties/#{k}"
               add_error_on_path(
@@ -707,15 +707,15 @@ module JSF
       # Appends a dependent property inside a subschema
       #
       # @return [JSF::Forms::Field::*]
-      def append_conditional_property(*args, &block)
-        insert_conditional_property_at_index(:append, *args, &block)
+      def append_conditional_property(*args, **kwargs, &block)
+        insert_conditional_property_at_index(:append, *args, **kwargs, &block)
       end
     
       # Prepends a dependent property inside a subschema
       #
       # @return [JSF::Forms::Field::*]
-      def prepend_conditional_property(*args, &block)
-        insert_conditional_property_at_index(:prepend, *args, &block)
+      def prepend_conditional_property(*args, **kwargs, &block)
+        insert_conditional_property_at_index(:prepend, *args, **kwargs, &block)
       end
 
       ###########

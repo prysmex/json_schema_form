@@ -2,9 +2,62 @@ require 'json_schema_form_test_helper'
 
 class FormTest < Minitest::Test
 
+  ############
+  #transforms#
+  ############
+
+  def test_transform
+    form = JSF::Forms::FormBuilder.build() do
+      # definitions
+      add_response_set(:response_set_1, example('response_set'))
+      add_component_ref(db_id: 1)
+      add_definition('form1', JSF::Forms::FormBuilder.example('form'))
+
+      # properties
+      append_property(:checkbox, example('checkbox'))
+      append_property(:component, example('component'))
+      append_property(:date_input, example('date_input'))
+      append_property(:file_input, example('file_input'))
+      append_property(:header, example('header'))
+      append_property(:info, example('info'))
+      append_property(:number_input, example('number_input'))
+      append_property(:select, example('select'))
+      append_property(:slider, example('slider'))
+      append_property(:static, example('static'))
+      append_property(:text_input, example('text_input'))
+
+      # conditional properties
+      append_conditional_property(:checkbox2, example('checkbox'), dependent_on: :select, type: :const, value: 1)
+    end
+
+    # definitions
+    assert_instance_of JSF::Forms::Form, form[:definitions][:form1]
+    assert_instance_of JSF::Forms::ResponseSet, form[:definitions][:response_set_1]
+    assert_instance_of JSF::Forms::ComponentRef, form[:definitions][JSF::Forms::Form.component_ref_key(1)]
+
+    # all field types
+    form[:properties].each do |name, field|
+      classified_name = name.to_s.split('_').collect(&:capitalize).join
+      assert_instance_of Object.const_get("JSF::Forms::Field::#{classified_name}"), field
+    end
+
+    # allOf
+    assert_instance_of JSF::Schema, form[:allOf].first
+    assert_instance_of JSF::Schema, form[:allOf].first[:if]
+    assert_instance_of JSF::Schema, form[:allOf].first[:if][:properties][:select]
+
+    # then
+    assert_instance_of JSF::Forms::Form, form[:allOf].first[:then]
+
+    # properties inside allOf then
+    assert_instance_of JSF::Forms::Field::Checkbox, form[:allOf].first[:then][:properties][:checkbox2]
+  end
+
   #############
   #validations#
   #############
+
+  # errors
 
   def test_no_unknown_keys_allowed
     errors = JSF::Forms::Form.new({array_key: [], other_key: 1}).errors
@@ -12,15 +65,66 @@ class FormTest < Minitest::Test
     refute_nil errors[:other_key]
   end
 
-  # @todo
-  # conditional fields
-  def test_property_key_must_match_property_id
-    form_example = JSF::Forms::FormBuilder.example('form')
-    form = JSF::Forms::FormBuilder.build(form_example) do
-      append_property :header_1, example('header').merge({:$id => '#/properties/header_1'})
+  # def test_referenced_component_properties_exist
+  # end
+
+  def test_property_key_must_match_field_id
+    # in root schema
+    form = JSF::Forms::FormBuilder.build() do
+      append_property :switch_1, example('switch').merge({:$id => '#/properties/switch_1'})
     end
     assert_empty form.errors
-    form[:properties][:header_1][:$id] = '#/_properties/header_1'
+    form.dig(:properties, :switch_1)[:$id] = '#/properties/__switch_1'
+    refute_empty form.errors
+
+    # nested
+    form = JSF::Forms::FormBuilder.build() do
+      append_property :switch_1, example('switch').merge({:$id => '#/properties/switch_1'})
+      append_conditional_property(:switch_2, example('switch').merge({:$id => '#/properties/switch_2'}), dependent_on: :switch_1, type: :const, value: true)
+    end
+    assert_empty form.errors
+    form.dig(:allOf, 0, :then, :properties, :switch_2)[:$id] = '#/properties/__switch_2'
+    refute_empty form.errors
+  end
+
+  def test_ensure_referenced_response_sets_exist
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:select1, example('select')).tap do |field|
+        field.response_set_id = :response_set_1
+      end
+    end
+
+    refute_empty form.errors
+    form.add_response_set(:response_set_1, JSF::Forms::FormBuilder.example('response_set'))
+    assert_empty form.errors
+  end
+
+  def test_ensure_component_only_exist_in_root_form
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:switch1, example('switch'))
+      add_component_pair(db_id: 1, index: 0)
+    end
+    
+    assert_empty form.errors
+
+    form.append_conditional_property(:component_2, JSF::Forms::FormBuilder.example('component'), dependent_on: :switch1, type: :const, value: true)
+    refute_empty form.errors(skip: [:component_presence]).dig(:allOf, 0, :then, :base)
+  end
+
+  def test_ensure_components_have_a_pair_in_definitions
+
+  end
+
+  def test_ensure_only_allowed_fields_contain_conditional_fields
+     # @todo test more fields?
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:text_input1, example('text_input')) # cannot have conditional
+      append_property(:switch1, example('switch'))
+      append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: :switch1, type: :const, value: true
+    end
+
+    assert_empty form.errors
+    form.append_conditional_property(:dependent_text_input2, JSF::Forms::FormBuilder.example('text_input'), dependent_on: :text_input1, type: :const, value: true)
     refute_empty form.errors
   end
 
@@ -36,42 +140,6 @@ class FormTest < Minitest::Test
       }
     )
     assert_empty form.errors
-  end
-
-  def test_components_only_in_root
-    form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch1, example('switch'))
-      add_component_pair(db_id: 1, index: 0)
-    end
-    
-    assert_empty form.errors
-
-    form.append_conditional_property(:component_2, JSF::Forms::FormBuilder.example('component'), dependent_on: :switch1, type: :const, value: true)
-    refute_empty form.errors(skip: [:component_presence]).dig(:allOf, 0, :then, :base)
-  end
-
-  def test_property_response_sets_must_exist
-    form = JSF::Forms::FormBuilder.build() do
-      append_property(:select1, example('select')).tap do |field|
-        field.response_set_id = :response_set_1
-      end
-    end
-
-    refute_empty form.errors
-    form.add_response_set(:response_set_1, JSF::Forms::FormBuilder.example('response_set'))
-    assert_empty form.errors
-  end
-
-  def test_conditional_fields_whitelist
-    form = JSF::Forms::FormBuilder.build() do
-      append_property(:text_input1, example('text_input')) # cannot have conditional
-      append_property(:switch1, example('switch'))
-      append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: :switch1, type: :const, value: true
-    end
-
-    assert_empty form.errors
-    form.append_conditional_property(:dependent_text_input2, JSF::Forms::FormBuilder.example('text_input'), dependent_on: :text_input1, type: :const, value: true)
-    refute_empty form.errors
   end
 
   # valid_for_locale?
@@ -122,56 +190,6 @@ class FormTest < Minitest::Test
     assert_equal true, form.valid_for_locale?
     form.response_sets[:response_set_1][:anyOf].each{|r| r.set_translation(nil) }
     assert_equal false, form.response_sets[:response_set_1].valid_for_locale?
-  end
-
-  ############
-  #transforms#
-  ############
-
-  def test_transform
-    form = JSF::Forms::FormBuilder.build() do
-      add_response_set(:response_set_1, example('response_set'))
-      add_component_ref(db_id: 1)
-      add_definition('form1', JSF::Forms::FormBuilder.example('form'))
-
-      # properties
-      append_property(:checkbox, example('checkbox'))
-      append_property(:component, example('component'))
-      append_property(:date_input, example('date_input'))
-      append_property(:file_input, example('file_input'))
-      append_property(:header, example('header'))
-      append_property(:info, example('info'))
-      append_property(:number_input, example('number_input'))
-      append_property(:select, example('select'))
-      append_property(:slider, example('slider'))
-      append_property(:static, example('static'))
-      append_property(:text_input, example('text_input'))
-
-      # conditional properties
-      append_conditional_property(:checkbox2, example('checkbox'), dependent_on: :select, type: :const, value: 1)
-    end
-
-    # test all field types
-    form[:properties].each do |name, field|
-      classified_name = name.to_s.split('_').collect(&:capitalize).join
-      assert_instance_of Object.const_get("JSF::Forms::Field::#{classified_name}"), field
-    end
-
-    # test definitions
-    assert_instance_of JSF::Forms::Form, form[:definitions][:form1]
-    assert_instance_of JSF::Forms::ResponseSet, form[:definitions][:response_set_1]
-    assert_instance_of JSF::Forms::ComponentRef, form[:definitions][JSF::Forms::Form.component_ref_key(1)]
-
-    # test allOf
-    assert_instance_of JSF::Schema, form[:allOf].first
-    assert_instance_of JSF::Schema, form[:allOf].first[:if]
-    assert_instance_of JSF::Schema, form[:allOf].first[:if][:properties][:select]
-
-    # test then
-    assert_instance_of JSF::Forms::Form, form[:allOf].first[:then]
-
-    # nested properties
-    assert_instance_of JSF::Forms::Field::Checkbox, form[:allOf].first[:then][:properties][:checkbox2]
   end
 
   ##############

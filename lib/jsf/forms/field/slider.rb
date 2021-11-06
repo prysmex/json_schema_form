@@ -55,7 +55,7 @@ module JSF
         end
 
         # @param passthru [Hash{Symbol => *}]
-        def errors(passthru={})
+        def errors(**passthru)
           errors = {}
   
           # extra enum validations

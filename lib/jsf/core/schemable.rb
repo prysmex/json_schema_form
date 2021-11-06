@@ -62,7 +62,7 @@ module JSF
             parent: nil,
             path: [],
             is_subschema: false
-          }.merge(options.delete(:meta) || {})
+          }.merge(options[:meta] || {})
       
           super(obj, options)
         end

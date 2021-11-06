@@ -172,7 +172,7 @@ module JSF
       #
       # @param passthru [Hash{Symbol => *}]
       # @return [Hash]
-      def errors(passthru={})
+      def errors(**passthru)
         errors = SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
         super.merge(errors)
       end
