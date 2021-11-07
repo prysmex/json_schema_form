@@ -39,7 +39,12 @@ module JSF
       # Override this method to implement own errors,
       # always call super to support recursive errors
       #
-      # @example schema.errors(recursive: true, only: ['properties', 'allOf'])
+      # @example 
+      # schema.errors(
+      #   recursive: true,
+      #   only: ['properties', 'allOf'],
+      #   if: [(instance, key)->{ false }]
+      # )
       #
       # @param [Array<String>] only allowlist of subschema keys
       # @param [Array<String>] except denylist of subschema keys
@@ -52,7 +57,9 @@ module JSF
 
         subschemas_errors(**passthru)
       end
-
+      
+      private
+      
       # Builds errors hash for all subschemas. It support two keys to
       # filter which subschemas' errors will be called
       #
@@ -62,7 +69,7 @@ module JSF
       # @return [ActiveSupport::HashWithIndifferentAccess]
       def subschemas_errors(**passthru)
 
-        errors = {}
+        acum_subschemas_errors = {}
         # continue recurrsion for all subschema keys
         self.each do |key, value|
 
@@ -72,46 +79,37 @@ module JSF
           if key == 'additionalProperties'
             next if !value.is_a?(::Hash)
             self[:additionalProperties]&.each do |k,v|
-              bury_subschema_errors(v, errors, passthru)
+              bury_subschema_errors(v, acum_subschemas_errors, passthru)
             end
           elsif key == 'definitions'
             self[:definitions]&.each do |k,v|
-              bury_subschema_errors(v, errors, passthru)
+              bury_subschema_errors(v, acum_subschemas_errors, passthru)
             end
           elsif key == 'dependencies'
             self[:dependencies]&.each do |k,v|
               next if !v.is_a?(::Hash)
-              bury_subschema_errors(v, errors, passthru)
+              bury_subschema_errors(v, acum_subschemas_errors, passthru)
             end
           elsif key == 'properties'
             self[:properties]&.each do |k,v|
-              bury_subschema_errors(v, errors, passthru)
+              bury_subschema_errors(v, acum_subschemas_errors, passthru)
             end
           else
             case value
             when ::Array
               next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
               value.each do |v|
-                bury_subschema_errors(v, errors, passthru)
+                bury_subschema_errors(v, acum_subschemas_errors, passthru)
               end
             else
               next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-              bury_subschema_errors(value, errors, passthru)
+              bury_subschema_errors(value, acum_subschemas_errors, passthru)
             end
           end
         end
 
-        ActiveSupport::HashWithIndifferentAccess.new(errors)
+        ActiveSupport::HashWithIndifferentAccess.new(acum_subschemas_errors)
       end
-
-      # Util for safely checking if a key with an array contains an element
-      #
-      # @return [Boolean]
-      def key_contains?(hash, key, value)
-        hash[key]&.include?(value)
-      end
-
-      private
 
       # Wrapper method, used only to DRY code
       #
@@ -119,23 +117,22 @@ module JSF
       # - buries subschema errors
       #
       # @return [void]
-      def bury_subschema_errors(subschema, subschemas_errors, passthru)
+      def bury_subschema_errors(subschema, acum_subschemas_errors, passthru)
         return unless subschema.respond_to?(:errors)
 
-        errors = subschema.errors(**passthru)
-        return if errors.empty?
+        subschema_errors = subschema.errors(**passthru)
+        return if subschema_errors.empty?
 
         relative_path = subschema.meta[:path].slice((self.meta[:path].size)..-1)
         
         # create path if it does not exists
-        if subschemas_errors.dig(*relative_path).nil?
-          SuperHash::Utils.bury(subschemas_errors, *relative_path, {})
+        if acum_subschemas_errors.dig(*relative_path).nil?
+          SuperHash::Utils.bury(acum_subschemas_errors, *relative_path, {})
         end
 
-        # add errors
-        subschemas_errors.dig(*relative_path).merge!(errors)
+        # merge new errors
+        acum_subschemas_errors.dig(*relative_path).merge!(subschema_errors)
       end
-
       
       # Utility to add errors on nested paths
       #
@@ -154,6 +151,32 @@ module JSF
           end
         end
         str
+      end
+
+      # passthru utils
+
+      # Util for safely checking if a key with an array contains an element
+      #
+      # @param [Hash] passthru errors passthru hash
+      # @param [Symbol] passthru hash key
+      # @param [] value
+      # @return [Boolean]
+      def key_contains?(passthru, key, value)
+        passthru[key]&.include?(value)
+      end
+
+      # Util that determines if a validation should run
+      # Use this method inside the +errors+ method when overriding it
+      #
+      # @param [Hash] passthru errors passthru hash
+      # @param [BaseHash] schema_instance
+      # @param [Symbol] validation_key error specific key
+      # @return [Boolean]
+      def run_validation?(passthru, schema_instance, validation_key)
+        return false if key_contains?(passthru, :skip, validation_key)
+        return false if passthru.key?(:if) && passthru[:if].none?{|proc| proc.call(schema_instance, validation_key)}
+        return false if passthru[:unless]&.any?{|proc| proc.call(schema_instance, validation_key)}
+        true
       end
 
     end

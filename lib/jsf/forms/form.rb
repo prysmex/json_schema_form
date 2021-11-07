@@ -233,7 +233,7 @@ module JSF
 
         self[:definitions]&.each do |k, v|
           # ensure referenced component properties exist
-          if !key_contains?(passthru, :skip, :component_presence)
+          if run_validation?(passthru, self, :component_presence)
             if v.is_a?(JSF::Forms::ComponentRef) && v.component.nil?
               add_error_on_path(
                 errors_hash,
@@ -247,7 +247,7 @@ module JSF
         self[:properties]&.each do |k, field|
 
           # ensure property $id key matches with field id
-          if !key_contains?(passthru, :skip, :match_key)
+          if run_validation?(passthru, self, :match_key)
             if field['$id'] != "#/properties/#{k}"
               add_error_on_path(
                 children_errors,
@@ -258,7 +258,7 @@ module JSF
           end
 
           # ensure referenced response sets exist
-          if !key_contains?(passthru, :skip, :response_set_presence)
+          if run_validation?(passthru, self, :response_set_presence)
             if field.respond_to?(:response_set) && field.response_set_id && field.response_set.nil?
               add_error_on_path(
                 children_errors,
@@ -269,7 +269,7 @@ module JSF
           end
 
           # ensure JSF::Forms::Field::Component only exist in root form
-          if !key_contains?(passthru, :skip, :component_in_root)
+          if run_validation?(passthru, self, :component_in_root)
             if self.meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Component)
               add_error_on_path(
                 errors_hash,
@@ -280,7 +280,7 @@ module JSF
           end
 
           # ensure components have a pair in 'definitions'
-          if !key_contains?(passthru, :skip, :component_ref_presence)
+          if run_validation?(passthru, self, :component_ref_presence)
             if field.is_a?(JSF::Forms::Field::Component)
               # response should be found
               if field.component_definition.nil?
@@ -296,7 +296,7 @@ module JSF
           # ensure only allowed fields contain (conditional) fields
           if CONDITIONAL_FIELDS.include?(field.class)
           else
-            if !key_contains?(passthru, :skip, :conditional_fields)
+            if run_validation?(passthru, self, :conditional_fields)
               if field.dependent_conditions.size > 0
                 fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
                 add_error_on_path(
