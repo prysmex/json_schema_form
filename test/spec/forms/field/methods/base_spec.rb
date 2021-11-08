@@ -56,7 +56,7 @@ module BaseMethodsTests
       end
     end
     
-    refute_nil prop.errors['_hidden_required_']
+    refute_empty prop.errors(if: ->(obj, key) { key == :hidden_and_required })
   end
 
   ##############

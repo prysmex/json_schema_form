@@ -56,7 +56,11 @@ module JSF
 
       # @param passthru [Hash{Symbol => *}]
       def errors(**passthru)
-        errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
+        errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
+          passthru,
+          self
+        )
+
         super.merge(errors)
       end
 

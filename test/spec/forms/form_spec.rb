@@ -65,8 +65,23 @@ class FormTest < Minitest::Test
     refute_nil errors[:other_key]
   end
 
-  # def test_referenced_component_properties_exist
-  # end
+  def test_referenced_component_properties_exist
+    form = JSF::Forms::FormBuilder.build do
+      add_component_pair(db_id: 1, index: :prepend)
+    end
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_presence }
+
+    # no errors
+    assert_empty form.errors(if: error_proc)
+
+    # missmatch id
+    form[:definitions][:shared_schema_template_1].db_id = 2
+    refute_empty form.errors(if: error_proc)
+
+    # not present
+    form[:properties] = {}
+    refute_empty form.errors(if: error_proc)
+  end
 
   def test_property_key_must_match_field_id
     # in root schema

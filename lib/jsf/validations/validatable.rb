@@ -136,18 +136,19 @@ module JSF
       
       # Utility to add errors on nested paths
       #
-      # @param Hash obj <description>
+      # @param [Hash] errors_hash
       # @param [Array<String,Symbol>] path
       # @param [String] str error to add
       # @return [String] added error
-      def add_error_on_path(obj, path, str)
-        current = obj
+      def add_error_on_path(errors_hash, path, str)
+        current = errors_hash
         path.each.with_index do |key, i|
           if (i + 1) == path.size
             current[key] ||= []
             current[key] << str
           else
-            current = current[key] ||= {}
+            current[key] ||= {}
+            current = current[key]
           end
         end
         str
@@ -174,8 +175,8 @@ module JSF
       # @return [Boolean]
       def run_validation?(passthru, schema_instance, validation_key)
         return false if key_contains?(passthru, :skip, validation_key)
-        return false if passthru.key?(:if) && passthru[:if].none?{|proc| proc.call(schema_instance, validation_key)}
-        return false if passthru[:unless]&.any?{|proc| proc.call(schema_instance, validation_key)}
+        return false if passthru.key?(:if) && !passthru[:if].call(schema_instance, validation_key)
+        return false if passthru[:unless]&.call(schema_instance, validation_key)
         true
       end
 

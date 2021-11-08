@@ -224,8 +224,8 @@ module JSF
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
       def errors(**passthru)
-        errors_hash = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
-          validation_schema(passthru),
+        errors_hash = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
+          passthru,
           self
         )
 
@@ -251,7 +251,7 @@ module JSF
             if field['$id'] != "#/properties/#{k}"
               add_error_on_path(
                 children_errors,
-                ['properties', 'k', '$id'],
+                ['properties', k, '$id'],
                 "'#{field['$id']}' did not match property key '#{k}'"
               )
             end
@@ -262,7 +262,7 @@ module JSF
             if field.respond_to?(:response_set) && field.response_set_id && field.response_set.nil?
               add_error_on_path(
                 children_errors,
-                (['properties', 'k'] + field.class::RESPONSE_SET_PATH),
+                (['properties', k] + field.class::RESPONSE_SET_PATH),
                 "response set #{field.response_set_id} not found"
               )
             end
@@ -429,7 +429,7 @@ module JSF
         # remove property
         # self.remove_property(key)
         self[:properties].reject! do |k,v|
-          v == JSF::Forms::Field::Component && v.component_ref_id == db_id
+          v == JSF::Forms::Field::Component && v.db_id == db_id
         end
         resort!
 

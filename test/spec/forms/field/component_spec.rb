@@ -27,9 +27,9 @@ class ComponentTest < Minitest::Test
 
   # component_definition_pointer
 
-  # component_definition_pointer=
+  # db_id
 
-  # component_ref_id
+  # db_id=
 
   # component_definition
 end

@@ -62,24 +62,36 @@ module JSF
           if self[:enum].is_a?(Array)
 
             # enum precision
-            precision_errors = self[:enum].select do |value|
-              value != value.round(MAX_PRECISION)
-            end
-            if !precision_errors.empty?
-              errors['_enum_precision_'] = "invalid enum values #{precision_errors.join(', ')}, max decimal precision is #{MAX_PRECISION}"
+            if run_validation?(passthru, self, :enum_precision)
+              precision_errors = self[:enum].select do |value|
+                value != value.round(MAX_PRECISION)
+              end
+              if !precision_errors.empty?
+                add_error_on_path(
+                  errors,
+                  ['enum'],
+                  "invalid enum values #{precision_errors.join(', ')}, max decimal precision is #{MAX_PRECISION}"
+                )
+              end
             end
   
             # check that all enums have same interval
-            if self[:enum].size > 1
-              big_decimal_enum = self[:enum].map{|v| BigDecimal(v.to_s) }
-              diff = (big_decimal_enum[1] - big_decimal_enum[0]).abs
-  
-              big_decimal_enum.each_with_index do |value, i|
-                next if i == 0
-                new_diff = (big_decimal_enum[i] - big_decimal_enum[i-1]).abs
-                if diff != new_diff
-                  errors['_enum_interval_'] = "found different interval from initial at index #{i}"
-                  break
+            if run_validation?(passthru, self, :enum_interval)
+              if self[:enum].size > 1
+                big_decimal_enum = self[:enum].map{|v| BigDecimal(v.to_s) }
+                diff = (big_decimal_enum[1] - big_decimal_enum[0]).abs
+    
+                big_decimal_enum.each_with_index do |value, i|
+                  next if i == 0
+                  new_diff = (big_decimal_enum[i] - big_decimal_enum[i-1]).abs
+                  if diff != new_diff
+                    add_error_on_path(
+                      errors,
+                      ['enum'],
+                      "found different interval from initial at index #{i}"
+                    )
+                    break
+                  end
                 end
               end
             end

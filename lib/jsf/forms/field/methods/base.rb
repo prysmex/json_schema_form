@@ -27,13 +27,20 @@ module JSF
 
           # @param passthru [Hash{Symbol => *}]
           def errors(**passthru)
-            errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(
-              validation_schema(passthru),
+            errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
+              passthru,
               self
             )
 
-            if self.hideOnCreate? && self.required?
-              errors['_hidden_required_'] = 'cannot be hideOnCreate and required'
+            # ToDo add error to base
+            if run_validation?(passthru, self, :hidden_and_required)
+              if self.hideOnCreate? && self.required?
+                add_error_on_path(
+                  errors,
+                  ['base'],
+                  'cannot be hideOnCreate and required'
+                )
+              end
             end
 
             super.merge(errors)

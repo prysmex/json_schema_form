@@ -28,7 +28,11 @@ module JSF
 
       # @param passthru [Hash{Symbol => *}]
       def errors(**passthru)
-        errors = JSF::Validations::DrySchemaValidatable::SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
+        errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
+          passthru,
+          self
+        )
+
         super.merge(errors)
       end
 
@@ -47,9 +51,24 @@ module JSF
 
         parent[:properties]&.find do |k,v|
           v.is_a?(JSF::Forms::Field::Component) &&
-          self[:$ref] == v.component_ref_id
+          self.db_id == v.db_id
         end&.last
       end
+
+        # Extracts the id from the json pointer
+        #
+        # @return [Integer]
+        def db_id
+          self[:$ref]
+        end
+
+        # Update the db id in the component_definition_pointer
+        #
+        # @param [Integer]
+        # @return [void]
+        def db_id=(id)
+          self[:$ref] = id
+        end
 
     end
 

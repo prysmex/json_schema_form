@@ -50,22 +50,20 @@ module JSF
         def component_definition_pointer
           self.dig(*[:$ref])
         end
-        
-        # Sets json pointer $ref, should point to its pair (JSF::Forms::ComponentRef, JSF::Forms::Form)
-        # inside the form's 'definitions' key
-        #
-        # @param [<Type>] pointer <description>
-        # @return [String]
-        def component_definition_pointer=(pointer)
-          SuperHash::Utils.bury(self, *[:$ref], pointer)
-        end
 
         # Extracts the id from the json pointer
         #
         # @return [Integer]
-        def component_ref_id
+        def db_id
           self.component_definition_pointer&.match(/\d+\z/)&.to_s&.to_i
         end
+
+        # Update the db id in the component_definition_pointer
+        #
+        # @param [Integer]
+        # @return [void]
+        # def db_id=(id)
+        # end
   
         # @return [JSF::Forms::ComponentRef, JSF::Forms::Form]
         def component_definition

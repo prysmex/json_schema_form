@@ -71,7 +71,15 @@ module JSF
           .(hash_or_schema)
           .errors
           .to_h
-          .merge({})
+          .deep_dup # this is important, otherwise something gets polluted
+      end
+
+      # @param [Hash] passthru
+      # @param [BaseHash#run_validation?] schema
+      # @return [Hash]
+      CONDITIONAL_SCHEMA_ERRORS_PROC = lambda do |passthru, schema|
+        return {} unless schema.send(:run_validation?, passthru, schema, :schema)
+        SCHEMA_ERRORS_PROC.call(schema.validation_schema(passthru), schema)
       end
       
       # Returns a Dry::Schema.JSON that can validate a Hash according to the
