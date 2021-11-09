@@ -46,7 +46,7 @@ module JSF
         def add_property(name, definition, options={})
           name = name.to_s
           self[:properties] ||= {}
-          StandardError.new("key #{id} already exists") if self[:properties]&.key?(name)
+          StandardError.new("key #{name} already exists") if self[:properties]&.key?(name)
 
           # definition = definition.deep_dup
           definition[:'$id'] = "#/properties/#{name}" #TODO this currently only works for main form

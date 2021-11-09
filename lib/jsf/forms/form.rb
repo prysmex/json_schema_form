@@ -1,8 +1,8 @@
 module JSF
   module Forms
-    DEFAULT_LOCALE = 'es'
-    AVAILABLE_LOCALES = ['es', 'en']
-    VERSION = '3.0.0'
+    DEFAULT_LOCALE = 'es'.freeze
+    AVAILABLE_LOCALES = ['es', 'en'].freeze
+    VERSION = '3.0.0'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -90,8 +90,6 @@ module JSF
               when 'string', :string
                 if value[:format] == 'date-time'
                   JSF::Forms::Field::DateInput
-                elsif !value[:responseSetId].nil? #deprecated, only for compatibility before v3.0.0
-                  JSF::Forms::Field::Select
                 else
                   JSF::Forms::Field::TextInput
                 end
@@ -136,12 +134,12 @@ module JSF
         raise StandardError.new("builder conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
     
-      # utility to DRY code
+      # Utility proc to DRY code, expands a condition type to a path
       #
-      # @param [Symbol], type
+      # @param [Symbol] type
       # @return [Array]
       CONDITION_TYPE_TO_PATH= ->(type) {
-        case type
+        case type.to_sym
         when :const
           [:const]
         when :not_const
@@ -151,7 +149,7 @@ module JSF
         when :not_enum
           [:not, :enum]
         else
-          ArgumentError.new("#{type} is not a whitelisted condition type")
+          raise ArgumentError.new("#{type} is not a whitelisted condition type")
         end
       }
     
@@ -197,7 +195,7 @@ module JSF
             optional(:'$id').filled(:string)
             optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
-            required(:schemaFormVersion).value(:string)
+            required(:schemaFormVersion).value(eql?: VERSION)
             required(:definitions).value(:hash)
             required(:availableLocales).value(:array?).array(:str?)
             required(:'$schema').filled(:string)
@@ -230,6 +228,16 @@ module JSF
         )
 
         children_errors = super
+
+        if run_validation?(passthru, self, :sorting)
+          unless self.verify_sort_order
+            add_error_on_path(
+              errors_hash,
+              ['base'],
+              "incorrect sorting, should start with 0 and increase consistently"
+            )
+          end
+        end
 
         self[:definitions]&.each do |k, v|
           # ensure referenced component properties exist
@@ -495,8 +503,11 @@ module JSF
       #
       # @return [Hash{String => JSF::Forms::Field::*}]
       def merged_properties(**args)
-        (self[:properties] || {})
-          .merge(self.dynamic_properties(**args))
+        properties = {}
+        schema_form_iterator(**args) do |_, then_hash|
+          properties.merge!(then_hash&.properties || {})
+        end
+        properties
       end
     
       # gets the property definition inside the properties key
@@ -512,7 +523,6 @@ module JSF
       # @param [String, Symbol]
       # @return [JSF::Forms::Field::*]
       def get_dynamic_property(property, **args)
-        property = property
         subschema_iterator(**args) do |_, then_hash|
           props = then_hash&.properties
           break props[property] if props&.key?(property)
@@ -538,7 +548,7 @@ module JSF
       #
       # @return [JSF::Forms::Field::*] added property
       def prepend_property(*args)
-        insert_property_at_index(self.min_sort, *args)
+        insert_property_at_index(self.min_sort || 0, *args)
       end
     
       # Adds a property with a sort value 1 more than the max and resorts all other properties
@@ -547,7 +557,9 @@ module JSF
       #
       # @return [JSF::Forms::Field::*] added property
       def append_property(*args)
-        insert_property_at_index((self.max_sort + 1), *args)
+        max_sort = self.max_sort
+        index = max_sort.nil? ? 0 : max_sort + 1
+        insert_property_at_index(index, *args)
       end
     
       # Adds a property with a specified sort value and resorts all other properties
@@ -557,9 +569,8 @@ module JSF
       # @param options[:required] [Boolean] if the property should be required
       # @return [JSF::Forms::Field::*] added property
       def insert_property_at_index(index, id, definition, options={})
-    
         prop = add_property(id, definition, options)
-        SuperHash::Utils.bury(prop, :displayProperties, :sort, (index - 0.5))
+        prop.sort = (index - 0.5)
         resort!
         prop
       end
@@ -575,45 +586,44 @@ module JSF
     
       # Moves a property to a specific sort value and resorts needed properties
       #
-      # @param target [Integer] sort value to set
       # @param id [String,Symbol] name of property to move
-      # @return [JSF::Forms::Field::*] mutated self
-      def move_property(target, id)
-        prop = self[:properties]&.find{|k,v| v.key_name == id.to_s }
-        if !prop.nil?
-          current = prop[1][:displayProperties][:sort]
-          range = Range.new(*[current, target].sort)
-          selected = sorted_properties.select{|k| range.include?(k[:displayProperties][:sort]) }
-          if target > current
-            selected.each{|k| k[:displayProperties][:sort] -= 1 }
-          else
-            selected.each{|k| k[:displayProperties][:sort] += 1 }
-          end
-          prop[1][:displayProperties][:sort] = target
-          resort!
+      # @param target [Integer] sort value to set
+      # @return [void]
+      def move_property(id, target)
+        property = self[:properties]&.find{|k,v| v.key_name == id.to_s }&.last
+        return unless property
+
+        current = property.sort
+        range = Range.new(*[current, target].sort)
+        selected = sorted_properties.select{|prop| range.include?(prop.sort) }
+        if target > current
+          selected.each{|prop| prop.sort -= 1 }
+        else
+          selected.each{|prop| prop.sort += 1 }
         end
-        self
+        property.sort = target
+        resort!
       end
     
       # gets the minimum sort value for all properties
       #
       # @return [Integer]
       def min_sort
-        self[:properties]&.map{|k,v| v&.dig(:displayProperties, :sort) }&.min || 0
+        self[:properties]&.map{|k,v| v&.sort }&.min
       end
     
       # gets the maximum sort value for all properties
       #
       # @return [Integer]
       def max_sort
-        self[:properties]&.map{|k,v| v&.dig(:displayProperties, :sort) }&.max || 0
+        self[:properties]&.map{|k,v| v&.sort }&.max
       end
     
       # gets a property by a sort value
       #
       # @return [JSF::Forms::Field]
       def get_property_by_sort(i)
-        self[:properties]&.find{|k,v| v&.dig(:displayProperties, :sort) == i}
+        self[:properties]&.find{|k,v| v&.sort == i}&.last
       end
     
       # Checks if all sort values are consecutive and starting with 0
@@ -621,7 +631,7 @@ module JSF
       # @return [Boolean]
       def verify_sort_order
         for i in 0...(self[:properties]&.size || 0)
-          return false if get_property_by_sort(i).blank?
+          return false if get_property_by_sort(i).nil?
         end
         true
       end
@@ -630,7 +640,7 @@ module JSF
       #
       # @return [Array<JSF::Forms::Field>]
       def sorted_properties
-        self[:properties]&.values&.sort_by{|v| v&.dig(:displayProperties, :sort)} || []
+        self[:properties]&.values&.sort_by{|v| v&.sort} || []
       end
     
       # fixes sorting in case sort values are not consecutive.
@@ -640,7 +650,7 @@ module JSF
         sorted = self.sorted_properties
         for i in 0...self[:properties].size
           property = sorted[i]
-          property[:displayProperties][:sort] = i
+          property.sort = i
         end
       end
     
@@ -667,24 +677,21 @@ module JSF
       # @param type [Symbol] type of condition to filter by
       # @param value [String,Boolean,Integer] Value that makes the condition TRUE
       # @return condition [JSF::Schema] added or retrieved condition hash
-      def add_or_get_condition(dependent_on, type, value)
+      def add_condition(dependent_on, type, value)
         raise ArgumentError.new('dependent property not found') if self.get_property(dependent_on).nil?
-        condition = get_condition(dependent_on, type, value)
-        if condition.nil?
-          #ensure transform is triggered
-          self[:allOf] = (self[:allOf] || []) << {
-            if: {
-              properties: {
-                :"#{dependent_on}" => SuperHash::Utils.bury({}, *CONDITION_TYPE_TO_PATH.call(type), value)
-              }
-            },
-            then: {
-              properties: {}
+
+        #ensure transform is triggered
+        self[:allOf] = (self[:allOf] || []) << {
+          if: {
+            properties: {
+              :"#{dependent_on}" => SuperHash::Utils.bury({}, *CONDITION_TYPE_TO_PATH.call(type), value)
             }
+          },
+          then: {
+            properties: {}
           }
-          condition = self[:allOf].last
-        end
-        condition
+        }
+        self[:allOf].last
       end
     
       # Adds a dependent property inside a subschema
@@ -701,7 +708,7 @@ module JSF
           raise ArgumentError.new("sort must be an Integer, :prepend or :append, got #{sort_value}")
         end
     
-        condition = add_or_get_condition(dependent_on, type, value)
+        condition = get_condition(dependent_on, type, value) || add_condition(dependent_on, type, value)
         added_property = case sort_value
         when :prepend
           condition[:then].prepend_property(property_id, definition, options)
@@ -741,19 +748,24 @@ module JSF
       # @param start_level [Integer] Depth of allOf nesting to ignore (0 for root)
       # @param levels [Integer] Max depth of allOf nesting to starting from start_level
       # @param skip_when_false [Boolean]
-      # @return [Nil]
+      # @yieldparam [JSF::Schema] condition
+      # @yieldparam [JSF::Forms::Form] form
+      # @yieldparam [JSF::Forms::Form] parent form
+      # @yieldparam [Integer] current_level
+      # @return [NilClass]
       def schema_form_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
-        return if !start_level.nil? && !levels.nil? && current_level >= (start_level + levels)
-        return if self[:allOf].nil?
+        # stop execution if levels limit matches
+        return if !levels.nil? && !start_level.nil? && current_level >= (start_level + levels)
     
-        #root
+        # yield root form, if
         if current_level == 0 && current_level >= start_level
           yield( nil, self, nil, current_level )
         end
         current_level += 1
     
-        #recursive allOf
-        self[:allOf].each do |condition_subschema|
+        # iterate allOf
+        self[:allOf]&.each do |condition_subschema|
+          # yield subschema form if criteria matches
           if start_level.nil? || current_level >= start_level
             returned_value = yield(
               condition_subschema[:if],
@@ -763,6 +775,7 @@ module JSF
             )
             next if skip_when_false && (returned_value == false)
           end
+          # go to next level recursively
           condition_subschema[:then]&.schema_form_iterator(
             start_level: start_level,
             levels: levels,
@@ -777,7 +790,8 @@ module JSF
     
       # Calls 'schema_form_iterator' with a default start_level of 1 to include only subschemas
       # supports same params as 'schema_form_iterator'
-      def subschema_iterator(start_level: 1, **args, &block)
+      def subschema_iterator(start_level: 0, **args, &block)
+        start_level += 1
         schema_form_iterator(start_level: start_level, **args, &block)
       end
     

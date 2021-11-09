@@ -99,6 +99,20 @@ module JSF
           def hideOnCreate=(value)
             SuperHash::Utils.bury(self, :displayProperties, :hideOnCreate, value)
           end
+
+          # Get sort value
+          #
+          # @return [<Type>] <description>
+          def sort
+            self.dig(:displayProperties, :sort)
+          end
+
+          # Set sort value
+          #
+          # @return [<Type>] <description>
+          def sort=(value)
+            SuperHash::Utils.bury(self, :displayProperties, :sort, value)
+          end
           
           # get the field's i18n label
           #

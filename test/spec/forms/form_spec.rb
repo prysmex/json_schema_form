@@ -65,6 +65,19 @@ class FormTest < Minitest::Test
     refute_nil errors[:other_key]
   end
 
+  def test_sorting_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :sorting }
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      append_property(:switch_3, example('switch'))
+    end
+
+    assert_empty form.errors(if: error_proc)
+    form.get_property(:switch_2).sort = 4
+    refute_empty form.errors(if: error_proc)
+  end
+
   def test_component_presence_error
     error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_presence }
     form = JSF::Forms::FormBuilder.build do
@@ -290,22 +303,272 @@ class FormTest < Minitest::Test
   #   end
   # end
 
-  # def test_get_condition
+  # def test_add_response_set
+  # end
 
+  def test_properties
+    form = JSF::Forms::FormBuilder.build
+    assert_same form.properties, form[:properties]
+  end
+
+  # dynamic_properties and merged_properties
+  def test_dynamic_and_merged_properties
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+
+      # conditional properties
+      append_conditional_property(:switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true) do |form, field|
+        form.append_conditional_property(:switch_3, example('switch'), dependent_on: :switch_2, type: :const, value: true) do |form, field|
+          form.append_conditional_property(:switch_4, example('switch'), dependent_on: :switch_3, type: :const, value: true)
+        end
+      end
+    end
+
+    # test dynamic_properties
+    assert_equal ['switch_2', 'switch_3', 'switch_4'], form.dynamic_properties.keys
+    assert_equal ['switch_3', 'switch_4'], form.dynamic_properties(start_level: 1).keys
+    assert_equal ['switch_3'], form.dynamic_properties(start_level: 1, levels: 1).keys
+
+    # test merged_properties
+    assert_equal ['switch_1', 'switch_2', 'switch_3', 'switch_4'], form.merged_properties.keys
+    assert_equal ['switch_2', 'switch_3', 'switch_4'], form.merged_properties(start_level: 1).keys
+    assert_equal ['switch_2'], form.merged_properties(start_level: 1, levels: 1).keys
+  end
+
+  def test_get_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+    end
+
+    refute_nil form.get_property('switch_1')
+  end
+
+  def test_get_dynamic_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_conditional_property(:switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true)
+    end
+
+    refute_nil form.get_dynamic_property('switch_2')
+  end
+
+  def test_get_merged_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_conditional_property(:switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true)
+    end
+
+    refute_nil form.get_merged_property('switch_1')
+    refute_nil form.get_merged_property('switch_2')
+  end
+
+  def test_prepend_property
+    form = JSF::Forms::FormBuilder.build do
+      prepend_property(:switch_1, example('switch'))
+      prepend_property(:switch_2, example('switch'))
+    end
+
+    assert_equal 1, form.get_property('switch_1').sort
+    assert_equal 0, form.get_property('switch_2').sort
+  end
+
+  def test_append_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+    end
+
+    assert_equal 0, form.get_property('switch_1').sort
+    assert_equal 1, form.get_property('switch_2').sort
+  end
+
+  def test_insert_property_at_index
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      insert_property_at_index(1, :switch_3, example('switch'))
+    end
+
+    # sort
+    assert_equal 0, form.get_property('switch_1').sort
+    assert_equal 2, form.get_property('switch_2').sort
+    assert_equal 1, form.get_property('switch_3').sort
+  end
+
+  def test_remove_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      remove_property(:switch_1)
+    end
+
+    assert_nil form.get_property('switch_1')
+    assert_equal 0, form.get_property('switch_2').sort
+  end
+
+  def test_move_property
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      append_property(:switch_3, example('switch'))
+      move_property(:switch_3, 0)
+    end
+
+    assert_equal 1, form.get_property('switch_1').sort
+    assert_equal 2, form.get_property('switch_2').sort
+    assert_equal 0, form.get_property('switch_3').sort
+  end
+
+  def test_min_sort
+    form = JSF::Forms::FormBuilder.build
+    assert_nil form.min_sort
+
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+    end
+    assert_equal 0, form.min_sort
+  end
+
+  def test_max_sort
+    form = JSF::Forms::FormBuilder.build
+    assert_nil form.max_sort
+
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+    end
+    assert_equal 1, form.max_sort
+  end
+
+  def test_get_property_by_sort 
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+    end
+    assert_same form.get_property(:switch_1), form.get_property_by_sort(0)
+  end
+
+  def test_verify_sort_order
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+    end
+
+    assert_equal true, form.verify_sort_order
+    form.get_property(:switch_1).sort = 3
+    assert_equal false, form.verify_sort_order
+  end
+
+  def test_sorted_properties
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      append_property(:switch_3, example('switch'))
+      move_property(:switch_3, 0)
+    end
+
+    assert_equal ['switch_3', 'switch_1', 'switch_2'], form.sorted_properties.map(&:key_name)
+  end
+
+  def test_resort!
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch'))
+      append_property(:switch_2, example('switch'))
+      append_property(:switch_3, example('switch'))
+    end
+
+    # change sort to be non consecutive and in different order
+    form.get_property(:switch_1).sort = 20
+    form.get_property(:switch_2).sort = 10
+    form.get_property(:switch_3).sort = 30
+
+    form.resort!
+    assert_equal 1, form.get_property('switch_1').sort
+    assert_equal 0, form.get_property('switch_2').sort
+    assert_equal 2, form.get_property('switch_3').sort
+  end
+
+  def test_get_condition
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:prop1, example('select'))
+      add_condition('prop1', :const, 'const')
+      add_condition('prop1', :not_const, 'not_const')
+      add_condition('prop1', :enum, ['enum'])
+      add_condition('prop1', :not_enum, ['not_enum'])
+    end
+
+    # found
+    assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
+    assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
+    assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first
+    assert_equal 'not_enum', form.get_condition(:prop1, :not_enum, 'not_enum')&.dig(:if, :properties, :prop1, :not, :enum)&.first
+
+    # not found
+    assert_nil form.get_condition(:prop1, :const, 'other_value')
+
+    # invalid key
+    assert_raises(ArgumentError){ form.get_condition(:prop1, :wrong_key, 'other_value') }
+  end
+
+  def test_add_condition
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:switch_1, example('switch'))
+    end
+
+    # add new condition
+    condition = form.add_condition('switch_1', :const, true)
+    assert_instance_of JSF::Schema, condition
+
+    # invalid key
+    assert_raises(ArgumentError){ form.add_condition(:prop1, :wrong_key, true) }
+
+    # non-existing prop
+    assert_raises(ArgumentError){ form.add_condition(:other_prop, :const, true) }
+  end
+
+  # def test_insert_conditional_property_at_index
   #   form = JSF::Forms::FormBuilder.build() do
-  #     append_property(:prop1, example('select'))
-  #     add_or_get_condition('prop1', :const, 'const')
-  #     add_or_get_condition('prop1', :not_const, 'not_const')
-  #     add_or_get_condition('prop1', :enum, ['enum'])
-  #     add_or_get_condition('prop1', :not_enum, ['not_enum'])
+  #     append_property(:switch_1, example('switch'))
+  #     insert_conditional_property_at_index(0, :switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true) do |f, field|
+  #       f.insert_conditional_property_at_index(0, :switch_3, example('switch'), dependent_on: :switch_2, type: :const, value: true)
+  #       f.insert_conditional_property_at_index(0, :switch_4, example('switch'), dependent_on: :switch_3, type: :const, value: true)
+  #     end
   #   end
 
-  #   assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
-  #   assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
-  #   assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first
-  #   assert_equal 'not_enum', form.get_condition(:prop1, :not_enum, 'not_enum')&.dig(:if, :properties, :prop1, :not, :enum)&.first
+  #   # test supports yielding block
+  #   # test sorting
+  #   # test condition is valid
+  # end
 
-  #   assert_nil form.get_condition(:prop1, :const, 'other_value')
+  # def test_append_conditional_property
+  # end
+
+  # def test_prepend_conditional_property
+  # end
+
+  # def test_schema_form_iterator
+  # end
+
+  # def test_subschema_iterator
+  # end
+
+  # def test_max_score
+  # end
+
+  # def test_i18n_document
+  # end
+
+  # def test_i18n_document_value
+  # end
+
+  # def test_nil_document
+  # end
+
+  # def test_compile
+  # end
+
+  # def test_migrate
   # end
 
 end
