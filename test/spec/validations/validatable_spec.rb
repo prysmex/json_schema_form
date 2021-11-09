@@ -7,7 +7,9 @@ class ValidatableTest < Minitest::Test
   module IdValidation
     def errors(**passthru)
       errors_hash = super
-      errors_hash[:$id] = 'id must be present' if self[:$id].nil?
+      if run_validation?(passthru, self, :id_presence)
+        errors_hash[:$id] = 'id must be present' if self[:$id].nil?
+      end
       errors_hash
     end
   end
@@ -39,14 +41,65 @@ class ValidatableTest < Minitest::Test
         }
       ]
     })
+
+    # recursive errors
     refute_nil schema.errors.dig(:allOf, 0, :properties, :prop_1, :$id)
+
+    # not recursive
+    assert_nil schema.errors(recursive: false).dig(:allOf, 0, :properties, :prop_1, :$id)
+
+    # ToDo if_subschema
+
+    # ToDo unless_subschema
+
+    # fix error
     schema[:allOf].first[:properties][:prop_1][:$id] = 'some_id'
+
     assert_empty schema.errors
   end
 
-  # add_error_on_path
+  def test_conditional_errors
+    SampleSchema.include IdValidation
+    refute_empty SampleSchema.new({}).errors
 
-  # def test_add_error_on_path
+    # if
+    refute_empty SampleSchema.new({}).errors(if: ->(instance, key){key == :id_presence})
+    assert_empty SampleSchema.new({}).errors(if: ->(instance, key){key != :id_presence})
+    
+    # unless
+    assert_empty SampleSchema.new({}).errors(unless: ->(instance, key){key == :id_presence})
+    refute_empty SampleSchema.new({}).errors(unless: ->(instance, key){key != :id_presence})
+  end
+
+  # methods
+
+  # add_error_on_path
+  def test_add_error_on_path
+    hash = {}
+    path = [:some, :new, :path]
+    schema = SampleSchema.new()
+
+    # create new path
+    schema.send(:add_error_on_path, hash, path, 'some_error')
+    assert_equal 'some_error', hash.dig(*path)[0]
+
+    # append error
+    schema.send(:add_error_on_path, hash, path, 'other_error')
+    assert_equal 'other_error', hash.dig(*path)[1]
+  end
+
+  # key_contains?
+  def test_key_contains?
+    hash = {some_key: ['value']}
+    schema = SampleSchema.new()
+
+    assert_equal true, schema.send(:key_contains?, hash, :some_key, 'value')
+    assert_equal false, schema.send(:key_contains?, hash, :some_key, 'other_value')
+    assert_equal false, schema.send(:key_contains?, hash, :other_key, 'value')
+  end
+
+  # run_validation?
+  # def test_run_validation?
   # end
 
 end

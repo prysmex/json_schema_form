@@ -14,17 +14,17 @@ class FormbuilderTest < Minitest::Test
         {trait: :is_inspection, errors_args: {is_inspection: true}}
       ],
       JSF::Forms::Field::Checkbox => [
-        {errors_args: {skip: [:ref_presence]}}
+        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::Component => [
-        {errors_args: {skip: [:ref_presence]}}
+        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
-        {errors_args: {skip: [:ref_presence]}}
+        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::Slider => [],
       JSF::Forms::Field::Static => [],
@@ -32,7 +32,7 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::TextInput => [],
       JSF::Forms::Field::FileInput => [],
       JSF::Forms::ComponentRef => [
-        {errors_args: {skip: [:ref_presence]}}
+        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ]
     }
     

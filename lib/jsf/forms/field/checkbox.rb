@@ -18,6 +18,7 @@ module JSF
         def validation_schema(passthru)
           #TODO find a way to prevent enum from being valid
           skip_ref_presence = !run_validation?(passthru, self, :ref_presence)
+          is_inspection = passthru[:is_inspection]
 
           Dry::Schema.define(parent: super) do
             required(:type)
@@ -45,6 +46,7 @@ module JSF
               required(:sort).filled(:integer)
               optional(:hidden).filled(:bool)
             end
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
           end
         end
   

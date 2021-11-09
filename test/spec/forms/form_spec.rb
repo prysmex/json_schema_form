@@ -65,11 +65,11 @@ class FormTest < Minitest::Test
     refute_nil errors[:other_key]
   end
 
-  def test_referenced_component_properties_exist
+  def test_component_presence_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_presence }
     form = JSF::Forms::FormBuilder.build do
       add_component_pair(db_id: 1, index: :prepend)
     end
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_presence }
 
     # no errors
     assert_empty form.errors(if: error_proc)
@@ -83,64 +83,79 @@ class FormTest < Minitest::Test
     refute_empty form.errors(if: error_proc)
   end
 
-  def test_property_key_must_match_field_id
+  def test_match_key_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :match_key }
+
     # in root schema
     form = JSF::Forms::FormBuilder.build() do
       append_property :switch_1, example('switch').merge({:$id => '#/properties/switch_1'})
     end
-    assert_empty form.errors
+    assert_empty form.errors(if: error_proc)
     form.dig(:properties, :switch_1)[:$id] = '#/properties/__switch_1'
-    refute_empty form.errors
+    refute_empty form.errors(if: error_proc)
 
     # nested
     form = JSF::Forms::FormBuilder.build() do
       append_property :switch_1, example('switch').merge({:$id => '#/properties/switch_1'})
       append_conditional_property(:switch_2, example('switch').merge({:$id => '#/properties/switch_2'}), dependent_on: :switch_1, type: :const, value: true)
     end
-    assert_empty form.errors
+    assert_empty form.errors(if: error_proc)
     form.dig(:allOf, 0, :then, :properties, :switch_2)[:$id] = '#/properties/__switch_2'
-    refute_empty form.errors
+    refute_empty form.errors(if: error_proc)
   end
 
-  def test_ensure_referenced_response_sets_exist
+  def test_response_set_presence_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :response_set_presence }
+
     form = JSF::Forms::FormBuilder.build() do
       append_property(:select1, example('select')).tap do |field|
         field.response_set_id = :response_set_1
       end
     end
 
-    refute_empty form.errors
+    refute_empty form.errors(if: error_proc)
     form.add_response_set(:response_set_1, JSF::Forms::FormBuilder.example('response_set'))
-    assert_empty form.errors
+    assert_empty form.errors(if: error_proc)
   end
 
-  def test_ensure_component_only_exist_in_root_form
+  def test_component_in_root_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_in_root }
     form = JSF::Forms::FormBuilder.build() do
       append_property(:switch1, example('switch'))
       add_component_pair(db_id: 1, index: 0)
     end
     
-    assert_empty form.errors
+    assert_empty form.errors(if: error_proc)
 
     form.append_conditional_property(:component_2, JSF::Forms::FormBuilder.example('component'), dependent_on: :switch1, type: :const, value: true)
-    refute_empty form.errors(skip: [:component_presence]).dig(:allOf, 0, :then, :base)
+    refute_empty form.errors(if: error_proc).dig(:allOf, 0, :then, :base)
   end
 
-  def test_ensure_components_have_a_pair_in_definitions
+  def test_component_ref_presence_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_ref_presence }
+    db_id = 1
 
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:component_1, example('component')).tap{|c| c.db_id=db_id}
+    end
+
+    refute_empty form.errors(if: error_proc)
+    form.add_component_ref(db_id: db_id)
+    assert_empty form.errors(if: error_proc)
   end
 
-  def test_ensure_only_allowed_fields_contain_conditional_fields
-     # @todo test more fields?
+  # @todo test more fields?
+  def test_conditional_fields_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :conditional_fields }
     form = JSF::Forms::FormBuilder.build() do
       append_property(:text_input1, example('text_input')) # cannot have conditional
       append_property(:switch1, example('switch'))
       append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: :switch1, type: :const, value: true
     end
 
-    assert_empty form.errors
+    assert_empty form.errors(if: error_proc)
     form.append_conditional_property(:dependent_text_input2, JSF::Forms::FormBuilder.example('text_input'), dependent_on: :text_input1, type: :const, value: true)
-    refute_empty form.errors
+    refute_empty form.errors(if: error_proc)
   end
 
   def test_valid_subschema_form
@@ -211,118 +226,86 @@ class FormTest < Minitest::Test
   ###METHODS####
   ##############
 
-  # def test_component_definitions
-  # end
-
-  # def add_component_definition
-  # end
-
-  # def remove_component_definition
-  # end
-
-  # def test_response_sets
-  # end
-
-  # def test_add_response_set
-  # end
-
-  # def test_properties
-  # end
-
-  # def test_dynamic_properties
-  # end
-
-  # def test_merged_properties
-  # end
-
-  # def test_get_property
-  # end
-
-  # def test_get_dynamic_property
-  # end
-
-  # def test_get_merged_property
-  # end
-
-  # def test_prepend_property
-  # end
-
-  # def test_append_property
-  # end
-
-  # def test_insert_property_at_index
-  # end
-
-  # def test_move_property
-  # end
-
-  # def test_min_sort
-  # end
-
-  # def test_max_sort
-  # end
-
-  # def test_get_property_by_sort
-  # end
-
-  # def test_verify_sort_order
-  # end
-
-  # def test_sorted_properties
-  # end
-
-  # def test_resort!
-  # end
-
-  def test_get_condition
-
-    form = JSF::Forms::FormBuilder.build() do
-      append_property(:prop1, example('select'))
-      add_or_get_condition('prop1', :const, 'const')
-      add_or_get_condition('prop1', :not_const, 'not_const')
-      add_or_get_condition('prop1', :enum, ['enum'])
-      add_or_get_condition('prop1', :not_enum, ['not_enum'])
+  def test_component_definitions
+    form = JSF::Forms::FormBuilder.build do
+      add_component_ref(db_id: 1)
+      add_definition(:some_key, JSF::Forms::Form.new)
     end
-
-    assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
-    assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
-    assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first
-    assert_equal 'not_enum', form.get_condition(:prop1, :not_enum, 'not_enum')&.dig(:if, :properties, :prop1, :not, :enum)&.first
-
-    assert_nil form.get_condition(:prop1, :const, 'other_value')
+    assert_equal ["shared_schema_template_1", "some_key"], form.component_definitions.keys
   end
 
-  # def test_add_or_get_condition
+  def test_add_component_ref
+    form = JSF::Forms::FormBuilder.build do
+      add_component_ref(db_id: 1)
+    end
+
+    assert_equal true, form['definitions'].one?{|k,v| v.is_a?(JSF::Forms::ComponentRef) }
+  end
+
+  def test_get_component_ref
+    db_id = 1
+    form = JSF::Forms::FormBuilder.build do
+      add_component_ref(db_id: db_id)
+    end
+
+    assert_instance_of JSF::Forms::ComponentRef, form.get_component_ref(db_id: db_id)
+  end
+
+  def test_remove_component_ref
+    db_id = 1
+    form = JSF::Forms::FormBuilder.build do
+      add_component_ref(db_id: db_id)
+    end
+
+    form.remove_component_ref(db_id: db_id)
+
+    assert_empty form['definitions']
+  end
+
+  def test_add_component_pair
+    db_id = 1
+    form = JSF::Forms::FormBuilder.build do
+      add_component_pair(db_id: db_id, index: :append)
+    end
+
+    component_ref = form.get_component_ref(db_id: db_id)
+    assert_instance_of JSF::Forms::ComponentRef, component_ref
+    assert_instance_of JSF::Forms::Field::Component, component_ref&.component
+  end
+
+  def test_remove_component_pair
+    db_id = 1
+    form = JSF::Forms::FormBuilder.build do
+      add_component_pair(db_id: db_id, index: :append)
+      remove_component_pair(db_id: db_id)
+    end
+
+    assert_empty form['definitions']
+    assert_empty form['properties']
+  end
+
+  # def test_response_sets
+  #   form = JSF::Forms::FormBuilder.build do
+  #     add_response_set('some_key', )
+  #   end
   # end
 
-  # def test_insert_conditional_property_at_index
-  # end
+  # def test_get_condition
 
-  # def test_append_conditional_property
-  # end
+  #   form = JSF::Forms::FormBuilder.build() do
+  #     append_property(:prop1, example('select'))
+  #     add_or_get_condition('prop1', :const, 'const')
+  #     add_or_get_condition('prop1', :not_const, 'not_const')
+  #     add_or_get_condition('prop1', :enum, ['enum'])
+  #     add_or_get_condition('prop1', :not_enum, ['not_enum'])
+  #   end
 
-  # def test_prepend_conditional_property
-  # end
+  #   assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
+  #   assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
+  #   assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first
+  #   assert_equal 'not_enum', form.get_condition(:prop1, :not_enum, 'not_enum')&.dig(:if, :properties, :prop1, :not, :enum)&.first
 
-  # def test_schema_form_iterator
-  # end
-
-  # def test_max_score
-  # end
-
-  # def test_i18n_document
-  # end
-
-  # def test_i18n_document_value
-  # end
-
-  # def test_nil_document
-  # end
-
-  # def test_compile!
-  # end
-
-  # def test_migrate!
+  #   assert_nil form.get_condition(:prop1, :const, 'other_value')
   # end
 
 end

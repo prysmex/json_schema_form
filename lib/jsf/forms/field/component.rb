@@ -62,8 +62,9 @@ module JSF
         #
         # @param [Integer]
         # @return [void]
-        # def db_id=(id)
-        # end
+        def db_id=(id)
+          self[:$ref] = "#/definitions/#{JSF::Forms::Form.component_ref_key(id)}"
+        end
   
         # @return [JSF::Forms::ComponentRef, JSF::Forms::Form]
         def component_definition

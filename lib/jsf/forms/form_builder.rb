@@ -91,7 +91,9 @@ module JSF
       # @param [String] example_path
       # @return [Hash]
       def parse_example(example_path)
-        hash = JSON.parse(File.read(gem_directory_path + example_path))
+        @file_cache ||= {}
+        hash = @file_cache[example_path] ||= JSON.parse(File.read(gem_directory_path + example_path))
+        hash = hash.deep_dup
         yield (hash) if block_given?
         hash = hash.deep_symbolize_keys # change to deep_stringify_keys to run tests with string keys
         hash

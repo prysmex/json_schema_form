@@ -377,6 +377,16 @@ module JSF
         self.add_definition(key, component_ref)
       end
 
+      # Finds a JSF::Forms::ComponentRef from a db_id
+      #
+      # @param [Integer] db_id
+      # @return [JSF::Forms::ComponentRef]
+      def get_component_ref(db_id:)
+        self['definitions'].find do |k,v|
+          v.is_a?(JSF::Forms::ComponentRef) && v.db_id == db_id
+        end&.last
+      end
+
       # Removes a JSF::Forms::ComponentRef or JSF::Forms::Form from the 'definitions' key
       #
       # @param [Integer] db_id (DB id)
@@ -429,7 +439,7 @@ module JSF
         # remove property
         # self.remove_property(key)
         self[:properties].reject! do |k,v|
-          v == JSF::Forms::Field::Component && v.db_id == db_id
+          v.is_a?(JSF::Forms::Field::Component) && v.db_id == db_id
         end
         resort!
 

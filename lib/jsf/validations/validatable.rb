@@ -37,17 +37,23 @@ module JSF
 
       # @note
       # Override this method to implement own errors,
-      # always call super to support recursive errors
+      # always call super to support:
+      #
+      # - recursive errors
+      # - ensuring errors is a ActiveSupport::HashWithIndifferentAccess
+      #
+      # @todo implement
       #
       # @example 
       # schema.errors(
       #   recursive: true,
-      #   only: ['properties', 'allOf'],
       #   if: [(instance, key)->{ false }]
       # )
       #
-      # @param [Array<String>] only allowlist of subschema keys
-      # @param [Array<String>] except denylist of subschema keys
+      # @param [Proc] if
+      # @param [Proc] unless
+      # @param [Proc] if_subschema
+      # @param [Proc] unless_subschema
       # @param [Boolean] recursive if true, calls errors for all subschemas
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
@@ -63,8 +69,10 @@ module JSF
       # Builds errors hash for all subschemas. It support two keys to
       # filter which subschemas' errors will be called
       #
-      # @param [Array<String>] only allowlist of subschema keys
-      # @param [Array<String>] except denylist of subschema keys
+      # @param [Proc] if
+      # @param [Proc] unless
+      # @param [Proc] if_subschema
+      # @param [Proc] unless_subschema
       # @param passthru [Hash{Symbol => *}] options to be passed
       # @return [ActiveSupport::HashWithIndifferentAccess]
       def subschemas_errors(**passthru)
@@ -73,8 +81,9 @@ module JSF
         # continue recurrsion for all subschema keys
         self.each do |key, value|
 
-          next if passthru.key?(:only) && !key_contains?(passthru, :only, key)
-          next if key_contains?(passthru, :except, key)
+          # skip conditionally based on passed proc
+          next if passthru.key?(:if_subschema) && !passthru[:if_subschema].call(schema_instance, key)
+          next if passthru[:unless_subschema]&.call(schema_instance, validation_key)
 
           if key == 'additionalProperties'
             next if !value.is_a?(::Hash)
@@ -134,7 +143,7 @@ module JSF
         acum_subschemas_errors.dig(*relative_path).merge!(subschema_errors)
       end
       
-      # Utility to add errors on nested paths
+      # Utility to safely add an error on a nested path
       #
       # @param [Hash] errors_hash
       # @param [Array<String,Symbol>] path
@@ -163,7 +172,7 @@ module JSF
       # @param [] value
       # @return [Boolean]
       def key_contains?(passthru, key, value)
-        passthru[key]&.include?(value)
+        !!passthru[key]&.include?(value)
       end
 
       # Util that determines if a validation should run
@@ -172,9 +181,8 @@ module JSF
       # @param [Hash] passthru errors passthru hash
       # @param [BaseHash] schema_instance
       # @param [Symbol] validation_key error specific key
-      # @return [Boolean]
+      # @retunr [Boolean]
       def run_validation?(passthru, schema_instance, validation_key)
-        return false if key_contains?(passthru, :skip, validation_key)
         return false if passthru.key?(:if) && !passthru[:if].call(schema_instance, validation_key)
         return false if passthru[:unless]&.call(schema_instance, validation_key)
         true
