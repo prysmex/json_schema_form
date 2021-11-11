@@ -42,7 +42,7 @@ class FormTest < Minitest::Test
     end
 
     # allOf
-    assert_instance_of JSF::Schema, form[:allOf].first
+    assert_instance_of JSF::Forms::Condition, form[:allOf].first
     assert_instance_of JSF::Schema, form[:allOf].first[:if]
     assert_instance_of JSF::Schema, form[:allOf].first[:if][:properties][:select]
 
@@ -171,8 +171,9 @@ class FormTest < Minitest::Test
     refute_empty form.errors(if: error_proc)
   end
   
+  # ToDo move this to Condition spec?
   def test_conditions_format
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :conditions_format }
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Condition) && key == :schema }
     form = JSF::Forms::FormBuilder.build() do
       append_property(:switch1, example('switch'))
       append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: :switch1, type: :const, value: true
@@ -538,7 +539,7 @@ class FormTest < Minitest::Test
 
     # add new condition
     condition = form.add_condition('switch_1', :const, true)
-    assert_instance_of JSF::Schema, condition
+    assert_instance_of JSF::Forms::Condition, condition
 
     # invalid key
     assert_raises(ArgumentError){ form.add_condition(:prop1, :wrong_key, true) }

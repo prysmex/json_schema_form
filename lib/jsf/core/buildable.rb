@@ -4,7 +4,7 @@ module JSF
     # Include this module to make your class 'buildable' (a recursive tree).
     # It sets the SuperHash's attributes with a transform Proc for each key that may contain a subschema.
 
-    # It also defines a `attributes_transform` method (ultimately called by all attribute trabsfirms), to allow a single entry point to
+    # It also defines a `attributes_transform` method (ultimately called by all attribute transforms), to allow a single entry point to
     # customize how an instance can 'build' its child subschemas. This is how JSF::Forms::Form
     # can easily customize how the schema tree is built.
 

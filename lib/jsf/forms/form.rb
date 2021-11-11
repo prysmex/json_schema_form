@@ -49,16 +49,6 @@ module JSF
       def self.component_ref_key(id)
         "shared_schema_template_#{id}"
       end
-    
-      # Proc used to redefine a subschema's instance attributes_transform_proc.
-      # ONE reason we need this is that a when we encounter an allOf, JSF::Schema
-      # objects are instantiated, but we need them to instantiate JSF::Forms::Field classes,
-      # so we override their attributes_transform_proc.
-      #
-      # @param [Object] instance
-      SUBSCHEMA_PROC = Proc.new do |instance|
-        instance.instance_variable_set('@attributes_transform_proc', ATTRIBUTE_TRANSFORM)
-      end
       
       # Defined in a Proc so it can be reused:
       ATTRIBUTE_TRANSFORM = ->(attribute, value, instance, init_options) {
@@ -76,7 +66,7 @@ module JSF
               return JSF::Forms::ComponentRef.new(value, init_options)
             end
           when 'allOf'
-            return JSF::Schema.new(value, init_options.merge(preinit_proc: SUBSCHEMA_PROC))
+            return JSF::Forms::Condition.new(value, init_options)
           when 'properties'
             if value.key?(:$ref)
               if value.dig(:displayProperties, :isSelect)
@@ -120,18 +110,9 @@ module JSF
             return klass.new(value, init_options) if klass
           end
           
-        when JSF::Schema
-    
-          case attribute
-          when 'then'
-            return JSF::Forms::Form.new(value, init_options)
-          else
-            return JSF::Schema.new(value, init_options.merge(preinit_proc: SUBSCHEMA_PROC ))
-          end
-          
         end
     
-        raise StandardError.new("builder conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
+        raise StandardError.new("JSF::Forms::Form transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
     
       # Utility proc to DRY code, expands a condition type to a path
@@ -237,55 +218,6 @@ module JSF
               ['base'],
               "incorrect sorting, should start with 0 and increase consistently"
             )
-          end
-        end
-
-        # validate allOf conditions format        
-        if run_validation?(passthru, self, :conditions_format)
-          property_keys = self.properties.keys
-  
-          condition_schema = Dry::Schema.JSON do
-            config.validate_keys = true
-          
-            before(:key_validator) do |result|
-              hash = result.to_h
-              hash['then'] = {} if hash.key?('then')
-              hash
-            end
-          
-            required(:if).hash do
-              required(:properties).filled(:hash) do
-                property_keys.each do |prop|
-                  optional(prop.to_sym).filled(:hash) do
-                    optional(:const)
-                    optional(:enum).value(:array, min_size?: 1)
-                    optional(:not).filled(:hash) do
-                      optional(:const)
-                      optional(:enum).value(:array, min_size?: 1)
-                    end
-                  end
-                end
-              end
-            end
-            required(:then).hash do
-              optional(:properties)
-              optional(:allOf)
-              optional(:required)
-            end
-          end
-
-          self[:allOf]&.each_with_index do |condition, i|
-
-            # ToDo, validate properties exist
-            errors = condition_schema.(condition).errors.to_h
-            unless errors.empty?
-              add_error_on_path(
-                errors_hash,
-                ['base'],
-                "#{errors}, at: #{['allOf', i].join(', ')}"
-              )
-            end
-
           end
         end
 

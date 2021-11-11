@@ -1,4 +1,5 @@
 require_relative 'forms/component_ref'
+require_relative 'forms/condition'
 require_relative 'forms/document'
 require_relative 'forms/field'
 require_relative 'forms/form'
