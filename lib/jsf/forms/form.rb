@@ -229,6 +229,7 @@ module JSF
 
         children_errors = super
 
+        # validate sorting
         if run_validation?(passthru, self, :sorting)
           unless self.verify_sort_order
             add_error_on_path(
@@ -236,6 +237,55 @@ module JSF
               ['base'],
               "incorrect sorting, should start with 0 and increase consistently"
             )
+          end
+        end
+
+        # validate allOf conditions format        
+        if run_validation?(passthru, self, :conditions_format)
+          property_keys = self.properties.keys
+  
+          condition_schema = Dry::Schema.JSON do
+            config.validate_keys = true
+          
+            before(:key_validator) do |result|
+              hash = result.to_h
+              hash['then'] = {} if hash.key?('then')
+              hash
+            end
+          
+            required(:if).hash do
+              required(:properties).filled(:hash) do
+                property_keys.each do |prop|
+                  optional(prop.to_sym).filled(:hash) do
+                    optional(:const)
+                    optional(:enum).value(:array, min_size?: 1)
+                    optional(:not).filled(:hash) do
+                      optional(:const)
+                      optional(:enum).value(:array, min_size?: 1)
+                    end
+                  end
+                end
+              end
+            end
+            required(:then).hash do
+              optional(:properties)
+              optional(:allOf)
+              optional(:required)
+            end
+          end
+
+          self[:allOf]&.each_with_index do |condition, i|
+
+            # ToDo, validate properties exist
+            errors = condition_schema.(condition).errors.to_h
+            unless errors.empty?
+              add_error_on_path(
+                errors_hash,
+                ['base'],
+                "#{errors}, at: #{['allOf', i].join(', ')}"
+              )
+            end
+
           end
         end
 
@@ -739,33 +789,51 @@ module JSF
       #Utilities#
       ###########
 
+      # Same as subschema_iterator, but includes the current JSF::Forms::Form
+      #
+      # @todo yield condition and parent if not root form
+      #
+      # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
+      # @param levels [Integer] Max depth of allOf nesting to starting from start_level
+      #
+      # @yieldparam [NilClass] condition
+      # @yieldparam [JSF::Forms::Form] form
+      # @yieldparam [NilClass] parent form
+      # @yieldparam [Integer] current_level
+      #
+      # @return [NilClass]
+      def schema_form_iterator(start_level: 0, levels: nil, **args, &block)
+        return if levels == 0
+
+        yield( nil, self, nil, 0 ) if start_level == 0
+
+        subschema_iterator(current_level: 1, levels: levels, start_level: start_level, **args, &block)
+      end
+    
       # Iterates and yields each JSF::Form along with its condition.
       # If 'skip_when_false' is true and the returned value from the yield equals false,
       # then the iteration of that tree is halted
       #
       # @todo consider else key in allOf
       #
-      # @param start_level [Integer] Depth of allOf nesting to ignore (0 for root)
+      # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       # @param levels [Integer] Max depth of allOf nesting to starting from start_level
       # @param skip_when_false [Boolean]
+      #
       # @yieldparam [JSF::Schema] condition
       # @yieldparam [JSF::Forms::Form] form
       # @yieldparam [JSF::Forms::Form] parent form
       # @yieldparam [Integer] current_level
+      #
       # @return [NilClass]
-      def schema_form_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
+      def subschema_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
+        
         # stop execution if levels limit matches
-        return if !levels.nil? && !start_level.nil? && current_level >= (start_level + levels)
-    
-        # yield root form, if
-        if current_level == 0 && current_level >= start_level
-          yield( nil, self, nil, current_level )
-        end
-        current_level += 1
-    
-        # iterate allOf
+        return if !levels.nil? && current_level >= (start_level + levels)
+
         self[:allOf]&.each do |condition_subschema|
-          # yield subschema form if criteria matches
+
+          # skip all subschemas until first match on start_level
           if start_level.nil? || current_level >= start_level
             returned_value = yield(
               condition_subschema[:if],
@@ -773,10 +841,13 @@ module JSF
               self,
               current_level
             )
+
+            # allow skipping tree execution
             next if skip_when_false && (returned_value == false)
           end
+
           # go to next level recursively
-          condition_subschema[:then]&.schema_form_iterator(
+          condition_subschema[:then]&.subschema_iterator(
             start_level: start_level,
             levels: levels,
             skip_when_false: skip_when_false,
@@ -784,15 +855,8 @@ module JSF
             &block
           )
         end
-    
+
         nil
-      end
-    
-      # Calls 'schema_form_iterator' with a default start_level of 1 to include only subschemas
-      # supports same params as 'schema_form_iterator'
-      def subschema_iterator(start_level: 0, **args, &block)
-        start_level += 1
-        schema_form_iterator(start_level: start_level, **args, &block)
       end
     
       # Calculates the maximum attainable score considering all possible branches
@@ -909,7 +973,14 @@ module JSF
       end
 
       # Builds a document with a key for each property on the schema form.
-      #   - pass {skip_when_false: true} to include only visible properties
+      # It yields a condition and a value that can be validated with a json-schema compliant
+      # validator.
+      # 
+      # If the validator returns false and you pass {skip_when_false: true}, it will build
+      # a document with only 'visible properties'
+      #
+      # @param [Hash{String}], document
+      # @return [Hash{String}]
       def nil_document(document, **args, &block)
         #root
         obj = self[:properties].transform_values{|v| nil}
