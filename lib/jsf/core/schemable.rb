@@ -43,7 +43,8 @@ module JSF
         def set_strict_type(type)
           update_attribute 'type', {
             # required: true,
-            type: Types::String.enum(type)
+            type: Types::String.enum(type),
+            default: ->(data) { type }
           }
         end
       end

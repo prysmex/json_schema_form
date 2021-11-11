@@ -27,7 +27,7 @@ module JSF
       include JSF::Core::Type::Objectable
     
       set_strict_type('object')
-    
+
       CONDITIONAL_FIELDS = [
         JSF::Forms::Field::Select,
         JSF::Forms::Field::Switch,
@@ -859,21 +859,25 @@ module JSF
         nil
       end
     
-      # Calculates the maximum attainable score considering all possible branches
-      # A block is required to resolve whether a conditional field is visible or not
+      # Calculates the MAXIMUM ATTAINABLE score considering all possible branches
+      # A block is REQUIRED to resolve whether a conditional field is visible or not
+      #
+      # @todo consider hideOnCreate
+      #
+      # @param [Boolean] skip_hidden
+      # @param [Proc] &bloclk
       # @return [Nil|Float]
       def max_score(skip_hidden: true, &block)
-        self[:properties].inject(nil) do |acum, (name, field)|
+        self[:properties]&.inject(nil) do |acum, (name, field)|
           next acum if skip_hidden && field.hidden?
     
           # Field may have conditional fields so we go recursive trying all possible
           # values to calculate the max score
-          field_score = if CONDITIONAL_FIELDS.include?(field.class)
-            
-            # can we generalize this?
-            # - 1) when fields respond_to :possible_values
-            # - 2) when fileds don't respond_to :possible_values get values from conditions
-            possible_values = case field
+          field_score = if CONDITIONAL_FIELDS.include?(field.class) && field.has_dependent_conditions?
+
+            # 1) Calculate a set of values that can affect own score
+            # 2) Calculate a set of values that can trigger branches, affecting score
+            score_relevant_values = case field
             when JSF::Forms::Field::Select
               field.response_set[:anyOf].map do |obj|
                 obj[:const]
@@ -881,32 +885,41 @@ module JSF
             when JSF::Forms::Field::Switch
               [true, false]
             when JSF::Forms::Field::NumberInput
-              field.dependent_conditions&.map do |condition|
-                condition_value = condition[:if][:properties].values[0]
-                if condition_value.key?(:not)
-                  'BP8;x&/dTF2Qn[RG' #some very random text
+              # ToDo, this logic assumes only equal and not equal are supported
+
+              (field.dependent_conditions || []).map do |condition|
+                sub_condition = condition[:if][:properties].values[0]
+                if sub_condition.key?(:not)
+                  'BP8;x&/dTF2Qn[RG45>?234/>?#5dsgfhDFGH++?asdf.' #some very random text
                 else
-                  condition_value[:const]
+                  sub_condition[:const]
                 end
-              end || []
+              end
+            else
+              StandardError.new("conditional field #{field.class} is not yet supported for max_score")
             end
         
-            #iterate all posible values and take only the max_score
-            possible_values&.map do |value|
-              dependent_conditions = field.dependent_conditions_for_value({"#{name}" => value}, &block)
-              sub_schemas_max_score = dependent_conditions.inject(nil) do |acum_score, condition|
+            # iterate posible values and take only the max_score
+            score_relevant_values&.map do |value|
+
+              # get the matching dependent conditions for a value and 
+              # calculate MAX score for all of them
+              value_dependent_conditions = field.dependent_conditions_for_value({"#{name}" => value}, &block)
+              sub_schemas_max_score = value_dependent_conditions.inject(nil) do |acum_score, condition|
                 [
                   acum_score,
                   condition[:then]&.max_score(&block)
                 ].compact.inject(&:+)
               end
+
+              field_score_for_value = field.respond_to?(:score_for_value) ? field.score_for_value(value) : nil
               [
                 sub_schemas_max_score,
-                (field.respond_to?(:score_for_value) ? field.score_for_value(value) : nil)
+                field_score_for_value
               ].compact.inject(&:+)
             end&.compact&.max
           
-          # Field hash score but not conditional fields
+          # Field has score but not conditional fields
           elsif SCORABLE_FIELDS.include? field.class
             field.max_score
           else
