@@ -1,26 +1,26 @@
 {
   // "$id": "",
-  "title": "file_input",
-  "type": "array",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
-    // "hideOnCreate": false,
     // "hidden": false
+    // "hideOnCreate": false,
     "i18n": {
       "label": {
         "es": "Archivo",
         "en": "File"
       }
     },
+    "sort": 0,
     "visibility": {
       "label": true
-    },
-    "sort": 0
+    }
   },
-  "uniqueItems": true,
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "maxItems": 1,
   "items": {
     "type": "string",
     "format": "uri"
-  }
+  },
+  "maxItems": 1,
+  "title": "file_input",
+  "type": "array",
+  "uniqueItems": true
 }

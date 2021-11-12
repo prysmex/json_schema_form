@@ -169,17 +169,17 @@ module JSF
             JSF::Validations::DrySchemaValidatable::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
     
+          required(:allOf).array(:hash)
           required(:properties).value(:hash)
           required(:required).value(:array?).array(:str?)
-          required(:allOf).array(:hash)
           if !is_subschema
             optional(:'$id').filled(:string)
+            required(:'$schema').filled(:string)
+            required(:availableLocales).value(:array?).array(:str?)
+            required(:definitions).value(:hash)
+            required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
-            required(:schemaFormVersion).value(eql?: VERSION)
-            required(:definitions).value(:hash)
-            required(:availableLocales).value(:array?).array(:str?)
-            required(:'$schema').filled(:string)
             if is_inspection
               optional(:maxScore) { int? | float? | nil? }
             end

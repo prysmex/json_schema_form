@@ -1,24 +1,24 @@
 {
   // "$id": "",
-  "title": "neutral6664",
-  "type": "null",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
-    // "hideOnCreate": false,
     // "hidden": false
-    "pictures": [],
+    // "hideOnCreate": false,
     "i18n": {
       "label": {
         "es": "Neutral",
         "en": "Neutral"
       }
     },
+    "icon": "info",
+    "kind": "neutral",
+    "pictures": [],
+    "sort": 0,
+    "useInfo": true,
     "visibility": {
       "label": true
-    },
-    "kind": "neutral",
-    "useInfo": true,
-    "icon": "info",
-    "sort": 0
+    }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "title": "neutral6664",
+  "type": "null"
 }

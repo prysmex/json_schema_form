@@ -16,10 +16,9 @@ module JSF
           is_inspection = passthru[:is_inspection]
 
           Dry::Schema.define(parent: super) do
-            required(:type)
             required(:displayProperties).hash do
+              optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
-              required(:pictures).value(:array?).array(:str?)
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -27,13 +26,14 @@ module JSF
                   end
                 end
               end
+              required(:pictures).value(:array?).array(:str?)
+              required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
             end
             required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:type)
           end
         end
   

@@ -1,12 +1,15 @@
 {
-  // "$id": "",  
-  "title": "switch8196",
-  "type": "boolean",
+  // "$id": "",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "default": false,
   "displayProperties": {
-    // "hideOnCreate": false,
     // "hidden": false
-    "pictures": [],
+    // "hideOnCreate": false,
     "i18n": {
+      "falseLabel": {
+        "en": "Some negative text",
+        "es": "Algun texto negativo"
+      },
       "label": {
         "es": "Switch",
         "en": "Switch"
@@ -14,18 +17,15 @@
       "trueLabel": {
         "en": "Some positive text",
         "es": "Algun texto positivo"
-      },
-      "falseLabel": {
-        "en": "Some negative text",
-        "es": "Algun texto negativo"
       }
     },
+    "pictures": [],
+    "sort": 0,
+    "useToggle": true,
     "visibility": {
       "label": true
-    },
-    "useToggle": true,
-    "sort": 0
+    }
   },
-  "default": false,
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "title": "switch8196",
+  "type": "boolean"
 }

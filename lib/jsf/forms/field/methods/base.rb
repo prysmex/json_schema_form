@@ -51,8 +51,8 @@ module JSF
             Dry::Schema.JSON do
               config.validate_keys = true
               optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }
-              optional(:title).maybe(:string)
               optional(:'$schema').filled(:string)
+              optional(:title).maybe(:string)
             end
           end
 

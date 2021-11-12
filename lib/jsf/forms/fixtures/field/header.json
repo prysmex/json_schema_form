@@ -1,23 +1,23 @@
 {
   // "$id": "",
-  "title": "header",
-  "type": "null",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
-    // "hideOnCreate": false,
     // "hidden": false
-    "pictures": [],
+    // "hideOnCreate": false,
     "i18n": {
       "label": {
         "es": "ENCABEZADOS",
         "en": "HEADERS"
       }
     },
+    "level": 1,
+    "pictures": [],
+    "sort": 0,
+    "useHeader": true,
     "visibility": {
       "label": true
-    },
-    "level": 1,
-    "useHeader": true,
-    "sort": 0
+    }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "title": "header",
+  "type": "null"
 }
