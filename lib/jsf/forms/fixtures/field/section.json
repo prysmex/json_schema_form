@@ -1,0 +1,23 @@
+{
+  // "$id": "#",
+  "$schema": "http: //json-schema.org/draft-07/schema#",
+  "displayProperties": {
+    // "hidden": false
+    // "hideOnCreate": false,
+    "i18n": {
+      "label": {
+        "es": "seccion",
+        "en": null
+      }
+    },
+    "pictures": [],
+    "sort": 5,
+    "useSection": true,
+    "visibility": {
+      "label": true
+    }
+  },
+  "items": {},
+  // "title": "seccion5201",
+  "type": "array"
+}

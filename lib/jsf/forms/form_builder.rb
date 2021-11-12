@@ -42,12 +42,16 @@ module JSF
             '/field/component.json'
           when 'date_input'
             '/field/date_input.json'
+          when 'file_input'
+            '/field/file_input.json'
           when 'header'
             '/field/header.json'
           when 'info'
             '/field/info.json'
           when 'number_input'
             '/field/number_input.json'
+          when 'section'
+            '/field/section.json'
           when 'select'
             '/field/select.json'
           when 'slider'
@@ -58,8 +62,6 @@ module JSF
             '/field/switch.json'
           when 'text_input'
             '/field/text_input.json'
-          when 'file_input'
-            '/field/file_input.json'
           else
             raise StandardError.new("invalid example name: #{ex_name}")
           end

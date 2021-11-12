@@ -94,6 +94,8 @@ module JSF
               when 'array', :array
                 if value.dig(:items, :format) == 'uri'
                   JSF::Forms::Field::FileInput
+                elsif value.dig(:displayProperties, :useSection)
+                  JSF::Forms::Field::Section
                 else
                   JSF::Forms::Field::Checkbox
                 end

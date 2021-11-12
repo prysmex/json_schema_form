@@ -7,6 +7,9 @@ class FormbuilderTest < Minitest::Test
   # tests .errors and .valid_for_locale?
   def test_fixtures
     klasses = {
+      JSF::Forms::ComponentRef => [
+        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
+      ],
       JSF::Forms::Form => [],
       JSF::Forms::ResponseSet => [],
       JSF::Forms::Response => [
@@ -20,20 +23,18 @@ class FormbuilderTest < Minitest::Test
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::DateInput => [],
+      JSF::Forms::Field::FileInput => [],
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
       JSF::Forms::Field::NumberInput => [],
+      JSF::Forms::Field::Section => [],
       JSF::Forms::Field::Select => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::Slider => [],
       JSF::Forms::Field::Static => [],
       JSF::Forms::Field::Switch => [],
-      JSF::Forms::Field::TextInput => [],
-      JSF::Forms::Field::FileInput => [],
-      JSF::Forms::ComponentRef => [
-        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
-      ]
+      JSF::Forms::Field::TextInput => []
     }
     
     klasses.each do |klass, traits_array|
