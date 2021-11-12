@@ -472,17 +472,6 @@ module JSF
         self[:properties]
       end
     
-      # get dynamic properties
-      #
-      # @return [Hash{String => JSF::Forms::Field::*}]
-      def dynamic_properties(**args)
-        properties = {}
-        subschema_iterator(**args) do |_, then_hash|
-          properties.merge!(then_hash&.properties || {})
-        end
-        properties
-      end
-    
       # get own and dynamic properties
       #
       # @return [Hash{String => JSF::Forms::Field::*}]
@@ -502,27 +491,14 @@ module JSF
         self.dig(:properties, property)
       end
     
-      # gets the property definition of the first matched key in subschemas
-      #
-      # @param [String, Symbol]
-      # @return [JSF::Forms::Field::*]
-      def get_dynamic_property(property, **args)
-        subschema_iterator(**args) do |_, then_hash|
-          props = then_hash&.properties
-          break props[property] if props&.key?(property)
-        end
-      end
-    
       # gets the property definition of the first match in a root or subschema property
       #
       # @param [String, Symbol]
       # @return [JSF::Forms::Field::*]
       def get_merged_property(property, **args)
-        property = property
-        if self[:properties].key?(property)
-          self[:properties][property]
-        else
-          get_dynamic_property(property, **args)
+        schema_form_iterator(**args) do |_, then_hash|
+          props = then_hash&.properties
+          break props[property] if props&.key?(property)
         end
       end
     

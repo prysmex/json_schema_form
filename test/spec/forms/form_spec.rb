@@ -225,7 +225,7 @@ class FormTest < Minitest::Test
     end
 
     assert_equal true, form.valid_for_locale?
-    form.get_dynamic_property(:dependent_info).set_label_for_locale(nil)
+    form.get_merged_property(:dependent_info).set_label_for_locale(nil)
     assert_equal false, form.valid_for_locale?
   end
 
@@ -332,8 +332,7 @@ class FormTest < Minitest::Test
     assert_same form.properties, form[:properties]
   end
 
-  # dynamic_properties and merged_properties
-  def test_dynamic_and_merged_properties
+  def test_merged_properties
     form = JSF::Forms::FormBuilder.build do
       append_property(:switch_1, example('switch'))
 
@@ -344,13 +343,7 @@ class FormTest < Minitest::Test
         end
       end
     end
-
-    # test dynamic_properties
-    assert_equal ['switch_2', 'switch_3', 'switch_4'], form.dynamic_properties.keys
-    assert_equal ['switch_3', 'switch_4'], form.dynamic_properties(start_level: 1).keys
-    assert_equal ['switch_3'], form.dynamic_properties(start_level: 1, levels: 1).keys
     
-    # test merged_properties
     assert_equal ['switch_1', 'switch_2', 'switch_3', 'switch_4'], form.merged_properties.keys
     assert_equal ['switch_2', 'switch_3', 'switch_4'], form.merged_properties(start_level: 1).keys
     assert_equal ['switch_2'], form.merged_properties(start_level: 1, levels: 1).keys
@@ -362,15 +355,6 @@ class FormTest < Minitest::Test
     end
 
     refute_nil form.get_property('switch_1')
-  end
-
-  def test_get_dynamic_property
-    form = JSF::Forms::FormBuilder.build do
-      append_property(:switch_1, example('switch'))
-      append_conditional_property(:switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true)
-    end
-
-    refute_nil form.get_dynamic_property('switch_2')
   end
 
   def test_get_merged_property
@@ -566,8 +550,8 @@ class FormTest < Minitest::Test
       end
     end
     assert_equal 0, form.get_property('switch_1').sort
-    assert_equal 1, form.get_dynamic_property('switch_2').sort
-    assert_equal 0, form.get_dynamic_property('switch_3').sort
+    assert_equal 1, form.get_merged_property('switch_2').sort
+    assert_equal 0, form.get_merged_property('switch_3').sort
 
     # added conditions are valid
     error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :conditions_format }
