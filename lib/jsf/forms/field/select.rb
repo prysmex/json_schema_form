@@ -24,9 +24,8 @@ module JSF
               required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
+              optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
-              required(:isSelect).filled(Types::True)
-              required(:pictures).value(:array?).array(:str?)
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -34,11 +33,12 @@ module JSF
                   end
                 end
               end
+              required(:isSelect).filled(Types::True)
+              required(:pictures).value(:array?).array(:str?)
+              required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
             end
             required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
           end

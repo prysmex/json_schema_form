@@ -1,5 +1,5 @@
 {
-  "type": "string",
+  "anyOf": [],
   "isResponseSet": true,
-  "anyOf": []
+  "type": "string"
 }

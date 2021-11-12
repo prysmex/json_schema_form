@@ -16,14 +16,8 @@ module JSF
           is_inspection = passthru[:is_inspection]
 
           Dry::Schema.define(parent: super) do
-            required(:type)
-            required(:uniqueItems)
-            optional(:maxItems)
-            required(:items).hash do
-              required(:'type').filled(Types::String.enum('string'))
-              required(:format).filled(Types::String.enum('uri'))
-            end
             required(:displayProperties).hash do
+              optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -32,13 +26,19 @@ module JSF
                   end
                 end
               end
+              required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
             end
             required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:items).hash do
+              required(:format).filled(Types::String.enum('uri'))
+              required(:'type').filled(Types::String.enum('string'))
+            end
+            optional(:maxItems)
+            required(:type)
+            required(:uniqueItems)
           end
         end
   

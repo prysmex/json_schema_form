@@ -14,10 +14,9 @@ module JSF
         
         def validation_schema(passthru)
           Dry::Schema.define(parent: super) do
-            required(:type)
             required(:displayProperties).hash do
+              optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
-              required(:pictures).value(:array?).array(:str?)
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -25,14 +24,15 @@ module JSF
                   end
                 end
               end
+              required(:level).filled(Types::Integer.constrained(lteq: 2))
+              required(:pictures).value(:array?).array(:str?)
+              required(:sort).filled(:integer)
+              required(:useHeader).filled(:bool)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
-              required(:useHeader).filled(:bool)
-              required(:level).filled(Types::Integer.constrained(lteq: 2))
             end
+            required(:type)
           end
         end
   

@@ -1,16 +1,10 @@
 {
   // "$id": "",
-  "title": "min_5_max_10_inc_15081",
-  "type": "number",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
+    // "hidden": false,
     // "hideOnCreate": false,
-    // "hidden": false
-    "pictures": [],
     "i18n": {
-      "label": {
-        "es": "Min: 5, Max: 10, Inc: 1",
-        "en": "Min: 5, Max: 10, Inc: 1"
-      },
       "enum": {
         "en": {
           "5": "5",
@@ -28,13 +22,18 @@
           "9": "9",
           "10": "10"
         }
+      },
+      "label": {
+        "es": "Min: 5, Max: 10, Inc: 1",
+        "en": "Min: 5, Max: 10, Inc: 1"
       }
     },
+    "pictures": [],
+    "sort": 0,
+    "useSlider": true,
     "visibility": {
       "label": true
-    },
-    "useSlider": true,
-    "sort": 0
+    }
   },
   "enum": [
     5,
@@ -44,5 +43,6 @@
     9,
     10
   ],
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "title": "min_5_max_10_inc_15081",
+  "type": "number"
 }

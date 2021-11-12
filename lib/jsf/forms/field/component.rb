@@ -22,6 +22,7 @@ module JSF
               required(:$ref).filled{ str? & format?(REF_REGEX) }
             end
             required(:displayProperties).hash do
+              optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -30,11 +31,10 @@ module JSF
                   end
                 end
               end
+              required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
             end
           end
         end

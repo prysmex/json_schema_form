@@ -28,32 +28,32 @@ module JSF
               duplicate
             end
   
-            required(:type)
-            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
             required(:displayProperties).hash do
               optional(:hideOnCreate).filled(:bool)
-              required(:pictures).value(:array?).array(:str?)
+              optional(:hidden).filled(:bool)
               required(:i18n).hash do
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
-                  end
-                end
                 # ToDo create two types of sliders and remove this when only numbers
                 required(:enum).hash do
                   AVAILABLE_LOCALES.each do |locale|
                     optional(locale.to_sym).maybe(:hash)
                   end
                 end
+                required(:label).hash do
+                  AVAILABLE_LOCALES.each do |locale|
+                    optional(locale.to_sym).maybe(:string)
+                  end
+                end
               end
+              required(:pictures).value(:array?).array(:str?)
+              required(:sort).filled(:integer)
+              required(:useSlider).filled(:bool)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
-              required(:sort).filled(:integer)
-              optional(:hidden).filled(:bool)
-              required(:useSlider).filled(:bool)
             end
+            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
             required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:type)
           end
         end
 
