@@ -1,4 +1,4 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class ResponseSetTest < Minitest::Test
 
@@ -7,9 +7,16 @@ class ResponseSetTest < Minitest::Test
   ##################
 
   def test_no_unknown_keys_allowed
-    errors = JSF::Forms::ResponseSet.new({array_key: [], other_key: 1}).errors
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::ResponseSet) && key == :schema }
+
+    errors = JSF::Forms::ResponseSet.new({array_key: [], other_key: 1}).errors(if: error_proc)
+
+    # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
+
+    # required keys
+    refute_nil errors[:type]
   end
 
   def test_valid_for_locale
@@ -27,8 +34,7 @@ class ResponseSetTest < Minitest::Test
   ###METHODS####
   ##############
 
-  # helper
-
+  # test helper
   def build_response_set_instance(type)
     response_set_example = JSF::Forms::FormBuilder.example('response_set')
     response_example = JSF::Forms::FormBuilder.example('response', type)
@@ -36,8 +42,6 @@ class ResponseSetTest < Minitest::Test
     response_set.add_response(response_example)
     response_set
   end
-
-  # tests
 
   def test_anyOf_transform
     instance = build_response_set_instance(:default)
@@ -53,6 +57,29 @@ class ResponseSetTest < Minitest::Test
   def test_response_path
     instance = build_response_set_instance(:default)
     assert_equal ["anyOf", 0], instance.get_response_from_value('no_score_1').meta[:path]
+  end
+
+  # @todo add_response
+
+  # @todo remove_response_from_value
+
+  # @todo get_response_from_value
+
+  # @todo get_failing_responses
+
+  # @todo get_passing_responses
+
+  # @todo compile!
+
+  def test_scored?
+    instance = build_response_set_instance(:default)
+
+    assert_equal false, instance.scored?
+    instance[:anyOf][0][:score] = 1
+    assert_equal true, instance.scored?
+
+    instance = JSF::Forms::ResponseSet.new()
+    assert_equal false, instance.scored?
   end
 
 end

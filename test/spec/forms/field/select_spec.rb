@@ -1,6 +1,6 @@
-require 'json_schema_form_test_helper'
-require_relative 'methods/base_spec'
-require_relative 'methods/response_settable_spec'
+require 'test_helper'
+require_relative 'methods/base'
+require_relative 'methods/response_settable'
 
 class SelectTest < Minitest::Test
 

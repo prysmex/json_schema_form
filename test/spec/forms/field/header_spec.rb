@@ -1,5 +1,5 @@
-require 'json_schema_form_test_helper'
-require_relative 'methods/base_spec'
+require 'test_helper'
+require_relative 'methods/base'
 
 class HeaderTest < Minitest::Test
 

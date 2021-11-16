@@ -1,7 +1,7 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class BuildableTest < Minitest::Test
-  include JsonSchemaFormTestHelper::SampleClassHooks
+  include TestHelper::SampleClassHooks
 
   def setup
     super

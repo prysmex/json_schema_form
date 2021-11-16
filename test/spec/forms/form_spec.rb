@@ -1,4 +1,4 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class FormTest < Minitest::Test
 
@@ -59,10 +59,18 @@ class FormTest < Minitest::Test
 
   # errors
 
-  def test_no_unknown_keys_allowed
-    errors = JSF::Forms::Form.new({array_key: [], other_key: 1}).errors
+  def test_schema_key_validations
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :schema }
+
+    form = JSF::Forms::Form.new({array_key: [], other_key: 1})
+    form.delete('type')
+
+    errors = form.errors(if: error_proc)
+    # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
+    # required keys
+    refute_nil errors[:type]
   end
 
   def test_sorting_error
@@ -636,6 +644,14 @@ class FormTest < Minitest::Test
 
   # def test_max_score
   # end
+
+  def test_scored?
+    form = JSF::Forms::Form.new()
+
+    assert_equal false, form.scored?
+    form.append_property(:switch_1, JSF::Forms::FormBuilder.example('switch'))
+    assert_equal true, form.scored?
+  end
 
   # def test_i18n_document
   # end

@@ -1,7 +1,7 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class ValidatableTest < Minitest::Test
-  include JsonSchemaFormTestHelper::SampleClassHooks
+  include TestHelper::SampleClassHooks
 
   # Used to test validations
   module IdValidation
@@ -47,10 +47,6 @@ class ValidatableTest < Minitest::Test
 
     # not recursive
     assert_nil schema.errors(recursive: false).dig(:allOf, 0, :properties, :prop_1, :$id)
-
-    # ToDo if_subschema
-
-    # ToDo unless_subschema
 
     # fix error
     schema[:allOf].first[:properties][:prop_1][:$id] = 'some_id'

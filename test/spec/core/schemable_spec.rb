@@ -1,7 +1,7 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class StrictTypesTest < Minitest::Test
-  include JsonSchemaFormTestHelper::SampleClassHooks
+  include TestHelper::SampleClassHooks
 
   def test_can_be_empty
     assert_empty SampleSchema.new()
@@ -15,13 +15,13 @@ class StrictTypesTest < Minitest::Test
   # type attribute
 
   def test_supports_all_single_json_schema_types
-    JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.each do |type|
+    TestHelper::JSON_SCHEMA_TYPES.each do |type|
       assert_equal type, SampleSchema.new({type: type})[:type]
     end
   end
 
   def test_supports_multiple_schema_types
-    sample = JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.sample(2)
+    sample = TestHelper::JSON_SCHEMA_TYPES.sample(2)
     instance = SampleSchema.new({type: sample })
     assert_equal sample.size, (instance[:type] & sample).size
   end
@@ -175,7 +175,7 @@ class StrictTypesTest < Minitest::Test
   # set_strict_type
 
   def test_set_strict_type    
-    JsonSchemaFormTestHelper::JSON_SCHEMA_TYPES.each do |type|
+    TestHelper::JSON_SCHEMA_TYPES.each do |type|
       SampleSchema.set_strict_type(type)
       assert_raises(::Dry::Types::ConstraintError) { SampleSchema.new({type: 'whatever'}) } # fails
       assert_equal type, SampleSchema.new({type: type})[:type]                              # valid

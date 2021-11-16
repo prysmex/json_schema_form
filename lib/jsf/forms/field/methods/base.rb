@@ -15,6 +15,7 @@ module JSF
             base.include JSF::Core::Schemable
             base.include JSF::Validations::Validatable
             base.include JSF::Forms::Field::Methods::InstanceMethods
+            base.include JSF::Forms::Concerns::DisplayProperties
           end
     
         end
@@ -32,7 +33,6 @@ module JSF
               self
             )
 
-            # ToDo add error to base
             if run_validation?(passthru, self, :hidden_and_required)
               if self.hideOnCreate? && self.required?
                 add_error_on_path(
@@ -70,65 +70,12 @@ module JSF
           ###METHODS####
           ##############
 
-          # Get hidden display property
+          # Returns true if field contributes to scoring
           #
-          # @return [Boolean] true when hidden
-          def hidden?
-            !!self.dig(:displayProperties, :hidden)
-          end
-
-          # Set hidden display property
-          #
-          # @param [Boolean]
           # @return [Boolean]
-          def hidden=(value)
-            SuperHash::Utils.bury(self, :displayProperties, :hidden, value)
-          end
-
-          # Get hideOnCreate display property
-          #
-          # @return [Boolean] value
-          def hideOnCreate?
-            !!self.dig(:displayProperties, :hideOnCreate)
-          end
-
-          # Set hidden display property
-          #
-          # @param [Boolean] value
-          # @return [Boolean]
-          def hideOnCreate=(value)
-            SuperHash::Utils.bury(self, :displayProperties, :hideOnCreate, value)
-          end
-
-          # Get sort value
-          #
-          # @return [<Type>] <description>
-          def sort
-            self.dig(:displayProperties, :sort)
-          end
-
-          # Set sort value
-          #
-          # @return [<Type>] <description>
-          def sort=(value)
-            SuperHash::Utils.bury(self, :displayProperties, :sort, value)
-          end
-          
-          # get the field's i18n label
-          #
-          # @param [String,Symbol] locale
-          # @return [String]
-          def i18n_label(locale = DEFAULT_LOCALE)
-            self.dig(:displayProperties, :i18n, :label, locale)
-          end
-    
-          # set the field's i18n label
-          #
-          # @param [String,Symbol] locale
-          # @param [String] locale
-          # @return [String]
-          def set_label_for_locale(label, locale = DEFAULT_LOCALE)
-            SuperHash::Utils.bury(self, :displayProperties, :i18n, :label, locale, label)
+          def scored?
+            # raise NoMethodError.new('this field does not implement scored?')
+            false
           end
 
           # Returns the path where the data of the field is in a JSF::Forms::Document

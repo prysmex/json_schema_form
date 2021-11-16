@@ -60,6 +60,15 @@ module JSF
               &.get_response_from_value(value)
               &.dig(:displayProperties, :i18n, locale)
           end
+
+          # Returns true if field contributes to scoring
+          #
+          # @override
+          #
+          # @return [Boolean]
+          def scored?
+            !!self.response_set&.scored?
+          end
         
         end
       end

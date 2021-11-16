@@ -2,7 +2,7 @@ module JSF
   module Forms
     DEFAULT_LOCALE = 'es'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
-    VERSION = '3.0.0'.freeze
+    VERSION = '3.1.0'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -95,7 +95,7 @@ module JSF
                 if value.dig(:items, :format) == 'uri'
                   JSF::Forms::Field::FileInput
                 elsif value.dig(:displayProperties, :useSection)
-                  JSF::Forms::Field::Section
+                  JSF::Forms::Section
                 else
                   JSF::Forms::Field::Checkbox
                 end
@@ -183,7 +183,7 @@ module JSF
             optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
             if is_inspection
-              optional(:maxScore) { int? | float? | nil? }
+              optional(:hasScoring) { int? | float? | nil? }
             end
           else
             optional(:'$schema').filled(:string)
@@ -768,17 +768,43 @@ module JSF
 
         nil
       end
+
+      # Checks if the form has fields with scoring
+      #
+      # @return [Boolean]
+      def scored?(**args)
+        has_scoring = false
+        schema_form_iterator(**args) do |_, then_hash|
+          then_hash.properties&.each do |key, field|
+            if field.scored?
+              has_scoring = true
+              break 
+            end
+          end
+        end
+        has_scoring
+      end
+
+      # Initial value when scoring a document
+      #
+      # @return [Float, NilClass]
+      def score_initial_value
+        (self[:hasScoring] || self.scored?) ? 0.0 : nil
+      end
     
       # Calculates the MAXIMUM ATTAINABLE score considering all possible branches
       # A block is REQUIRED to resolve whether a conditional field is visible or not
       #
       # @todo consider hideOnCreate
+      # @todo support non repeatable JSF::Forms::Section
       #
       # @param [Boolean] skip_hidden
-      # @param [Proc] &bloclk
+      # @param [Proc] &block
       # @return [Nil|Float]
       def max_score(skip_hidden: true, &block)
         self[:properties]&.inject(nil) do |acum, (name, field)|
+
+          raise StandardError.new('JSF::Forms::Section field is not yet supported for max_score')
           next acum if skip_hidden && field.hidden?
     
           # Field may have conditional fields so we go recursive trying all possible
@@ -925,48 +951,19 @@ module JSF
       #
       # @ return [JSF::Forms::Form] a mutated Form
       def compile!
-        self.response_sets.each do |_, response_set|
-          response_set.compile! if response_set&.respond_to?(:compile!)
-        end
-
-        self.component_definitions do |_, comp_def|
-          comp_def.compile! if definition&.respond_to?(:compile!)
-        end
-
-        self.schema_form_iterator do |_, then_hash|
-          then_hash[:properties]&.each do |id, definition|
-            definition.compile! if definition&.respond_to?(:compile!)
-          end
-        end
-
-        self
       end
     
       # Allows the definition of migrations to 'upgrade' schemas when the standard changes
       # The method is only the last migration script (not versioned)
       #
       # @return [Form] a mutated instance of the Form
-      def migrate!(options={})
-    
-        # migrate properties
-        self.schema_form_iterator do |_, then_hash|
-          then_hash[:properties]&.each do |id, definition|
-            if definition&.respond_to?(:migrate!)
-              puts 'migrating ' + definition.class.to_s.demodulize
-              definition.migrate!
-            end
+      def migrate!
+        if self[:schemaFormVersion] != '3.1.0'
+          if !self.meta[:is_subschema]
+            self[:hasScoring] = !self[:maxScore].nil?
+            self[:schemaFormVersion] = '3.1.0'
           end
         end
-    
-        # migrate response sets
-        self[:definitions]&.each do |id, definition|
-          if definition&.respond_to?(:migrate!)
-            puts 'migrating response set'
-            definition.migrate!
-          end
-        end
-    
-        self
       end
     
       private
@@ -974,6 +971,22 @@ module JSF
       # redefined as private to favor append*, prepend* methods
       def add_property(*args)
         super(*args)
+      end
+
+      # Raises an error if form is NOT the root form
+      #
+      # @param [String] error_msg
+      # @return [<Type>] <description>
+      def raise_if_subschema(msg = 'method can only be called for root form')
+        raise StandardError.new(msg) if meta[:is_subschema]
+      end
+
+      # Raises error if form is the root form
+      #
+      # @param [<Type>] msg <description>
+      # @return [<Type>] <description>
+      def raise_unless_subschema(msg = 'method cannot be called for root form')
+        raise StandardError.new(msg) unless meta[:is_subschema]
       end
     
     end

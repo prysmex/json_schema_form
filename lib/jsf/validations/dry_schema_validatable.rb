@@ -52,9 +52,9 @@ module JSF
       # @return [Hash]
       WITHOUT_SUBSCHEMAS_PROC = Proc.new do |hash|
         hash.inject({}) do |acum, (k,v)|
-          if v.is_a?(::Array) && JSF::Validations::Validatable::ARRAY_SUBSCHEMA_KEYS.include?(k)
+          if v.is_a?(::Array) && ARRAY_SUBSCHEMA_KEYS.include?(k)
             acum[k] = []
-          elsif v.is_a?(::Hash) && (JSF::Validations::Validatable::HASH_SUBSCHEMA_KEYS.include?(k) ||  JSF::Validations::Validatable::NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS.include?(k))
+          elsif v.is_a?(::Hash) && (HASH_SUBSCHEMA_KEYS.include?(k) ||  JSF::Validations::Validatable::NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS.include?(k))
             acum[k] = {}
           else
             acum[k] = v

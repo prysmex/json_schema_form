@@ -111,6 +111,13 @@ module JSF
       def compile!
         self[:anyOf]&.each{|r| r.compile! }
       end
+
+      # Returns true if the response set has responses with scoring
+      #
+      # @return [Boolean]
+      def scored?
+        !!self[:anyOf]&.any?{|r| r.scored? }
+      end
   
     end
   end

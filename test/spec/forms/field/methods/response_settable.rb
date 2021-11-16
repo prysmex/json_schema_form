@@ -1,3 +1,5 @@
+require_relative 'field_example_helpers'
+
 module ResponseSettableTests
 
   include FieldExampleHelpers
@@ -55,6 +57,30 @@ module ResponseSettableTests
     end
 
     assert_equal 'score_1_es', prop.i18n_value('test', :es)
+  end
+
+  def test_scored?
+    klass_example = tested_klass_example
+    prop = nil
+    response = nil
+
+    JSF::Forms::FormBuilder.build() do
+      add_response_set(:jsdflkj3, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :default)).tap do |r|
+          response = r
+          r[:const] = 'test'
+          r[:displayProperties] = { i18n: { es: "score_1_es" } }
+        end
+      end
+
+      prop = append_property(:testprop, klass_example).tap do |field|
+        field.response_set_id = :jsdflkj3
+      end
+    end
+
+    assert_equal false, prop.scored?
+    response[:score] = 1
+    assert_equal true, prop.scored?
   end
 
 end

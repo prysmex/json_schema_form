@@ -83,6 +83,15 @@ module JSF
           end
         end
 
+        # Returns true if field contributes to scoring
+        #
+        # @override
+        #
+        # @return [Boolean]
+        def scored?
+          true
+        end
+
         def migrate!
         end
   

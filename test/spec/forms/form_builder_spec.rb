@@ -1,4 +1,4 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class FormbuilderTest < Minitest::Test
 
@@ -16,6 +16,7 @@ class FormbuilderTest < Minitest::Test
         {trait: :default, errors_args: {is_inspection: false}},
         {trait: :is_inspection, errors_args: {is_inspection: true}}
       ],
+      JSF::Forms::Section => [],
       JSF::Forms::Field::Checkbox => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
@@ -27,7 +28,6 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Header => [],
       JSF::Forms::Field::Info => [],
       JSF::Forms::Field::NumberInput => [],
-      JSF::Forms::Field::Section => [],
       JSF::Forms::Field::Select => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
@@ -38,7 +38,8 @@ class FormbuilderTest < Minitest::Test
     }
     
     klasses.each do |klass, traits_array|
-      skip_valid_for_locale = klass == JSF::Forms::ComponentRef
+      skip_valid_for_locale = [JSF::Forms::ComponentRef, JSF::Forms::Section].include?(klass)
+
       if traits_array.empty?
         hash = JSF::Forms::FormBuilder.example_for(klass)
         instance = klass.new(hash)

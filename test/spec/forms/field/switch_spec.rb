@@ -1,5 +1,5 @@
-require 'json_schema_form_test_helper'
-require_relative 'methods/base_spec'
+require 'test_helper'
+require_relative 'methods/base'
 
 class SwitchTest < Minitest::Test
 
@@ -48,6 +48,11 @@ class SwitchTest < Minitest::Test
     assert_equal 0, instance.score_for_value(false)
     assert_nil instance.score_for_value(nil)
     assert_raises(TypeError){instance.score_for_value(1)}
+  end
+
+  def test_scored?
+    instance = JSF::Forms::Field::Switch.new
+    assert_equal true, instance.scored?
   end
 
 end

@@ -1,4 +1,4 @@
-require 'json_schema_form_test_helper'
+require 'test_helper'
 
 class ResponseTest < Minitest::Test
 
@@ -7,9 +7,14 @@ class ResponseTest < Minitest::Test
   ##################
 
   def test_no_unknown_keys_allowed
-    errors = JSF::Forms::Response.new({array_key: [], other_key: 1}).errors
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Response) && key == :schema }
+
+    errors = JSF::Forms::Response.new({array_key: [], other_key: 1}).errors(if: error_proc)
+    # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
+    # required keys
+    refute_nil errors[:type]
   end
 
   def test_valid_for_locale
@@ -46,16 +51,9 @@ class ResponseTest < Minitest::Test
     end
   end
 
-  # def test_type_must_be_present
-  # end
-
-  # def test_type_must_equal_string
-  # end
-
-  # def test_const_must_be_present
-  # end
-
-  # def test_const_must_be_a_string
-  # end
+  def test_scored?
+    assert_equal false, JSF::Forms::Response.new({ score: nil }).scored?
+    assert_equal true, JSF::Forms::Response.new({ score: 1 }).scored?
+  end
 
 end

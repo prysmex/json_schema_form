@@ -1,5 +1,5 @@
-require 'json_schema_form_test_helper'
-require_relative 'methods/base_spec'
+require 'test_helper'
+require_relative 'methods/base'
 
 class SliderTest < Minitest::Test
 
@@ -141,6 +141,10 @@ class SliderTest < Minitest::Test
 
     instance[:enum] = [move_decimail_point(1, JSF::Forms::Field::Slider::MAX_PRECISION + 1)]
     refute_empty instance.errors(if: ->(obj, key) { key == :enum_precision })
+  end
+
+  def test_scored?
+    assert_equal true, JSF::Forms::Field::Slider.new().scored?
   end
 
 end

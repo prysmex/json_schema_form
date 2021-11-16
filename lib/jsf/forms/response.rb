@@ -45,7 +45,7 @@ module JSF
             optional(:color).maybe(:string)
           end
           if is_inspection
-            required(:enableScore).value(Types::True)
+            required(:enableScore).value(Types::True) #deprecate?
             required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
             required(:failed).value(:bool)
           end
@@ -85,6 +85,13 @@ module JSF
 
       def compile!
         self.delete(:displayProperties)
+      end
+
+      # Checks if the response has an assigned score value
+      #
+      # @return [Boolean]
+      def scored?
+        !self[:score].nil?
       end
   
     end

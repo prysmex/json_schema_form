@@ -1,5 +1,5 @@
-require 'json_schema_form_test_helper'
-require_relative 'methods/base_spec'
+require 'test_helper'
+require_relative 'methods/base'
 
 class ComponentTest < Minitest::Test
 
@@ -10,9 +10,14 @@ class ComponentTest < Minitest::Test
   ##################
 
   def test_no_unknown_keys_allowed
-    errors = JSF::Forms::Field::Component.new({array_key: [], other_key: 1}).errors
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Field::Component) && key == :schema }
+
+    errors = JSF::Forms::Field::Component.new({array_key: [], other_key: 1}).errors(if: error_proc)
+    # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
+    # required keys
+    refute_nil errors[:displayProperties]
   end
 
   def test_ref_regex

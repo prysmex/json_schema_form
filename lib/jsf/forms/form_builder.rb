@@ -36,6 +36,9 @@ module JSF
             '/response_set.json'
           when 'response'
             response_path(*args)
+          when 'section'
+            '/section.json'
+          #fields
           when 'checkbox'
             '/field/checkbox.json'
           when 'component'
@@ -50,8 +53,6 @@ module JSF
             '/field/info.json'
           when 'number_input'
             '/field/number_input.json'
-          when 'section'
-            '/field/section.json'
           when 'select'
             '/field/select.json'
           when 'slider'

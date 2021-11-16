@@ -1,3 +1,5 @@
+require_relative 'field_example_helpers'
+
 #
 # Some of the methods added by JSF::Forms::Field::Methods::Base may be overriden on a field class,
 # for example, `valid_for_locale?`. If that is the case, those methods should also be overriden on the
@@ -33,9 +35,14 @@ module BaseMethodsTests
   # validation_schema
 
   def test_no_unknown_keys_allowed
+    error_proc = ->(obj, key) { obj.is_a?(tested_klass) && key == :schema }
+
     errors = tested_klass.new({array_key: [], other_key: 1}).errors
+    # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
+    # required keys
+    refute_nil errors[:displayProperties]
   end
 
   def test_id_regex
@@ -63,40 +70,9 @@ module BaseMethodsTests
   ###METHODS####
   ##############
 
-  # hidden? and hidden=
-
-  def test_hidden
-    example = self.tested_klass_example
-    instance = tested_klass.new(example)
-
-    assert_equal false, instance.hidden?
-    instance['displayProperties']['hidden'] = true
-    assert_equal true, instance.hidden?
-    instance.hidden = false
-    assert_equal false, instance.hidden?
-  end
-
-  # hideOnCreate? and hideOnCreate=
-
-  def test_hidden_on_create
-    example = self.tested_klass_example
-    instance = tested_klass.new(example)
-
-    assert_equal false, instance.hideOnCreate?
-    instance['displayProperties']['hideOnCreate'] = true
-    assert_equal true, instance.hideOnCreate?
-    instance.hideOnCreate = false
-    assert_equal false, instance.hideOnCreate?
-  end
-
-  # i18n_label and set_label_for_locale
-  
-  def test_i18n_label
-    example = self.tested_klass_example
-    instance = tested_klass.new(example)
-    instance.set_label_for_locale('__some_label__')
-
-    assert_equal '__some_label__', instance.i18n_label
+  def test_scored?
+    instance = tested_klass.new(self.tested_klass_example)
+    assert_equal false, instance.scored?
   end
 
   # document_path
