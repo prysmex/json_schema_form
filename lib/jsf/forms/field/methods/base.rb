@@ -107,16 +107,20 @@ module JSF
           #
           # @return [Array<String>]
           def document_path
-            path = self.meta[:path]
-            new_path = []
+            schema_path = self.meta[:path]
+            document_path = []
         
-            if path[0] == 'definitions' # fields inside 'definitions'
+            # if it is inside 'definitions' we must add the key of the 'JSF::Forms::Field::Component'
+            # that matches
+            if schema_path[0] == 'definitions'
               root_form = self.root_parent
+              component_definition_path = schema_path.slice(0..1)
+
               component_field = nil
               root_form.schema_form_iterator do |_, form|
                 found_prop = form.properties.find do |key, prop|
                   next unless prop.is_a?(JSF::Forms::Field::Component)
-                  prop.component_definition == root_form.dig(*path.slice(0..1)) #match the field
+                  prop.component_definition == root_form.dig(*component_definition_path) #match the field
                 end
                 if found_prop
                   component_field = found_prop[1]
@@ -124,11 +128,12 @@ module JSF
                 end
               end
               raise StandardError.new("JSF::Forms::Field::Component not found for property: #{self.key_name}") unless component_field
-              new_path.push(component_field.key_name)
+              document_path.push(component_field.key_name)
             end
     
-            new_path.push(self.key_name)
-            new_path
+            # add own key name
+            document_path.push(self.key_name)
+            document_path
           end
 
           # Removes all keys that are not part of the JsonSchema spec

@@ -65,6 +65,21 @@ class SliderTest < Minitest::Test
   ###METHODS####
   ##############
 
+  def test_i18n_value
+    instance = JSF::Forms::Field::Slider.new({
+      displayProperties: {
+        i18n: {
+          enum: {
+            en: {'1': 'some_value_1'}
+          },
+        },
+      },
+      enum: [1]
+    })
+
+    assert_equal 'some_value_1', instance.i18n_value(1, :en)
+  end
+
   # max_score
 
   def test_max_score

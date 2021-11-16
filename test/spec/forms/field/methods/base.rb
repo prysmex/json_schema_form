@@ -1,4 +1,41 @@
+require 'test_helper'
 require_relative 'field_example_helpers'
+
+class FormTest < Minitest::Test
+
+  def test_document_path
+    form = JSF::Forms::FormBuilder.build() do
+
+      # Form
+      add_definition(:shared_schema_template_1,
+        JSF::Forms::FormBuilder.build() do
+          append_property(:shared_switch_1, example('switch'))
+          append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: :shared_switch_1, type: :const, value: true)
+        end
+      )
+      # Component
+      append_property(:component_1, example('component')).tap do |field|
+        field.db_id = 1
+      end
+
+      # Field
+      append_property(:switch_1, example('switch'))
+
+      # Dynamic Field
+      append_conditional_property(:switch_1_1, example('switch'), dependent_on: :switch_1, type: :const, value: true) do |f, field|
+        f.append_conditional_property(:switch_1_2, example('switch'), dependent_on: :switch_1_1, type: :const, value: true) do |f, field|
+        end
+      end
+    end
+
+    assert_equal ["switch_1"], form.dig(:properties, :switch_1).document_path
+    assert_equal ["switch_1_1"], form.dig(:allOf, 0, :then, :properties, :switch_1_1).document_path
+    assert_equal ["component_1", "shared_switch_1"], form.dig(:definitions, :shared_schema_template_1, :properties, :shared_switch_1).document_path
+    assert_equal ["component_1", "shared_switch_1_1"], form.dig(:definitions, :shared_schema_template_1, :allOf,  0, :then, :properties, :shared_switch_1_1).document_path
+
+  end
+
+end
 
 #
 # Some of the methods added by JSF::Forms::Field::Methods::Base may be overriden on a field class,
@@ -73,18 +110,6 @@ module BaseMethodsTests
   def test_scored?
     instance = tested_klass.new(self.tested_klass_example)
     assert_equal false, instance.scored?
-  end
-
-  # document_path
-  # @Todo
-
-  # compile!
-  # @Todo
-
-  # errors
-
-  def test_errors_dont_raise_error
-    tested_klass.new().errors
   end
 
 end

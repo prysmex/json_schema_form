@@ -112,10 +112,19 @@ module JSF
           label_is_valid = super
   
           missing_locale = self[:enum].find do |value|
-            self.dig(:displayProperties, :i18n, :enum, locale, value&.to_s).to_s.empty?
+            self.i18n_value(value, locale).to_s.empty?
           end
           
           label_is_valid && !missing_locale
+        end
+
+        # get the translation for a value
+        #
+        # @param [] value
+        # @param [String,Symbol] locale
+        # @return [String]
+        def i18n_value(value, locale = DEFAULT_LOCALE)
+          self.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
         end
   
         ##################

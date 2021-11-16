@@ -724,8 +724,6 @@ module JSF
       # If 'skip_when_false' is true and the returned value from the yield equals false,
       # then the iteration of that tree is halted
       #
-      # @todo consider else key in allOf
-      #
       # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       # @param levels [Integer] Max depth of allOf nesting to starting from start_level
       # @param skip_when_false [Boolean]
@@ -866,7 +864,7 @@ module JSF
         end
       end
     
-      # Builds a new localized hash based on the Form's fields responses
+      # Builds a new hash where the values of translatable fields are localized
       #
       # @param [Hash{String}, Document] document 
       # @param [Boolean] is_inspection <description>
@@ -879,16 +877,17 @@ module JSF
         raise StandardError.new('schema not found') if merged_properties.nil?
         document.each_with_object({}) do|(name, v), hash|
           name = name.to_s
-          if v.nil? || is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(name)
+
+          # if inspection, do not translate document keywords
+          if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(name)
             hash[name] = v
           else
-            value = self.i18n_document_value(
+            hash[name] = self.i18n_document_value(
               name,
               v,
               locale: locale,
               property: merged_properties[name],
             )
-            hash[name] = value.nil? ? 'Missing Translation' : value
           end
         end
       end
@@ -900,18 +899,21 @@ module JSF
         property ||= get_merged_property(attr_name)
         return unless property.present?
     
+        missing_locale_msg = 'Missing Translation'
+
         case property
         when JSF::Forms::Field::Checkbox
-          value.map{|v| property.i18n_value(v, locale) }
+          value.map{ |v|
+            property.i18n_value(v, locale) || missing_locale_msg
+          }
         when JSF::Forms::Field::Slider
-          property.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
+          property.i18n_value(value, locale) || missing_locale_msg
         when JSF::Forms::Field::Select
-          property.i18n_value(value, locale)
+          property.i18n_value(value, locale) || missing_locale_msg
         when JSF::Forms::Field::DateInput
           value.class == DateTime ? value : DateTime.parse(value) 
         when JSF::Forms::Field::Switch
-          label = value ? :trueLabel : :falseLabel
-          property.dig(:displayProperties, :i18n, label, locale)
+          property.i18n_value(value, locale) || missing_locale_msg
         when JSF::Forms::Field::Component
           property
             .component_definition
@@ -949,14 +951,14 @@ module JSF
     
       # Mutates the entire Form to a json schema compliant
       #
-      # @ return [JSF::Forms::Form] a mutated Form
+      # @return [void]
       def compile!
       end
     
       # Allows the definition of migrations to 'upgrade' schemas when the standard changes
       # The method is only the last migration script (not versioned)
       #
-      # @return [Form] a mutated instance of the Form
+      # @return [void]
       def migrate!
         if self[:schemaFormVersion] != '3.1.0'
           if !self.meta[:is_subschema]

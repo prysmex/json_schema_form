@@ -60,6 +60,16 @@ module JSF
         ##################
         #####METHODS######
         ##################
+
+        # get the translation for a value
+        #
+        # @param [] value
+        # @param [String,Symbol] locale
+        # @return [String]
+        def i18n_value(value, locale = DEFAULT_LOCALE)
+          label = value ? :trueLabel : :falseLabel
+          self.dig(:displayProperties, :i18n, label, locale)
+        end
   
         # @return [1]
         def max_score
