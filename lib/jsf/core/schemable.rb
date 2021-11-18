@@ -132,14 +132,16 @@ module JSF
         end
       
         # Selects dependent_conditions that evaluate to true based on a input value
-        # The evaluation of the schema is not part of the scope of this gem, so a
-        # block is yielded so a json-schema compliant method can evaluate it.
         #
         # @param value [] value to evaluate
         # @return [Nil, Array] 
         def dependent_conditions_for_value(value, &block)
           dependent_conditions&.select do |condition|
-            yield(condition[:if], value, self)
+            if condition.respond_to?(:evaluate)
+              condition.evaluate(value, &block)
+            else
+              yield(condition)
+            end
           end
         end
 

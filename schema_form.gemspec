@@ -43,5 +43,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activesupport", '~> 6'
   spec.add_dependency "super_hash", '>= 0.2.0'
   spec.add_dependency "dry-schema", "1.8.0"
+  spec.add_dependency "json_schemer", "0.2.17"
 
 end
