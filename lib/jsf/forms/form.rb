@@ -359,23 +359,22 @@ module JSF
       #
       # @param [Integer] db_id (DB id)
       # @return [JSF::Forms::ComponentRef]
-      def add_component_ref(db_id:)
+      def add_component_definition(db_id:, definition: nil)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         
-        component_ref = JSF::Forms::FormBuilder.example('component_ref') do |obj|
-          obj['$ref'] = db_id
-        end
-        key = component_ref_key(db_id)
-        self.add_definition(key, component_ref)
+        definition ||= JSF::Forms::FormBuilder.example('component_ref')
+        definition = self.add_definition(component_ref_key(db_id), definition)
+        definition.db_id = db_id if definition.is_a?(JSF::Forms::ComponentRef)
+        definition
       end
 
       # Finds a JSF::Forms::ComponentRef from a db_id
       #
       # @param [Integer] db_id
-      # @return [JSF::Forms::ComponentRef]
-      def get_component_ref(db_id:)
+      # @return [JSF::Forms::ComponentRef, JSF::Forms::Form]
+      def get_component_definition(db_id:)
         self['definitions'].find do |k,v|
-          v.is_a?(JSF::Forms::ComponentRef) && v.db_id == db_id
+          k == component_ref_key(db_id)
         end&.last
       end
 
@@ -383,7 +382,7 @@ module JSF
       #
       # @param [Integer] db_id (DB id)
       # @return [JSF::Forms::Form] mutated self
-      def remove_component_ref(db_id:)
+      def remove_component_definition(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         key = component_ref_key(db_id)
 
@@ -396,15 +395,13 @@ module JSF
       # @param [Integer] db_id (DB id)
       # @param [Integer] index
       # @return [JSF::Forms::ComponentRef]
-      def add_component_pair(db_id:, index:, options: {})
+      def add_component_pair(db_id:, index:, definition: nil, options: {})
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         key = component_ref_key(db_id)
 
         # add property
-        component = JSF::Forms::FormBuilder.example('component') do |obj|
-          obj['$ref'] = "#/definitions/#{key}"
-        end
-        case index
+        component = JSF::Forms::FormBuilder.example('component')
+        prop = case index
         when Integer
           insert_property_at_index(index, key, component, options)
         when :append
@@ -415,8 +412,10 @@ module JSF
           raise ArgumentError.new("invalid index argument #{index}")
         end
 
+        prop.db_id = db_id
+
         # add definition
-        add_component_ref(db_id: db_id)
+        add_component_definition(db_id: db_id, definition: definition)
       end
 
       # Removes a component ref. If remove_component is true, it will also remove the matching JSF::Forms::Field::Component
@@ -431,7 +430,7 @@ module JSF
         # remove property
         # self.remove_property(key)
         self[:properties].reject! do |k,v|
-          v.is_a?(JSF::Forms::Field::Component) && v.db_id == db_id
+          k == key
         end
         resort!
 
@@ -818,6 +817,8 @@ module JSF
       #
       # @note does not consider forms inside 'definitions' key
       #
+      # @todo consider Section count
+      #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
       def specific_max_score(document, condition_proc:, is_create: false, **kwargs, &block)
@@ -868,14 +869,12 @@ module JSF
       # - removes all keys in unactive trees
       #
       # @return [JSF::Forms::Document] mutated document
-      def clean_document!(document, is_create: false, is_inspection: false)
-
-        # option 1
-        # 1) create a nil_document from a document
-        # 2) flatten both hashes and remove all keys not present in the nil_document
-        # 3) rebuild a hash from flattened hash
-
-      end
+      # def clean_document!(document, condition_proc:, is_create: false, is_inspection: false)
+      #   # option 1
+      #   # 1) create a nil_document from a document
+      #   # 2) flatten both hashes and remove all keys not present in the nil_document
+      #   # 3) rebuild a hash from flattened hash
+      # end
 
       # Checks if the form has fields with scoring
       #

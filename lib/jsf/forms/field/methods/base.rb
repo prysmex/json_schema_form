@@ -108,27 +108,35 @@ module JSF
           # @return [Array<String>]
           def document_path
             schema_path = self.meta[:path]
+            root_form = self.root_parent
             document_path = []
-        
-            # if it is inside 'definitions' we must add the key of the 'JSF::Forms::Field::Component'
-            # that matches
-            if schema_path[0] == 'definitions'
-              root_form = self.root_parent
-              component_definition_path = schema_path.slice(0..1)
 
-              component_field = nil
-              root_form.each_form do |form|
-                found_prop = form.properties.find do |key, prop|
-                  next unless prop.is_a?(JSF::Forms::Field::Component)
-                  prop.component_definition == root_form.dig(*component_definition_path) #match the field
+            schema_path.each_with_index.inject(root_form) do |current_schema, (key, i)|
+              next_schema = current_schema[key]
+
+              # if a 'definitions' we must add the key of the 'JSF::Forms::Field::Component'
+              # that matches
+              if key == 'definitions'
+                target_form = next_schema[schema_path[i + 1]]
+                
+                component_field = nil
+                root_form.each_form do |form|
+                  found_prop = form.properties.find do |key, prop|
+                    next unless prop.is_a?(JSF::Forms::Field::Component)
+                    prop.component_definition == target_form #match the field
+                  end
+                  if found_prop
+                    component_field = found_prop[1]
+                    break
+                  end
                 end
-                if found_prop
-                  component_field = found_prop[1]
-                  break
-                end
+                raise StandardError.new("JSF::Forms::Field::Component not found for property: #{self.key_name}") unless component_field
+                document_path.push(component_field.key_name)
+              elsif current_schema.is_a?(JSF::Forms::Section)
+                document_path.push(current_schema.key_name)
               end
-              raise StandardError.new("JSF::Forms::Field::Component not found for property: #{self.key_name}") unless component_field
-              document_path.push(component_field.key_name)
+
+              next_schema
             end
     
             # add own key name

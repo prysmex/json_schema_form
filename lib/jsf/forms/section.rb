@@ -77,6 +77,10 @@ module JSF
       ###METHODS####
       ##############
 
+      def form
+        self[:items]
+      end
+
       # @return [Boolean]
       def repeatable?
         self[:maxItems] != 1
@@ -85,8 +89,8 @@ module JSF
       def valid_for_locale?(locale = DEFAULT_LOCALE)
         !i18n_label(locale).to_s.empty? &&
           (
-            self[:items].nil? ||
-            self[:items].valid_for_locale?(locale)
+            form.nil? ||
+            form.valid_for_locale?(locale)
           )
       end
 
@@ -94,7 +98,7 @@ module JSF
       #
       # @return [Boolean]
       def scored?
-        !!self[:items]&.scored?
+        !!form&.scored?
       end
 
     end

@@ -6,16 +6,19 @@ class FormTest < Minitest::Test
   def test_document_path
     form = JSF::Forms::FormBuilder.build() do
 
-      # Form
-      add_definition(:shared_schema_template_1,
-        JSF::Forms::FormBuilder.build() do
+      # Add form in definitions
+      add_component_pair(
+        db_id: 1,
+        index: :prepend,
+        definition: JSF::Forms::FormBuilder.build() do
           append_property(:shared_switch_1, example('switch'))
           append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: :shared_switch_1, type: :const, value: true)
         end
       )
-      # Component
-      append_property(:component_1, example('component')).tap do |field|
-        field.db_id = 1
+
+      # Section
+      append_property(:section, example('section')).tap do |section|
+        section.form.append_property(:switch_2, example('switch'))
       end
 
       # Field
@@ -26,13 +29,14 @@ class FormTest < Minitest::Test
         f.append_conditional_property(:switch_1_2, example('switch'), dependent_on: :switch_1_1, type: :const, value: true) do |f, field|
         end
       end
+      
     end
 
     assert_equal ["switch_1"], form.dig(:properties, :switch_1).document_path
     assert_equal ["switch_1_1"], form.dig(:allOf, 0, :then, :properties, :switch_1_1).document_path
-    assert_equal ["component_1", "shared_switch_1"], form.dig(:definitions, :shared_schema_template_1, :properties, :shared_switch_1).document_path
-    assert_equal ["component_1", "shared_switch_1_1"], form.dig(:definitions, :shared_schema_template_1, :allOf,  0, :then, :properties, :shared_switch_1_1).document_path
-
+    assert_equal ["section", "switch_2"], form.dig(:properties, :section, :items, :properties, :switch_2).document_path
+    assert_equal ["shared_schema_template_1", "shared_switch_1"], form.dig(:definitions, :shared_schema_template_1, :properties, :shared_switch_1).document_path
+    assert_equal ["shared_schema_template_1", "shared_switch_1_1"], form.dig(:definitions, :shared_schema_template_1, :allOf,  0, :then, :properties, :shared_switch_1_1).document_path
   end
 
 end

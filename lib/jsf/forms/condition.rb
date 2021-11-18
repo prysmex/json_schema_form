@@ -88,6 +88,10 @@ module JSF
         self.meta[:parent]&.dig(:properties, condition_property_key)
       end
 
+      def negated
+        self.dig('properties', condition_property_key).key?('not')
+      end
+
       # Util
       def evaluate(entire_document)
         key = condition.condition_property_key

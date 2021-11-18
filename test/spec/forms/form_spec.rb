@@ -10,7 +10,7 @@ class FormTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build() do
       # definitions
       add_response_set(:response_set_1, example('response_set'))
-      add_component_ref(db_id: 1)
+      add_component_definition(db_id: 1)
       add_definition('form1', JSF::Forms::FormBuilder.example('form'))
 
       # properties
@@ -161,7 +161,7 @@ class FormTest < Minitest::Test
     end
 
     refute_empty form.errors(if: error_proc)
-    form.add_component_ref(db_id: db_id)
+    form.add_component_definition(db_id: db_id)
     assert_empty form.errors(if: error_proc)
   end
 
@@ -270,36 +270,36 @@ class FormTest < Minitest::Test
 
   def test_component_definitions
     form = JSF::Forms::FormBuilder.build do
-      add_component_ref(db_id: 1)
+      add_component_definition(db_id: 1)
       add_definition(:some_key, JSF::Forms::Form.new)
     end
     assert_equal ["shared_schema_template_1", "some_key"], form.component_definitions.keys
   end
 
-  def test_add_component_ref
+  def test_add_component_definition
     form = JSF::Forms::FormBuilder.build do
-      add_component_ref(db_id: 1)
+      add_component_definition(db_id: 1)
     end
 
     assert_equal true, form['definitions'].one?{|k,v| v.is_a?(JSF::Forms::ComponentRef) }
   end
 
-  def test_get_component_ref
+  def test_get_component_definition
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_ref(db_id: db_id)
+      add_component_definition(db_id: db_id)
     end
 
-    assert_instance_of JSF::Forms::ComponentRef, form.get_component_ref(db_id: db_id)
+    assert_instance_of JSF::Forms::ComponentRef, form.get_component_definition(db_id: db_id)
   end
 
-  def test_remove_component_ref
+  def test_remove_component_definition
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_ref(db_id: db_id)
+      add_component_definition(db_id: db_id)
     end
 
-    form.remove_component_ref(db_id: db_id)
+    form.remove_component_definition(db_id: db_id)
 
     assert_empty form['definitions']
   end
@@ -310,7 +310,7 @@ class FormTest < Minitest::Test
       add_component_pair(db_id: db_id, index: :append)
     end
 
-    component_ref = form.get_component_ref(db_id: db_id)
+    component_ref = form.get_component_definition(db_id: db_id)
     assert_instance_of JSF::Forms::ComponentRef, component_ref
     assert_instance_of JSF::Forms::Field::Component, component_ref&.component
   end
@@ -645,6 +645,12 @@ class FormTest < Minitest::Test
   end
 
   # def test_max_score
+  # end
+
+  # def test_specific_max_score
+  # end
+
+  # def test_clean_document
   # end
 
   def test_scored?
