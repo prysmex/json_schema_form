@@ -11,11 +11,15 @@ module JSF
           ###VALIDATIONS####
           ##################
 
+          # # Consider response set
+          # #
+          # # @param [] locale
+          # # @return [Boolean]
           # def valid_for_locale?(locale = DEFAULT_LOCALE)
-          #   label_is_valid = super
+          #   field_is_valid = super
 
           #   set = self.response_set
-          #   label_is_valid && (set.nil? || set.valid_for_locale?(locale))
+          #   field_is_valid && (set.nil? || set.valid_for_locale?(locale))
           # end
 
           ##############

@@ -29,9 +29,13 @@ module JSF
         super(obj, options)
       end
 
+      ##################
+      ###VALIDATIONS####
+      ##################
+
       def validation_schema(passthru={})
 
-        prop = self.dig('if', 'properties')&.keys&.first || '__key_placeholder__'
+        prop = self.condition_property_key || '__key_placeholder__'
 
         Dry::Schema.JSON do
           config.validate_keys = true
@@ -70,6 +74,18 @@ module JSF
         )
 
         super.merge(errors)
+      end
+
+      ##################
+      #####METHODS######
+      ##################
+
+      def condition_property_key
+        self.dig('if', 'properties')&.keys&.first
+      end
+
+      def condition_property
+        self.meta[:parent]&.dig(:properties, condition_property_key)
       end
 
     end

@@ -305,18 +305,18 @@ module JSF
         children_errors.merge(errors_hash)
       end
 
-      # Checks locale vality for the following:
-      #
-      #   - JSF::Forms::Field::* (recursive)
-      #     - JSF::Forms::ResponseSet
+      # Checks that all properties are valid for locale, if field
+      # respond to 'response_set', also check that response set is
+      # valid for locale
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean] if valid
       def valid_for_locale?(locale = DEFAULT_LOCALE)
-    
+        prop = nil
+
         # check properties and their response_sets
-        prop = self.schema_form_iterator do |_, then_hash|
-          invalid_property = then_hash&.properties&.any? do |k,v|
+        self.each_form(ignore_sections: true) do |form|
+          prop = form&.properties&.any? do |k,v|
             if v.respond_to?(:response_set)
               !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
             else
@@ -324,7 +324,7 @@ module JSF
             end
           end
     
-          break invalid_property if invalid_property
+          break prop if prop
         end
 
         !prop
@@ -477,8 +477,8 @@ module JSF
       # @return [Hash{String => JSF::Forms::Field::*}]
       def merged_properties(**args)
         properties = {}
-        schema_form_iterator(**args) do |_, then_hash|
-          properties.merge!(then_hash&.properties || {})
+        each_form(**args) do |form|
+          properties.merge!(form&.properties || {})
         end
         properties
       end
@@ -496,8 +496,8 @@ module JSF
       # @param [String, Symbol]
       # @return [JSF::Forms::Field::*]
       def get_merged_property(property, **args)
-        schema_form_iterator(**args) do |_, then_hash|
-          props = then_hash&.properties
+        each_form(**args) do |form|
+          props = form&.properties
           break props[property] if props&.key?(property)
         end
       end
@@ -699,81 +699,182 @@ module JSF
       #Utilities#
       ###########
 
-      # Same as subschema_iterator, but includes the current JSF::Forms::Form
+      # If returns true if inside the root key 'definitions'
       #
-      # @todo yield condition and parent if not root form
+      # @return [Boolean]
+      def is_component_definition?
+        self.meta[:path].first == 'definitions'
+      end
+
+      # Iterates and yields each JSF::Form along with its condition
       #
       # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       # @param levels [Integer] Max depth of allOf nesting to starting from start_level
+      # @param is_create [Boolean] pass true to consider 'hideOnCreate' display property
+      # @param condition_proc [Proc] if the returned value is falsy, then the iteration of that tree is halted
+      # @param skip_tree_when_hidden [Boolean] forces skiping trees when hidden
+      # @param ignore_sections [Boolean] if true, does not iterate into forms inside a JSF::Forms::Section
+      # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
       #
       # @yieldparam [NilClass] condition
       # @yieldparam [JSF::Forms::Form] form
       # @yieldparam [NilClass] parent form
-      # @yieldparam [Integer] current_level
+      # @yieldparam [Integer] nested level, 0 for root
       #
-      # @return [NilClass]
-      def schema_form_iterator(start_level: 0, levels: nil, **args, &block)
-        return if levels == 0
+      # @return [void]
+      def each_form(
+          condition_proc: nil,
+          current_level: 0,
+          ignore_sections: false,
+          ignore_definitions: true,
+          ignore_all_of: false,
+          is_create: false,
+          levels: nil,
+          skip_tree_when_hidden: false,
+          start_level: 0,
+          &block
+        )
+          # stop execution if levels limit matches
+          return if !levels.nil? && current_level >= (start_level + levels)
 
-        yield( nil, self, nil, 0 ) if start_level == 0
+          # create kwargs hash to dry code when calling recursive
+          kwargs = {}
+          kwargs[:condition_proc] = condition_proc
+          kwargs[:ignore_sections] = ignore_sections
+          kwargs[:ignore_definitions] = ignore_definitions
+          kwargs[:ignore_all_of] = ignore_all_of
+          kwargs[:is_create] = is_create
+          kwargs[:levels] = levels
+          kwargs[:skip_tree_when_hidden] = skip_tree_when_hidden
+          kwargs[:start_level] = start_level
 
-        subschema_iterator(current_level: 1, levels: levels, start_level: start_level, **args, &block)
-      end
-    
-      # Iterates and yields each JSF::Form along with its condition.
-      # If 'skip_when_false' is true and the returned value from the yield equals false,
-      # then the iteration of that tree is halted
-      #
-      # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
-      # @param levels [Integer] Max depth of allOf nesting to starting from start_level
-      # @param skip_when_false [Boolean]
-      #
-      # @yieldparam [JSF::Schema] condition
-      # @yieldparam [JSF::Forms::Form] form
-      # @yieldparam [JSF::Forms::Form] parent form
-      # @yieldparam [Integer] current_level
-      #
-      # @return [NilClass]
-      def subschema_iterator(start_level: 0, levels: nil, skip_when_false: false, current_level: 0, &block)
-        
-        # stop execution if levels limit matches
-        return if !levels.nil? && current_level >= (start_level + levels)
-
-        self[:allOf]&.each do |condition_subschema|
-
-          # skip all subschemas until first match on start_level
+          # yield only if reached start_level or start_level is nil
           if start_level.nil? || current_level >= start_level
-            returned_value = yield(
-              condition_subschema[:if],
-              condition_subschema[:then],
-              self,
-              current_level
-            )
-
-            # allow skipping tree execution
-            next if skip_when_false && (returned_value == false)
+            yield(self, current_level)
           end
 
-          # go to next level recursively
-          condition_subschema[:then]&.subschema_iterator(
-            start_level: start_level,
-            levels: levels,
-            skip_when_false: skip_when_false,
-            current_level: current_level + 1,
-            &block
-          )
+          # iterate properties and call recursive on JSF::Forms::Section
+          unless ignore_sections
+            self.properties&.each do |key, prop|
+              next unless prop.is_a?(JSF::Forms::Section)
+              next if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+              
+              prop[:items]&.each_form(
+                current_level: current_level + 1,
+                **kwargs,
+                &block
+              )
+            end
+          end
+
+          # iterate definitions and call recursive on JSF::Forms::Form
+          unless ignore_definitions
+            self[:definitions]&.each do |key, prop|
+              next unless prop.is_a?(JSF::Forms::Form)
+              
+              prop&.each_form(
+                current_level: current_level + 1,
+                **kwargs,
+                &block
+              )
+            end
+          end
+
+          # iterate allOf
+          unless ignore_all_of
+            self[:allOf]&.each do |condition|
+              prop = condition.condition_property
+
+              next if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+              next if condition_proc && !condition_proc.call(condition)
+    
+              # go to next level recursively
+              condition[:then]&.each_form(
+                current_level: current_level + 1,
+                **kwargs,
+                &block
+              )
+    
+            end
+          end
+
+      end
+
+      # Calculates the maximum attainable score given a document. This
+      # considers which paths are active in the form.
+      #
+      # @note does not consider forms inside 'definitions' key
+      #
+      # @param document [Hash{String}, JSF::Forms::Document]
+      # @return [Float, NilClass]
+      def specific_max_score(document, condition_proc:, is_create: false, **kwargs, &block)
+
+        # create an internal proc to encapsulate some logic and simplify
+        # the condition proc that needs to be sent via the caller
+        internal_condition_proc = Proc.new do |condition|
+          key = condition.condition_property_key
+          condition_prop = condition.condition_property
+          fake_hash = {"#{key}" => document.dig(condition_prop.document_path)}
+    
+          condition_proc.call(condition, fake_hash, condition_prop)
         end
 
-        nil
+        score_value = self.score_initial_value
+
+        # iterate recursively through schemas
+        each_form(condition_proc: internal_condition_proc, is_create: is_create, **kwargs) do |form, condition|
+          
+          # iterate properties and increment score_value if needed 
+          score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
+            next sum if !JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class)
+            next sum if prop.hidden? || (is_create && prop.hideOnCreate?)
+      
+            field_score = if document[k].nil?
+              prop.max_score
+            else
+
+              # check for any visible child field
+              visible_children = prop.dependent_conditions.any? do |cond|
+                next unless internal_condition_proc.call(cond)
+
+                cond.dig(:then, :properties)&.any? do |k,v|
+                  !v.hidden? && !(is_create && v.hideOnCreate?)
+                end
+              end
+        
+              if visible_children
+                document.dig(:extras, *prop.document_path, :score)
+              else
+                prop.max_score
+              end
+            end
+
+            [sum, field_score].compact.inject(&:+)
+          end
+
+        end
+        
+        score_value
       end
+
+      # @note This mutates the document!
+      #
+      # - removes all unknown keys
+      # - removes all keys with displayProperties.hidden
+      # - removes all keys with displayProperties.hideOnCreate if record is new
+      # - removes all keys in unactive trees
+      #
+      # @return [JSF::Forms::Document] mutated document
+      # def clean_document!(document, is_create: false, is_inspection: false)
+      # end
 
       # Checks if the form has fields with scoring
       #
       # @return [Boolean]
       def scored?(**args)
         has_scoring = false
-        schema_form_iterator(**args) do |_, then_hash|
-          then_hash.properties&.each do |key, field|
+        each_form(**args) do |form|
+          form.properties&.each do |key, field|
             if field.scored?
               has_scoring = true
               break 
@@ -923,31 +1024,31 @@ module JSF
         end
       end
 
-      # Builds a document with a key for each property on the schema form.
-      # It yields a condition and a value that can be validated with a json-schema compliant
-      # validator.
-      # 
-      # If the validator returns false and you pass {skip_when_false: true}, it will build
-      # a document with only 'visible properties'
-      #
-      # @param [Hash{String}], document
-      # @return [Hash{String}]
-      def nil_document(document, **args, &block)
-        #root
-        obj = self[:properties].transform_values{|v| nil}
+      # # Builds a document with a key for each property on the schema form.
+      # # It yields a condition and a value that can be validated with a json-schema compliant
+      # # validator.
+      # # 
+      # # If the validator returns false and you pass {skip_tree_when_false: true}, it will build
+      # # a document with only 'visible properties'
+      # #
+      # # @param [Hash{String}], document
+      # # @return [Hash{String}]
+      # def nil_document(document, **args, &block)
+      #   #root
+      #   obj = self[:properties].transform_values{|v| nil}
     
-        #subschemas
-        subschema_iterator(**args) do |if_hash, then_hash, parent_schema, current_level|
-          key = if_hash[:properties].keys.first
-          value = yield( if_hash, {"#{key}" => document[key]}, parent_schema.dig(:properties, key) )
+      #   #subschemas
+      #   each_form(start_level: 1, **args) do |form, if_hash, parent_schema|
+      #     key = if_hash[:properties].keys.first
+      #     value = yield( if_hash, {"#{key}" => document[key]}, parent_schema.dig(:properties, key) )
     
-          obj.merge!( then_hash[:properties].transform_values{|v| nil} ) if value
+      #     obj.merge!( form[:properties].transform_values{|v| nil} ) if value
     
-          value
-        end
+      #     value
+      #   end
     
-        obj
-      end
+      #   obj
+      # end
     
       # Mutates the entire Form to a json schema compliant
       #

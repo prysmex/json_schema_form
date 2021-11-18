@@ -82,6 +82,14 @@ module JSF
         self[:maxItems] != 1
       end
 
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
+        !i18n_label(locale).to_s.empty? &&
+          (
+            self[:items].nil? ||
+            self[:items].valid_for_locale?(locale)
+          )
+      end
+
       # Checks any subschema is scored
       #
       # @return [Boolean]

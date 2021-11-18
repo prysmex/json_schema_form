@@ -371,8 +371,8 @@ class FormTest < Minitest::Test
       append_conditional_property(:switch_2, example('switch'), dependent_on: :switch_1, type: :const, value: true)
     end
 
-    refute_nil form.get_merged_property('switch_1')
-    refute_nil form.get_merged_property('switch_2')
+    assert_instance_of JSF::Forms::Field::Switch, form.get_merged_property('switch_1')
+    assert_instance_of JSF::Forms::Field::Switch, form.get_merged_property('switch_2')
   end
 
   def test_prepend_property
@@ -575,7 +575,10 @@ class FormTest < Minitest::Test
   # def test_prepend_conditional_property
   # end
 
-  def test_schema_form_iterator
+  # def test_is_component_definition?
+  # end
+
+  def test_each_form
     form1, form2 = form3 = nil
     form1 = JSF::Forms::FormBuilder.build() do
       append_property(:switch_1, example('switch'))
@@ -592,7 +595,7 @@ class FormTest < Minitest::Test
     forms = [form1, form2, form3]
     forms.each_with_index do |f, index|
       i = index
-      form1.schema_form_iterator(start_level: index) do |condition, current_form, parent_form, current_level|
+      form1.each_form(start_level: index) do |current_form, current_level|
         assert_equal i, current_level
         assert_same forms[current_level], current_form
         i += 1
@@ -601,8 +604,9 @@ class FormTest < Minitest::Test
     
   end
   
-  def test_schema_form_iterator_2
+  def test_each_form_2
     form1_1 = form1_2 = form2_1 = form2_2 = nil
+
     form = JSF::Forms::FormBuilder.build() do
       append_property(:switch_1, example('switch'))
       append_conditional_property(:switch_1_1, example('switch'), dependent_on: :switch_1, type: :const, value: true) do |f, field|
@@ -621,26 +625,24 @@ class FormTest < Minitest::Test
 
     # all forms are yielded
     forms = []
-    form.schema_form_iterator(skip_when_false: false) do |condition, current_form, parent_form, current_level|
+    form.each_form do |current_form, current_level|
       forms.push(current_form)
       current_form != form1_1
     end
     assert_equal 5, forms.size
     assert_empty (forms - [form, form1_1, form1_2, form2_1, form2_2])
 
-    # test trees are halted when skip_when_false is true and block returns false
+    # test trees are halted when condition_proc returns false
     forms = []
-    form.schema_form_iterator(skip_when_false: true) do |condition, current_form, parent_form, current_level|
+    form.each_form(
+      condition_proc: ->(condition){ !condition.dig(:then, :properties).key?('switch_1_1') }
+    ) do |current_form, current_level|
       forms.push(current_form)
-      current_form != form1_1
     end
-    assert_equal 4, forms.size
-    assert_empty (forms - [form, form1_1, form2_1, form2_2])
+    assert_equal 3, forms.size
+    assert_empty (forms - [form, form2_1, form2_2])
 
   end
-
-  # def test_subschema_iterator
-  # end
 
   # def test_max_score
   # end

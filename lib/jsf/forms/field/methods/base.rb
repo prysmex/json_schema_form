@@ -117,7 +117,7 @@ module JSF
               component_definition_path = schema_path.slice(0..1)
 
               component_field = nil
-              root_form.schema_form_iterator do |_, form|
+              root_form.each_form do |form|
                 found_prop = form.properties.find do |key, prop|
                   next unless prop.is_a?(JSF::Forms::Field::Component)
                   prop.component_definition == root_form.dig(*component_definition_path) #match the field
