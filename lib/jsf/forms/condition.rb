@@ -88,6 +88,15 @@ module JSF
         self.meta[:parent]&.dig(:properties, condition_property_key)
       end
 
+      # Util
+      def evaluate(entire_document)
+        key = condition.condition_property_key
+        condition_prop = condition.condition_property
+        fake_hash = {"#{key}" => entire_document.dig(condition_prop.document_path)}
+
+        yield fake_hash, condition_prop
+      end
+
     end
 
   end

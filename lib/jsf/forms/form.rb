@@ -708,13 +708,15 @@ module JSF
 
       # Iterates and yields each JSF::Form along with its condition
       #
-      # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
-      # @param levels [Integer] Max depth of allOf nesting to starting from start_level
-      # @param is_create [Boolean] pass true to consider 'hideOnCreate' display property
       # @param condition_proc [Proc] if the returned value is falsy, then the iteration of that tree is halted
-      # @param skip_tree_when_hidden [Boolean] forces skiping trees when hidden
-      # @param ignore_sections [Boolean] if true, does not iterate into forms inside a JSF::Forms::Section
+      # @param skipped_form_callback [Proc]
       # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
+      # @param ignore_definitions [Boolean]
+      # @param ignore_sections [Boolean] if true, does not iterate into forms inside a JSF::Forms::Section
+      # @param is_create [Boolean] pass true to consider 'hideOnCreate' display property
+      # @param levels [Integer] Max depth of allOf nesting to starting from start_level
+      # @param skip_tree_when_hidden [Boolean] forces skiping trees when hidden
+      # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       #
       # @yieldparam [NilClass] condition
       # @yieldparam [JSF::Forms::Form] form
@@ -725,9 +727,10 @@ module JSF
       def each_form(
           condition_proc: nil,
           current_level: 0,
-          ignore_sections: false,
-          ignore_definitions: true,
+          skipped_form_callback: nil,
           ignore_all_of: false,
+          ignore_definitions: true,
+          ignore_sections: false,
           is_create: false,
           levels: nil,
           skip_tree_when_hidden: false,
@@ -740,6 +743,7 @@ module JSF
           # create kwargs hash to dry code when calling recursive
           kwargs = {}
           kwargs[:condition_proc] = condition_proc
+          kwargs[:skipped_form_callback] = skipped_form_callback
           kwargs[:ignore_sections] = ignore_sections
           kwargs[:ignore_definitions] = ignore_definitions
           kwargs[:ignore_all_of] = ignore_all_of
@@ -757,7 +761,11 @@ module JSF
           unless ignore_sections
             self.properties&.each do |key, prop|
               next unless prop.is_a?(JSF::Forms::Section)
-              next if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+
+              if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+                skipped_form_callback&.call(prop[:items])
+                next
+              end
               
               prop[:items]&.each_form(
                 current_level: current_level + 1,
@@ -785,8 +793,13 @@ module JSF
             self[:allOf]&.each do |condition|
               prop = condition.condition_property
 
-              next if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
-              next if condition_proc && !condition_proc.call(condition)
+              skip_hidden = skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+              failed_condition = condition_proc && !condition_proc.call(condition)
+
+              if failed_condition || skip_hidden
+                skipped_form_callback&.call(condition[:then])
+                next
+              end
     
               # go to next level recursively
               condition[:then]&.each_form(
@@ -809,33 +822,23 @@ module JSF
       # @return [Float, NilClass]
       def specific_max_score(document, condition_proc:, is_create: false, **kwargs, &block)
 
-        # create an internal proc to encapsulate some logic and simplify
-        # the condition proc that needs to be sent via the caller
-        internal_condition_proc = Proc.new do |condition|
-          key = condition.condition_property_key
-          condition_prop = condition.condition_property
-          fake_hash = {"#{key}" => document.dig(condition_prop.document_path)}
-    
-          condition_proc.call(condition, fake_hash, condition_prop)
-        end
-
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        each_form(condition_proc: internal_condition_proc, is_create: is_create, **kwargs) do |form, condition|
+        each_form(condition_proc: condition_proc, is_create: is_create, **kwargs) do |form, condition|
           
           # iterate properties and increment score_value if needed 
           score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
             next sum if !JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class)
             next sum if prop.hidden? || (is_create && prop.hideOnCreate?)
       
-            field_score = if document[k].nil?
+            field_score = if document.dig(*prop.document_path).nil?
               prop.max_score
             else
 
               # check for any visible child field
               visible_children = prop.dependent_conditions.any? do |cond|
-                next unless internal_condition_proc.call(cond)
+                next unless condition_proc.call(cond)
 
                 cond.dig(:then, :properties)&.any? do |k,v|
                   !v.hidden? && !(is_create && v.hideOnCreate?)
@@ -865,8 +868,14 @@ module JSF
       # - removes all keys in unactive trees
       #
       # @return [JSF::Forms::Document] mutated document
-      # def clean_document!(document, is_create: false, is_inspection: false)
-      # end
+      def clean_document!(document, is_create: false, is_inspection: false)
+
+        # option 1
+        # 1) create a nil_document from a document
+        # 2) flatten both hashes and remove all keys not present in the nil_document
+        # 3) rebuild a hash from flattened hash
+
+      end
 
       # Checks if the form has fields with scoring
       #
