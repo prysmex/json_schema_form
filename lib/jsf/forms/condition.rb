@@ -89,20 +89,21 @@ module JSF
       end
 
       def negated
-        self.dig('properties', condition_property_key).key?('not')
+        !!self.dig('if', 'properties', condition_property_key)&.key?('not')
       end
 
       def evaluate(entire_document)
-        condition_prop = condition.condition_property
-        key = condition.condition_property_key
-        value = entire_document.dig(condition_prop.document_path)
-
+        condition_prop = self.condition_property
+        key = self.condition_property_key
+        value = entire_document.dig(*condition_prop.document_path)
+        fake_hash = {"#{key}" => value}
+        
         if block_given?
           # support custom evaluation
-          yield({"#{key}" => value}, condition_prop)
+          yield(fake_hash, condition_prop)
         else
           return false if negated && value.nil?
-          JSONSchemer.schema(condition).valid?(value) # need to call as_json to condition and value?
+          JSONSchemer.schema(self[:if]).valid?(fake_hash) # need to call as_json to self and value?
         end
       end
 
