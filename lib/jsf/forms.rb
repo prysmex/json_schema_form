@@ -1,5 +1,6 @@
 # concerns
 require_relative 'forms/concerns/display_properties'
+require_relative 'forms/concerns/document_path'
 
 require_relative 'forms/component_ref'
 require_relative 'forms/condition'

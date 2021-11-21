@@ -7,6 +7,7 @@ module JSF
       include JSF::Core::Type::Arrayable
       include JSF::Core::Buildable
       include JSF::Forms::Concerns::DisplayProperties
+      include JSF::Forms::Concerns::DocumentPath
 
       set_strict_type('array')
 
@@ -73,6 +74,14 @@ module JSF
         end
       end
 
+      def valid_for_locale?(locale = DEFAULT_LOCALE)
+        !i18n_label(locale).to_s.empty? &&
+          (
+            form.nil? ||
+            form.valid_for_locale?(locale)
+          )
+      end
+
       ##############
       ###METHODS####
       ##############
@@ -84,14 +93,6 @@ module JSF
       # @return [Boolean]
       def repeatable?
         self[:maxItems] != 1
-      end
-
-      def valid_for_locale?(locale = DEFAULT_LOCALE)
-        !i18n_label(locale).to_s.empty? &&
-          (
-            form.nil? ||
-            form.valid_for_locale?(locale)
-          )
       end
 
       # Checks any subschema is scored

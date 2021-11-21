@@ -506,8 +506,8 @@ module JSF
       # @see insert_property_at_index for arguments
       #
       # @return [JSF::Forms::Field::*] added property
-      def prepend_property(*args)
-        insert_property_at_index(self.min_sort || 0, *args)
+      def prepend_property(*args, &block)
+        insert_property_at_index(self.min_sort || 0, *args, &block)
       end
     
       # Adds a property with a sort value 1 more than the max and resorts all other properties
@@ -515,10 +515,10 @@ module JSF
       # @see insert_property_at_index for arguments
       #
       # @return [JSF::Forms::Field::*] added property
-      def append_property(*args)
+      def append_property(*args, &block)
         max_sort = self.max_sort
         index = max_sort.nil? ? 0 : max_sort + 1
-        insert_property_at_index(index, *args)
+        insert_property_at_index(index, *args, &block)
       end
     
       # Adds a property with a specified sort value and resorts all other properties
@@ -527,8 +527,8 @@ module JSF
       # @param definition [Hash] the schema to add
       # @param options[:required] [Boolean] if the property should be required
       # @return [JSF::Forms::Field::*] added property
-      def insert_property_at_index(index, id, definition, options={})
-        prop = add_property(id, definition, options)
+      def insert_property_at_index(index, id, definition, options={}, &block)
+        prop = add_property(id, definition, options, &block)
         prop.sort = (index - 0.5)
         resort!
         prop
@@ -646,9 +646,7 @@ module JSF
               :"#{dependent_on}" => SuperHash::Utils.bury({}, *CONDITION_TYPE_TO_PATH.call(type), value)
             }
           },
-          then: {
-            properties: {}
-          }
+          then: {}
         }
         self[:allOf].last
       end
@@ -662,7 +660,7 @@ module JSF
       # @param type [Symbol] type of condition
       # @param value [Symbol] value that makes the condition TRUE
       # @return [JSF::Forms::Field::*] the added property
-      def insert_conditional_property_at_index(sort_value, property_id, definition, dependent_on:, type:, value:, **options)
+      def insert_conditional_property_at_index(sort_value, property_id, definition, dependent_on:, type:, value:, **options, &block)
         unless sort_value.is_a?(Integer) || [:prepend, :append].include?(sort_value)
           raise ArgumentError.new("sort must be an Integer, :prepend or :append, got #{sort_value}")
         end
@@ -670,13 +668,12 @@ module JSF
         condition = get_condition(dependent_on, type, value) || add_condition(dependent_on, type, value)
         added_property = case sort_value
         when :prepend
-          condition[:then].prepend_property(property_id, definition, options)
+          condition[:then].prepend_property(property_id, definition, options, &block)
         when :append
-          condition[:then].append_property(property_id, definition, options)
+          condition[:then].append_property(property_id, definition, options, &block)
         else
-          condition[:then].insert_property_at_index(sort_value, property_id, definition, options)
+          condition[:then].insert_property_at_index(sort_value, property_id, definition, options, &block)
         end
-        yield(condition[:then], added_property) if block_given?
         added_property
       end
     
@@ -821,35 +818,44 @@ module JSF
       #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
-      def specific_max_score(document, condition_proc:, is_create: false, **kwargs, &block)
+      def specific_max_score(document, condition_proc: ->(condition){ condition.evaluate(document) }, is_create: false, **kwargs, &block)
 
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        each_form(condition_proc: condition_proc, is_create: is_create, **kwargs) do |form, condition|
-          
+        each_form(condition_proc: condition_proc, is_create: is_create, ignore_sections: true, **kwargs) do |form, _|
           # iterate properties and increment score_value if needed 
           score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
-            next sum if !JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class)
             next sum if prop.hidden? || (is_create && prop.hideOnCreate?)
-      
-            field_score = if document.dig(*prop.document_path).nil?
-              prop.max_score
-            else
 
-              # check for any visible child field
-              visible_children = prop.dependent_conditions.any? do |cond|
-                next unless condition_proc.call(cond)
+            value = document.dig(k)
 
-                cond.dig(:then, :properties)&.any? do |k,v|
-                  !v.hidden? && !(is_create && v.hideOnCreate?)
-                end
+            field_score = case prop
+            when JSF::Forms::Section
+              # Since JSF::Forms::Section are repeatable, we iterate recursively for each value
+              scores = value&.map do |doc|
+                prop.form.specific_max_score(doc, is_create: is_create, **kwargs, &block)
               end
-        
-              if visible_children
-                document.dig(:extras, *prop.document_path, :score)
-              else
+              scores&.compact&.inject(&:+)
+            when *JSF::Forms::Form::SCORABLE_FIELDS              
+              if value.nil?
                 prop.max_score
+              else
+  
+                # check for any visible child field
+                visible_children = prop.dependent_conditions.any? do |cond|
+                  next unless condition_proc.call(cond)
+  
+                  cond.dig(:then, :properties)&.any? do |k,v|
+                    !v.hidden? && !(is_create && v.hideOnCreate?)
+                  end
+                end
+          
+                if visible_children
+                  prop.score_for_value(value)
+                else
+                  prop.max_score
+                end
               end
             end
 
@@ -1080,8 +1086,8 @@ module JSF
       private
     
       # redefined as private to favor append*, prepend* methods
-      def add_property(*args)
-        super(*args)
+      def add_property(*args, &block)
+        super(*args, &block)
       end
 
       # Raises an error if form is NOT the root form

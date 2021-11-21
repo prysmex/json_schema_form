@@ -92,10 +92,16 @@ module JSF
         !!self.dig('if', 'properties', condition_property_key)&.key?('not')
       end
 
-      def evaluate(entire_document)
+      # Takes a document or a part of a document (for nested hashes like JSF::Forms::Section) and
+      # evaluates if the condition passes. It supports passing a block which will yield data for
+      # easy evaluation
+      #
+      # @param [Hash{String}] local_document must have the root key that will be evaluated
+      # @return [<Type>] <description>
+      def evaluate(local_document)
         condition_prop = self.condition_property
         key = self.condition_property_key
-        value = entire_document.dig(*condition_prop.document_path)
+        value = local_document[key]
         fake_hash = {"#{key}" => value}
         
         if block_given?
