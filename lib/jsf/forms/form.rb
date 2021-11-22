@@ -757,7 +757,7 @@ module JSF
             self.properties&.each do |key, prop|
               next unless prop.is_a?(JSF::Forms::Section)
 
-              if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+              if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate?))
                 skipped_form_callback&.call(prop[:items])
                 next
               end
@@ -788,7 +788,7 @@ module JSF
             self[:allOf]&.each do |condition|
               prop = condition.condition_property
 
-              skip_hidden = skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
+              skip_hidden = skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate?))
 
               if skip_hidden
                 skipped_form_callback&.call(condition[:then])
@@ -821,7 +821,7 @@ module JSF
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        each_form(is_create: is_create, ignore_sections: true, **kwargs) do |form, condition, skip_branch_proc|
+        each_form(skip_tree_when_hidden: true, is_create: is_create, ignore_sections: true, **kwargs) do |form, condition, skip_branch_proc|
 
           if condition&.evaluate(document, &block) == false
             skip_branch_proc.call
@@ -870,19 +870,41 @@ module JSF
         score_value
       end
 
-      # @note This mutates the document!
-      #
-      # - removes all unknown keys
-      # - removes all keys with displayProperties.hidden
-      # - removes all keys with displayProperties.hideOnCreate if record is new
-      # - removes all keys in unactive trees
-      #
-      # @return [JSF::Forms::Document] mutated document
-      # def clean_document!(document, condition_proc:, is_create: false, is_inspection: false)
-      #   # option 1
-      #   # 1) create a nil_document from a document
-      #   # 2) flatten both hashes and remove all keys not present in the nil_document
-      #   # 3) rebuild a hash from flattened hash
+      # # @note This mutates the document!
+      # #
+      # # - removes all nil values
+      # # - removes all unknown keys
+      # # - removes all keys with displayProperties.hidden
+      # # - removes all keys with displayProperties.hideOnCreate if record is new
+      # # - removes all keys in unactive trees
+      # #
+      # # @return [JSF::Forms::Document] mutated document
+      # def cleaned_document(document, is_create: false, is_inspection: false)
+      #   document.each_with_object({}) do |(key, value), hash|
+      #     next if value.nil?
+
+      #     if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
+      #     else
+      #       property = self.get_merged_property(key, skip_tree_when_hidden: true, is_create: is_create, ignore_sections: true)
+      #       next unless property
+
+      #       new_value = case property
+      #       when JSF::Forms::Section
+      #         value&.map do |doc|
+      #           property.form.clean_document(doc, is_create: is_create, is_inspection: is_inspection)
+      #         end
+      #       # go recursive on component
+      #       when JSF::Forms::Field::Component
+      #         property
+      #           .component_definition
+      #           .clean_document(value, is_create: is_create, is_inspection: is_inspection) 
+      #       else property
+      #         value
+      #       end
+
+      #       hash[key] = new_value
+      #     end
+      #   end
       # end
 
       # Checks if the form has fields with scoring
@@ -920,7 +942,7 @@ module JSF
       def max_score(skip_hidden: true, &block)
         self[:properties]&.inject(nil) do |acum, (name, field)|
 
-          raise StandardError.new('JSF::Forms::Section field is not yet supported for max_score')
+          raise StandardError.new('JSF::Forms::Section field is not supported for max_score') if field.is_a?(JSF::Forms::Section)
           next acum if skip_hidden && field.hidden?
     
           # Field may have conditional fields so we go recursive trying all possible

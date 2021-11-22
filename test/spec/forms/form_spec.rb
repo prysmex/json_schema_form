@@ -590,7 +590,10 @@ class FormTest < Minitest::Test
   # end
 
   def test_each_form
+    # create vars to store forms in
     form1, form2 = form3 = form4 = form5 = form6 = nil
+
+    # build the form
     form1 = JSF::Forms::FormBuilder.build() do
       append_property(:switch_1, example('switch')) do |form, field, key|
         form.append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
@@ -612,14 +615,12 @@ class FormTest < Minitest::Test
         field.form.append_property(:switch_6, example('switch'))
       end
     end
-
     
     # test all forms are yielded, only once
     forms = []
     form1.each_form do |current_form, current_level|
       forms.push(current_form)
     end
-
     assert_equal 6, forms.size
     assert_empty (forms - [form1, form2, form3, form4, form5, form6])
 
@@ -628,7 +629,6 @@ class FormTest < Minitest::Test
     form1.each_form(ignore_definitions: true) do |current_form, current_level|
       forms.push(current_form)
     end
-
     assert_equal 6, forms.size
     assert_empty (forms - [form1, form2, form3, form4, form5, form6])
 
@@ -637,7 +637,6 @@ class FormTest < Minitest::Test
     form1.each_form(ignore_all_of: true) do |current_form, current_level|
       forms.push(current_form)
     end
-
     assert_equal 2, forms.size
     assert_empty (forms - [form1, form6])
 
@@ -646,21 +645,84 @@ class FormTest < Minitest::Test
     form1.each_form(ignore_sections: true) do |current_form, current_level|
       forms.push(current_form)
     end
-
     assert_equal 4, forms.size
     assert_empty (forms - [form1, form2, form3, form4])
 
-    # # test trees are halted when condition_proc returns false
+    # test trees are halted when yielded skip_branch_proc proc is called
     forms = []
-    form1.each_form(
-      # condition_proc: ->(condition){ !condition.dig(:then, :properties).key?('switch_1_1') }
-    ) do |current_form, current_level, skip_branch_proc|
+    form1.each_form() do |current_form, current_level, skip_branch_proc|
       skip_branch_proc.call if current_form.dig(:properties, :switch_2)
       forms.push(current_form)
     end
-
     assert_equal 4, forms.size
     assert_empty (forms - [form1, form4, form5, form6])
+
+    # test hidden is ignored when skip_tree_when_hidden is false
+    hide_props = ['switch_1', 'section_1']
+    hide_props.each{|key| form1.get_property(key).hidden = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: false) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 6, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5, form6])
+    hide_props.each{|key| form1.get_property(key).hidden = false } #restore
+
+    # test hidden property does not yield dependent forms when skip_tree_when_hidden is true
+    hide_props = ['switch_1']
+    hide_props.each{|key| form1.get_property(key).hidden = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 2, forms.size
+    assert_empty (forms - [form1, form6])
+    hide_props.each{|key| form1.get_property(key).hidden = false } #restore
+
+    # test hidden section does not yield dependent form when skip_tree_when_hidden is true
+    hide_props = ['section_1']
+    hide_props.each{|key| form1.get_property(key).hidden = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 5, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5])
+    hide_props.each{|key| form1.get_property(key).hidden = false } #restore
+
+    # test hideOnCreate is ignored when skip_tree_when_hidden is false
+    hide_props = ['switch_1', 'section_1']
+    hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: false) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 6, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5, form6])
+    hide_props.each{|key| form1.get_property(key).hidden = false } #restore
+
+    # test hideOnCreate is ignored when skip_tree_when_hidden is true and is_create is false
+    hide_props = ['switch_1', 'section_1']
+    hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: true, is_create: false) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 6, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5, form6])
+    hide_props.each{|key| form1.get_property(key).hideOnCreate = false } #restore
+
+    # test hideOnCreate property does not yield dependent forms when skip_tree_when_hidden is true and is_create is true
+    hide_props = ['switch_1']
+    hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
+    forms = []
+    form1.each_form(skip_tree_when_hidden: true, is_create: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+    assert_equal 2, forms.size
+    assert_empty (forms - [form1, form6])
+    hide_props.each{|key| form1.get_property(key).hideOnCreate = false } #restore
+
   end
 
   # def test_max_score
@@ -758,9 +820,8 @@ class FormTest < Minitest::Test
       end
     end
 
-    # form with no hidden fields
+    # test multiple documents for a form with no hidden fields
     form = scored_form_proc.call
-
     assert_equal 7.0, form.specific_max_score({})
     assert_equal 17.0, form.specific_max_score({'section_1' => [{}]} )
     assert_equal 27.0, form.specific_max_score({'section_1' => [{}, {}]} )
@@ -778,10 +839,9 @@ class FormTest < Minitest::Test
     assert_equal 33.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] })
     assert_equal 35.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] })
     assert_equal 35.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1', 'section_1_1_1' => [{}, {}]}] })
-
   end
 
-  # def test_clean_document
+  # def test_cleaned_document
   # end
 
   def test_scored?
@@ -889,9 +949,6 @@ class FormTest < Minitest::Test
     i18n_doc = form.i18n_document({'section' => [{"switch_2" => 'other_value'}]})
     assert_equal 'Missing Translation', i18n_doc.dig('section', 0, 'switch_2')
   end
-
-  # def test_i18n_document_value
-  # end
 
   # def test_compile
   # end
