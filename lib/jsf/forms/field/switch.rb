@@ -67,8 +67,12 @@ module JSF
         # @param [String,Symbol] locale
         # @return [String]
         def i18n_value(value, locale = DEFAULT_LOCALE)
-          label = value ? :trueLabel : :falseLabel
-          self.dig(:displayProperties, :i18n, label, locale)
+          label_key = if value == true
+            :trueLabel
+          elsif value == false
+            :falseLabel
+          end
+          self.dig(:displayProperties, :i18n, label_key, locale)
         end
   
         # @return [1]

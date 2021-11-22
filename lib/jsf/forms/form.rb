@@ -989,83 +989,46 @@ module JSF
       # @param [Symbol] locale <description>
       #
       # @return [Hash{String}]
-      def i18n_document(document, is_inspection: false, locale: DEFAULT_LOCALE)
-        merged_properties = self.merged_properties #precalculate for performance
-    
-        raise StandardError.new('schema not found') if merged_properties.nil?
-        document.each_with_object({}) do|(name, v), hash|
-          name = name.to_s
-
-          # if inspection, do not translate document keywords
-          if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(name)
-            hash[name] = v
+      def i18n_document(document, is_inspection: false, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation')
+        document.each_with_object({}) do |(key, value), hash|
+            
+          i18n_value = if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
+            value
           else
-            hash[name] = self.i18n_document_value(
-              name,
-              v,
-              locale: locale,
-              property: merged_properties[name],
-            )
+            property = self.get_merged_property(key, ignore_sections: true)
+
+            case property
+            when JSF::Forms::Field::Checkbox
+              value.map{ |v|
+                property.i18n_value(v, locale) || missing_locale_msg
+              }
+            when JSF::Forms::Field::Select
+              property.i18n_value(value, locale) || missing_locale_msg
+            when JSF::Forms::Field::Slider
+              property.i18n_value(value, locale) || missing_locale_msg
+            when JSF::Forms::Field::Switch
+              property.i18n_value(value, locale) || missing_locale_msg
+            # parse date
+            when JSF::Forms::Field::DateInput
+              value.class == DateTime ? value : DateTime.parse(value)
+            # go recursive on section
+            when JSF::Forms::Section
+              value&.map do |doc|
+                property.form.i18n_document(doc, is_inspection: is_inspection, locale: locale, missing_locale_msg: missing_locale_msg)
+              end
+            # go recursive on component
+            when JSF::Forms::Field::Component
+              property
+                .component_definition
+                .i18n_document(value, locale: locale, is_inspection: is_inspection, missing_locale_msg: missing_locale_msg)
+            else
+              value
+            end
           end
+
+          hash[key] = i18n_value
         end
       end
-    
-      def i18n_document_value(attr_name, value, is_inspection: false, locale: DEFAULT_LOCALE, property: nil)
-        return if value.nil?
-        
-        #for performance, allow passing the property
-        property ||= get_merged_property(attr_name)
-        return unless property.present?
-    
-        missing_locale_msg = 'Missing Translation'
-
-        case property
-        when JSF::Forms::Field::Checkbox
-          value.map{ |v|
-            property.i18n_value(v, locale) || missing_locale_msg
-          }
-        when JSF::Forms::Field::Slider
-          property.i18n_value(value, locale) || missing_locale_msg
-        when JSF::Forms::Field::Select
-          property.i18n_value(value, locale) || missing_locale_msg
-        when JSF::Forms::Field::DateInput
-          value.class == DateTime ? value : DateTime.parse(value) 
-        when JSF::Forms::Field::Switch
-          property.i18n_value(value, locale) || missing_locale_msg
-        when JSF::Forms::Field::Component
-          property
-            .component_definition
-            .i18n_document(value, locale: locale, is_inspection: is_inspection)
-        else
-          value
-        end
-      end
-
-      # # Builds a document with a key for each property on the schema form.
-      # # It yields a condition and a value that can be validated with a json-schema compliant
-      # # validator.
-      # # 
-      # # If the validator returns false and you pass {skip_tree_when_false: true}, it will build
-      # # a document with only 'visible properties'
-      # #
-      # # @param [Hash{String}], document
-      # # @return [Hash{String}]
-      # def nil_document(document, **args, &block)
-      #   #root
-      #   obj = self[:properties].transform_values{|v| nil}
-    
-      #   #subschemas
-      #   each_form(start_level: 1, **args) do |form, if_hash, parent_schema|
-      #     key = if_hash[:properties].keys.first
-      #     value = yield( if_hash, {"#{key}" => document[key]}, parent_schema.dig(:properties, key) )
-    
-      #     obj.merge!( form[:properties].transform_values{|v| nil} ) if value
-    
-      #     value
-      #   end
-    
-      #   obj
-      # end
     
       # Mutates the entire Form to a json schema compliant
       #

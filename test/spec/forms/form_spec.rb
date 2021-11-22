@@ -810,13 +810,87 @@ class FormTest < Minitest::Test
     assert_equal true, complex_non_scorable_form.scored?
   end
 
-  # def test_i18n_document
-  # end
+  def test_i18n_document
+    form = JSF::Forms::FormBuilder.build do
+
+      add_response_set(:response_set_1, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'value_1'
+          r.set_translation('respuesta 1')
+        end
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'value_2'
+          r.set_translation('respuesta 2')
+        end
+      end
+
+      # non-translatable
+      append_property(:number_input, example('number_input'))
+
+      # translatable
+      append_property(:checkbox, example('checkbox')) do |_, field|
+        field.response_set_id = :response_set_1
+      end
+      append_property(:select, example('select')) do |_, field|
+        field.response_set_id = :response_set_1
+      end
+      append_property(:slider, example('slider'))
+      append_property(:switch, example('switch')) do |form, field, key|
+        # conditional field
+        form.append_conditional_property(:switch_1, example('switch'), dependent_on: key, type: :const, value: true)
+      end
+
+      # section
+      append_property(:section, example('section')) do |_, field, _|
+        field.form.append_property(:switch_2, example('switch'))
+      end
+      
+    end
+
+    # ignores non existing fields
+    i18n_doc = form.i18n_document({'some_prop' => 'hello'})
+    assert_equal 'hello', i18n_doc['some_prop']
+
+    # does not mutate non-translatable fields
+    i18n_doc = form.i18n_document({'number_input' => 1})
+    assert_equal 1, i18n_doc['number_input']
+
+    # translates checkbox
+    i18n_doc = form.i18n_document({'checkbox' => ['value_1', 'other_value']})
+    assert_equal ['respuesta 1', 'Missing Translation'], i18n_doc['checkbox']
+
+    # translates select
+    i18n_doc = form.i18n_document({'select' => 'value_1'})
+    assert_equal 'respuesta 1', i18n_doc['select']
+    i18n_doc = form.i18n_document({'select' => 'other_value'})
+    assert_equal 'Missing Translation', i18n_doc['select']
+
+    # translates slider
+    i18n_doc = form.i18n_document({'slider' => 5})
+    assert_equal '5', i18n_doc['slider']
+    i18n_doc = form.i18n_document({'slider' => 500})
+    assert_equal 'Missing Translation', i18n_doc['slider']
+
+    # translates switch
+    i18n_doc = form.i18n_document({'switch' => true})
+    assert_equal 'Algun texto positivo', i18n_doc['switch']
+    i18n_doc = form.i18n_document({'switch' => 'other_value'})
+    assert_equal 'Missing Translation', i18n_doc['switch']
+
+    # translates logic field
+    i18n_doc = form.i18n_document({'switch_1' => true})
+    assert_equal 'Algun texto positivo', i18n_doc['switch_1']
+    i18n_doc = form.i18n_document({'switch_1' => 'other_value'})
+    assert_equal 'Missing Translation', i18n_doc['switch_1']
+
+    # translates field in section
+    i18n_doc = form.i18n_document({'section' => [{"switch_2" => true}]})
+    assert_equal 'Algun texto positivo', i18n_doc.dig('section', 0, 'switch_2')
+    i18n_doc = form.i18n_document({'section' => [{"switch_2" => 'other_value'}]})
+    assert_equal 'Missing Translation', i18n_doc.dig('section', 0, 'switch_2')
+  end
 
   # def test_i18n_document_value
-  # end
-
-  # def test_nil_document
   # end
 
   # def test_compile
