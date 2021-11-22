@@ -590,7 +590,7 @@ class FormTest < Minitest::Test
   # end
 
   def test_each_form
-    form1, form2 = form3 = nil
+    form1, form2 = form3 = form4 = form5 = form6 = nil
     form1 = JSF::Forms::FormBuilder.build() do
       append_property(:switch_1, example('switch')) do |form, field, key|
         form.append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
@@ -599,62 +599,68 @@ class FormTest < Minitest::Test
             form3 = subform
           end
         end
+
+        form.append_conditional_property(:section_2, example('section'), dependent_on: key, type: :const, value: false) do |subform, field, key|
+          form4 = subform
+          form5 = field.form
+          field.form.append_property(:switch_4, example('switch'))
+        end
+      end
+
+      append_property(:section_1, example('section')) do |form, field, key|
+        form6 = field.form
+        field.form.append_property(:switch_6, example('switch'))
       end
     end
 
     
-    # test current_level counter, current_form yield
-    forms = [form1, form2, form3]
-    forms.each_with_index do |f, index|
-      i = index
-      form1.each_form(start_level: index) do |current_form, current_level|
-        assert_equal i, current_level
-        assert_same forms[current_level], current_form
-        i += 1
-      end
-    end
-    
-  end
-  
-  def test_each_form_2
-    form1_1 = form1_2 = form2_1 = form2_2 = nil
-
-    form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch_1, example('switch')) do |form, field, key|
-        form.append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
-          form1_1 = subform
-          subform.append_conditional_property(:switch_1_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
-            form1_2 = subform
-          end
-        end
-        form.append_conditional_property(:switch_2_1, example('switch'), dependent_on: key, type: :const, value: false) do |subform, field, key|
-          form2_1 = subform
-          subform.append_conditional_property(:switch_2_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
-            form2_2 = subform
-          end
-        end
-      end
-    end
-
-    # all forms are yielded
+    # test all forms are yielded, only once
     forms = []
-    form.each_form do |current_form, current_level|
-      forms.push(current_form)
-      current_form != form1_1
-    end
-    assert_equal 5, forms.size
-    assert_empty (forms - [form, form1_1, form1_2, form2_1, form2_2])
-
-    # test trees are halted when condition_proc returns false
-    forms = []
-    form.each_form(
-      condition_proc: ->(condition){ !condition.dig(:then, :properties).key?('switch_1_1') }
-    ) do |current_form, current_level|
+    form1.each_form do |current_form, current_level|
       forms.push(current_form)
     end
-    assert_equal 3, forms.size
-    assert_empty (forms - [form, form2_1, form2_2])
 
+    assert_equal 6, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5, form6])
+
+    # ignore_definitions
+    forms = []
+    form1.each_form(ignore_definitions: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+
+    assert_equal 6, forms.size
+    assert_empty (forms - [form1, form2, form3, form4, form5, form6])
+
+    # ignore_all_of
+    forms = []
+    form1.each_form(ignore_all_of: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+
+    assert_equal 2, forms.size
+    assert_empty (forms - [form1, form6])
+
+    # ignore_sections
+    forms = []
+    form1.each_form(ignore_sections: true) do |current_form, current_level|
+      forms.push(current_form)
+    end
+
+    assert_equal 4, forms.size
+    assert_empty (forms - [form1, form2, form3, form4])
+
+    # # test trees are halted when condition_proc returns false
+    forms = []
+    form1.each_form(
+      # condition_proc: ->(condition){ !condition.dig(:then, :properties).key?('switch_1_1') }
+    ) do |current_form, current_level, skip_branch_proc|
+      skip_branch_proc.call if current_form.dig(:properties, :switch_2)
+      forms.push(current_form)
+    end
+
+    assert_equal 4, forms.size
+    assert_empty (forms - [form1, form4, form5, form6])
   end
 
   # def test_max_score

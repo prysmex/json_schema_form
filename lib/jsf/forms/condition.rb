@@ -106,7 +106,7 @@ module JSF
         
         if block_given?
           # support custom evaluation
-          yield(fake_hash, condition_prop)
+          yield(self[:if], fake_hash, condition_prop)
         else
           return false if negated && value.nil?
           JSONSchemer.schema(self[:if]).valid?(fake_hash) # need to call as_json to self and value?

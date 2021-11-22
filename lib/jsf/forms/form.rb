@@ -704,7 +704,6 @@ module JSF
 
       # Iterates and yields each JSF::Form along with its condition
       #
-      # @param condition_proc [Proc] if the returned value is falsy, then the iteration of that tree is halted
       # @param skipped_form_callback [Proc]
       # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
       # @param ignore_definitions [Boolean]
@@ -714,14 +713,13 @@ module JSF
       # @param skip_tree_when_hidden [Boolean] forces skiping trees when hidden
       # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       #
-      # @yieldparam [NilClass] condition
       # @yieldparam [JSF::Forms::Form] form
-      # @yieldparam [NilClass] parent form
+      # @yieldparam [JSF::Forms::Condition] condition
+      # @yieldparam [Proc] skip_branch_proc
       # @yieldparam [Integer] nested level, 0 for root
       #
       # @return [void]
       def each_form(
-          condition_proc: nil,
           current_level: 0,
           skipped_form_callback: nil,
           ignore_all_of: false,
@@ -738,7 +736,6 @@ module JSF
 
           # create kwargs hash to dry code when calling recursive
           kwargs = {}
-          kwargs[:condition_proc] = condition_proc
           kwargs[:skipped_form_callback] = skipped_form_callback
           kwargs[:ignore_sections] = ignore_sections
           kwargs[:ignore_definitions] = ignore_definitions
@@ -750,7 +747,9 @@ module JSF
 
           # yield only if reached start_level or start_level is nil
           if start_level.nil? || current_level >= start_level
-            yield(self, current_level)
+            condition = self.meta[:parent] if self.meta[:parent].is_a?(JSF::Forms::Condition)
+            skip_branch_proc = Proc.new{ return }
+            yield(self, condition, skip_branch_proc, current_level)
           end
 
           # iterate properties and call recursive on JSF::Forms::Section
@@ -790,9 +789,8 @@ module JSF
               prop = condition.condition_property
 
               skip_hidden = skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate))
-              failed_condition = condition_proc && !condition_proc.call(condition)
 
-              if failed_condition || skip_hidden
+              if skip_hidden
                 skipped_form_callback&.call(condition[:then])
                 next
               end
@@ -818,12 +816,17 @@ module JSF
       #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
-      def specific_max_score(document, condition_proc: ->(condition){ condition.evaluate(document) }, is_create: false, **kwargs, &block)
+      def specific_max_score(document, is_create: false, **kwargs, &block)
 
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        each_form(condition_proc: condition_proc, is_create: is_create, ignore_sections: true, **kwargs) do |form, _|
+        each_form(is_create: is_create, ignore_sections: true, **kwargs) do |form, condition, skip_branch_proc|
+
+          if condition&.evaluate(document, &block) == false
+            skip_branch_proc.call
+          end
+
           # iterate properties and increment score_value if needed 
           score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
             next sum if prop.hidden? || (is_create && prop.hideOnCreate?)
@@ -844,7 +847,7 @@ module JSF
   
                 # check for any visible child field
                 visible_children = prop.dependent_conditions.any? do |cond|
-                  next unless condition_proc.call(cond)
+                  next unless cond.evaluate(document, &block)
   
                   cond.dig(:then, :properties)&.any? do |k,v|
                     !v.hidden? && !(is_create && v.hideOnCreate?)
