@@ -811,7 +811,7 @@ class FormTest < Minitest::Test
 
               subform.append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: 'score_2')
               subform.append_conditional_property(:section_1_1_1, example('section'), dependent_on: key, type: :const, value: 'score_1') do |_, field, _|
-                field.form.append_property(:switch_1, example('switch'))
+                field.form.append_property(:switch_1_1_1_1, example('switch'))
               end
             end
           end

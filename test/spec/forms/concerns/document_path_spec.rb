@@ -13,10 +13,6 @@ class FormTest < Minitest::Test
           append_property(:shared_switch_1, example('switch')) do |form, field, key|
             form.append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
           end
-
-          # append_property(:section, example('section')) do |_, section|
-          #   section.form.append_property(:switch_2, example('switch'))
-          # end
         end
       )
 

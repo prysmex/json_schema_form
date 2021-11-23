@@ -72,6 +72,10 @@ module JSF
           SuperHash::Utils.bury(self, :displayProperties, :i18n, :label, locale, label)
         end
 
+        def visible(is_create:)
+          !self.hidden? && !(is_create && self.hideOnCreate?)
+        end
+
       end
     end
   end

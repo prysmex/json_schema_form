@@ -495,10 +495,15 @@ module JSF
       # @param [String, Symbol]
       # @return [JSF::Forms::Field::*]
       def get_merged_property(property, **args)
+        prop = nil
         each_form(**args) do |form|
           props = form&.properties
-          break props[property] if props&.key?(property)
+          if props&.key?(property)
+            prop = props[property] 
+            break
+          end
         end
+        prop
       end
     
       # Adds a property with a sort value of 0 and resorts all other properties
@@ -702,9 +707,9 @@ module JSF
         self.meta[:path].first == 'definitions'
       end
 
-      # Iterates and yields each JSF::Form along with its condition
+      # Utilt that recursively iterates and yields each JSF::Forms::Form along with other relevant
+      # params.
       #
-      # @param skipped_form_callback [Proc]
       # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
       # @param ignore_definitions [Boolean]
       # @param ignore_sections [Boolean] if true, does not iterate into forms inside a JSF::Forms::Section
@@ -721,7 +726,6 @@ module JSF
       # @return [void]
       def each_form(
           current_level: 0,
-          skipped_form_callback: nil,
           ignore_all_of: false,
           ignore_definitions: true,
           ignore_sections: false,
@@ -736,7 +740,6 @@ module JSF
 
           # create kwargs hash to dry code when calling recursive
           kwargs = {}
-          kwargs[:skipped_form_callback] = skipped_form_callback
           kwargs[:ignore_sections] = ignore_sections
           kwargs[:ignore_definitions] = ignore_definitions
           kwargs[:ignore_all_of] = ignore_all_of
@@ -757,8 +760,7 @@ module JSF
             self.properties&.each do |key, prop|
               next unless prop.is_a?(JSF::Forms::Section)
 
-              if skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate?))
-                skipped_form_callback&.call(prop[:items])
+              if skip_tree_when_hidden && !prop.visible(is_create: is_create)
                 next
               end
               
@@ -788,10 +790,9 @@ module JSF
             self[:allOf]&.each do |condition|
               prop = condition.condition_property
 
-              skip_hidden = skip_tree_when_hidden && (prop.hidden? || (is_create && prop.hideOnCreate?))
+              skip_hidden = skip_tree_when_hidden && !prop.visible(is_create: is_create)
 
               if skip_hidden
-                skipped_form_callback&.call(condition[:then])
                 next
               end
     
@@ -807,6 +808,32 @@ module JSF
 
       end
 
+      # def each_form_with_document(document, document_path: [], **kwargs, &block)
+      #   each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc|
+
+      #     yield(form, condition, skip_branch_proc, document, document_path)
+
+      #     # handle all properties that have a value that is a hash or an array because the document_path is modified
+      #     form[:properties].each do |key, property|
+      #       next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: is_create)
+      #       value = document[key]
+
+      #       # go recursive
+      #       case property
+      #       when JSF::Forms::Section
+      #         value&.map.with_index do |doc, i|
+      #           property.form.each_form_with_document(doc, is_create: is_create, document_path: (document_path + [key + i]), **kwargs, &block)
+      #         end
+      #       # when JSF::Forms::Field::Component
+      #       #   property
+      #       #     .component_definition
+      #       #     .each_form_with_document(value, is_create: is_create, document_path: (document_path + [key]), **kwargs, &block)
+      #       end
+      #     end
+
+      #   end
+      # end
+
       # Calculates the maximum attainable score given a document. This
       # considers which paths are active in the form.
       #
@@ -816,20 +843,20 @@ module JSF
       #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
-      def specific_max_score(document, is_create: false, **kwargs, &block)
+      def specific_max_score(document, is_create: false, condition_proc: nil, **kwargs)
 
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
         each_form(skip_tree_when_hidden: true, is_create: is_create, ignore_sections: true, **kwargs) do |form, condition, skip_branch_proc|
 
-          if condition&.evaluate(document, &block) == false
+          if condition&.evaluate(document, &condition_proc) == false
             skip_branch_proc.call
           end
 
-          # iterate properties and increment score_value if needed 
+          # iterate properties and increment score_value if needed
           score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
-            next sum if prop.hidden? || (is_create && prop.hideOnCreate?)
+            next sum unless prop.visible(is_create: is_create)
 
             value = document.dig(k)
 
@@ -837,20 +864,20 @@ module JSF
             when JSF::Forms::Section
               # Since JSF::Forms::Section are repeatable, we iterate recursively for each value
               scores = value&.map do |doc|
-                prop.form.specific_max_score(doc, is_create: is_create, **kwargs, &block)
+                prop.form.specific_max_score(doc, is_create: is_create, condition_proc: condition_proc, **kwargs)
               end
               scores&.compact&.inject(&:+)
-            when *JSF::Forms::Form::SCORABLE_FIELDS              
+            when *JSF::Forms::Form::SCORABLE_FIELDS
               if value.nil?
                 prop.max_score
               else
   
                 # check for any visible child field
                 visible_children = prop.dependent_conditions.any? do |cond|
-                  next unless cond.evaluate(document, &block)
+                  next unless cond.evaluate(document, &condition_proc)
   
                   cond.dig(:then, :properties)&.any? do |k,v|
-                    !v.hidden? && !(is_create && v.hideOnCreate?)
+                    v.visible(is_create: is_create)
                   end
                 end
           
@@ -864,7 +891,6 @@ module JSF
 
             [sum, field_score].compact.inject(&:+)
           end
-
         end
         
         score_value
@@ -878,33 +904,43 @@ module JSF
       # # - removes all keys with displayProperties.hideOnCreate if record is new
       # # - removes all keys in unactive trees
       # #
+      # # @todo clean document extras and meta
+      # #
       # # @return [JSF::Forms::Document] mutated document
       # def cleaned_document(document, is_create: false, is_inspection: false)
-      #   document.each_with_object({}) do |(key, value), hash|
-      #     next if value.nil?
+      #   new_document = {}
 
-      #     if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
-      #     else
-      #       property = self.get_merged_property(key, skip_tree_when_hidden: true, is_create: is_create, ignore_sections: true)
-      #       next unless property
+      #   # iterate recursively through schemas, skips hidden and hideOnCreate
+      #   each_form(is_create: is_create, skip_tree_when_hidden: true, ignore_sections: true) do |form, condition, skip_branch_proc|
+
+      #     # skip unactive trees
+      #     skip_branch_proc.call if condition&.evaluate(document, &block) == false
+
+      #     form[:properties].each do |key, property|
+      #       next unless property.visible(is_create: is_create)
+      #       value = document[key]
+      #       next if document.nil? # skip nil value
 
       #       new_value = case property
+      #       # go recursive
       #       when JSF::Forms::Section
       #         value&.map do |doc|
-      #           property.form.clean_document(doc, is_create: is_create, is_inspection: is_inspection)
+      #           property.form.cleaned_document(doc, is_create: is_create, is_inspection: is_inspection)
       #         end
-      #       # go recursive on component
+      #       # go recursive
       #       when JSF::Forms::Field::Component
       #         property
       #           .component_definition
-      #           .clean_document(value, is_create: is_create, is_inspection: is_inspection) 
-      #       else property
+      #           .cleaned_document(value, is_create: is_create, is_inspection: is_inspection) 
+      #       else
       #         value
       #       end
 
-      #       hash[key] = new_value
+      #       new_document[key] = new_value
       #     end
       #   end
+
+      #   new_document
       # end
 
       # Checks if the form has fields with scoring
