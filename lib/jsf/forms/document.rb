@@ -9,24 +9,15 @@ module JSF
     class Document < BaseHash
       instance_variable_set('@allow_dynamic_attributes', true)
 
-      ROOT_KEYWORDS = ['meta', 'extras'].freeze
-      EXTRAS_KEYS = ['pictures', 'score', 'failed', 'notes', 'report_ids'].freeze
-      META_KEYS = ['coordinates', 'timestamp'].freeze
+      ROOT_KEYWORDS = ['meta'].freeze
 
       EXTRAS_TEMPLATE = Proc.new do
         {
           pictures: [],
-          score: nil,
-          failed: nil,
           notes: nil,
           report_ids: []
-        }
-      end
-
-      META_TEMPLATE = Proc.new do
-        {
-          coordinates: {},
-          timestamp: nil
+          # coordinates: {},
+          # timestamp: nil
         }
       end
 
@@ -36,90 +27,24 @@ module JSF
       def without_keywords
         self.select{|k,v| !ROOT_KEYWORDS.include?(k) }
       end
-
-      # Returns all keys except ROOT_KEYWORDS
-      # It flattens 'shared' fields
-      #
-      # @return [Array<String>]
-      def property_keys
-        SuperHash::Utils.flatten_to_root(without_keywords)
-          .keys
-          .map{|k| k.to_s.split('.').last}
-      end
-
-      # Recursively sets all missing keys present in 'document keys' inside 'extras' while
-      # also merging values that already existed inside 'extras'
-      # 
-      # @return [Hash]
-      # @return [void]
-      def set_missing_extras
-        mirror_data_structure(:extras)
-      end
-    
-      # Recursively sets all missing keys present in 'document keys' inside 'meta' while
-      # also merging values that already existed inside 'meta'
-      # 
-      # @return [Hash]
-      # @return [void]
-      def set_missing_meta
-        mirror_data_structure(:meta)
-      end
     
       # Iterates extras hash and yields a key value pair where:
       #   - key: name of the key
       #   - value: extras hash
       #
-      # Note: at least ONE of the EXTRAS_KEYS must exist
-      #
       # @param hash (used for recursion)
       # @return [void]
-      def each_extras(hash = self[:extras], &block)
-        hash&.each do |k,v|
-          if property_keys.include?(k) || (EXTRAS_KEYS & v.keys).size > 0
-            yield(k,v)
-          else
-            each_extras(v, &block)
+      def each_extras_hash(hash = self.dig(:meta, :extras), &block)
+        yield(hash)
+        hash&.each do |key, value|
+          case value
+          when Array
+            value.each do |v|
+              each_extras_hash(v, &block) if v.is_a? Hash
+            end
+          when Hash
+            each_extras_hash(value, &block)
           end
-        end
-      end
-    
-      # Iterates meta hash and yields a key value pair where:
-      #   - key: name of the key
-      #   - value: meta hash
-      #
-      # @param hash (used for recursion)
-      # @return [void]
-      def each_meta(hash = self[:meta], &block)
-        hash&.each do |k,v|
-          if property_keys.include?(k) || (META_KEYS & v.keys).size > 0
-            yield(k,v)
-          else
-            each_meta(v, &block)
-          end
-        end
-      end
-    
-      private
-    
-      # used to dry code for set_missing_extras and set_missing_meta
-      #
-      # @param [Symbol] keyname :extras or :meta
-      # @return [void]
-      def mirror_data_structure(key_name)
-        SuperHash::Utils.flatten_to_root(self.to_h).reject do |k,v|
-          k_s = k.to_s
-          next if k_s.start_with?('extras') || k_s.start_with?('meta')
-    
-          hash = if key_name == :extras
-            EXTRAS_TEMPLATE.call
-          elsif key_name == :meta
-            META_TEMPLATE.call
-          end
-    
-          path = k_s.split('.')
-          data = hash.merge(self.dig(key_name, *path) || {})
-        
-          SuperHash::Utils.bury(self, key_name, *path, data)
         end
       end
     

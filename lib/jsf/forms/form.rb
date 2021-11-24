@@ -1133,14 +1133,13 @@ module JSF
       # Builds a new hash where the values of translatable fields are localized
       #
       # @param [Hash{String}, Document] document 
-      # @param [Boolean] is_inspection <description>
       # @param [Symbol] locale <description>
       #
       # @return [Hash{String}]
-      def i18n_document(document, is_inspection: false, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation')
+      def i18n_document(document, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation')
         document.each_with_object({}) do |(key, value), hash|
             
-          i18n_value = if is_inspection && JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
+          i18n_value = if JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
             value
           else
             property = self.get_merged_property(key, ignore_sections: true)
@@ -1162,13 +1161,13 @@ module JSF
             # go recursive on section
             when JSF::Forms::Section
               value&.map do |doc|
-                property.form.i18n_document(doc, is_inspection: is_inspection, locale: locale, missing_locale_msg: missing_locale_msg)
+                property.form.i18n_document(doc, locale: locale, missing_locale_msg: missing_locale_msg)
               end
             # go recursive on component
             when JSF::Forms::Field::Component
               property
                 .component_definition
-                .i18n_document(value, locale: locale, is_inspection: is_inspection, missing_locale_msg: missing_locale_msg)
+                .i18n_document(value, locale: locale, missing_locale_msg: missing_locale_msg)
             else
               value
             end

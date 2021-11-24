@@ -10,88 +10,43 @@ class DocumentTest < Minitest::Test
   # without_keywords
 
   def test_without_keywords
-    hash = JSF::Forms::Document.new(some_key: 'value', extras: {}, meta: {}).without_keywords
+    hash = JSF::Forms::Document.new(some_key: 'value', meta: {}).without_keywords
     assert_equal 1, hash.keys.size
     assert_equal 'some_key', hash.keys.first
   end
 
-  # property_keys
-
-  def test_property_keys
-    document = JSF::Forms::Document.new({
-      some_key: 'value',
-      other_key: 'test',
-      shared_template: {
-        prop_1: 1
-      }
-    })
-
-    assert_equal 3, document.property_keys.size
-    assert_equal ['some_key', 'other_key', 'prop_1'], document.property_keys
-  end
-
-  # set_missing_extras
-
-  def test_set_missing_extras
-    document = JSF::Forms::Document.new(some_key: 'value', shared: { prop_1: 1 })
-    document.set_missing_extras
-
-    expected = "{\"some_key\"=>{\"pictures\"=>[], \"score\"=>nil, \"failed\"=>nil, \"notes\"=>nil, \"report_ids\"=>[]}, \"shared\"=>{\"prop_1\"=>{\"pictures\"=>[], \"score\"=>nil, \"failed\"=>nil, \"notes\"=>nil, \"report_ids\"=>[]}}}"
-    assert_equal expected, document[:extras].to_s
-  end
-
-  # set_missing_meta
-
-  def test_set_missing_meta
-    document = JSF::Forms::Document.new(some_key: 'value', shared: { prop_1: 1 })
-    document.set_missing_meta
-
-    expected = "{\"some_key\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil}, \"shared\"=>{\"prop_1\"=>{\"coordinates\"=>{}, \"timestamp\"=>nil}}}"
-    assert_equal expected, document[:meta].to_s
-  end
-
   # each_extras
 
-  def test_each_extras
-    document = JSF::Forms::Document.new({
-      some_key: 'value',
-      shared_template: {
-        prop_1: 1
-      },
-      extras: {
-        some_key: {},
-        other_key: { pictures: [] },
-        shared_template: {
-          prop_1: {}
-        }
-      }
-    })
-
-    keys = []
-    document.each_extras{|k,v| keys.push(k) }
-    assert_equal ['some_key', 'other_key', 'prop_1'], keys
-  end
-
-  # each_meta
-
-  def test_each_meta
+  def test_each_extras_hash
     document = JSF::Forms::Document.new({
       some_key: 'value',
       shared_template: {
         prop_1: 1
       },
       meta: {
-        some_key: {},
-        other_key: { timestamp: 'some timestamp' },
-        shared_template: {
-          prop_1: {}
+        extras: {
+          some_key: {},
+          other_key: {
+            pictures: ['picture_1']
+          },
+          section: [
+            {
+              shared_template: {
+                prop_1: {
+                  pictures: ['picture_2']
+                }
+              }
+            }
+          ]
         }
       }
     })
 
-    keys = []
-    document.each_meta{|k,v| keys.push(k) }
-    assert_equal ['some_key', 'other_key', 'prop_1'], keys
+    pictures = []
+    document.each_extras_hash do |obj|
+      pictures.concat(obj['pictures']) if obj.key?('pictures')
+    end
+    assert_equal ['picture_1', 'picture_2'], pictures
   end
 
 end
