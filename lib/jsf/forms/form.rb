@@ -183,10 +183,11 @@ module JSF
             optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
             if is_inspection
-              optional(:hasScoring) { int? | float? | nil? }
+              required(:hasScoring) { bool? }
             end
           else
             optional(:'$schema').filled(:string)
+            optional(:type).filled(Types::String.enum('object'))
           end
     
         end
@@ -1188,12 +1189,13 @@ module JSF
       #
       # @return [void]
       def migrate!
-        if self[:schemaFormVersion] != '3.1.0'
-          if !self.meta[:is_subschema]
-            self[:hasScoring] = !self[:maxScore].nil?
-            self[:schemaFormVersion] = '3.1.0'
-          end
+        return if self[:schemaFormVersion] == '3.1.0'
+
+        if !self.meta[:is_subschema]
+          self[:hasScoring] = !self[:maxScore].nil? if self.key?('maxScore')
+          self[:schemaFormVersion] = '3.1.0'
         end
+
       end
     
       private

@@ -62,6 +62,7 @@ module JSF
             optional(:properties)
             optional(:allOf)
             optional(:required)
+            optional(:type)
           end
         end
       end
