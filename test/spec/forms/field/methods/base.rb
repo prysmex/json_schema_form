@@ -38,7 +38,7 @@ module BaseMethodsTests
   def test_no_unknown_keys_allowed
     error_proc = ->(obj, key) { obj.is_a?(tested_klass) && key == :schema }
 
-    errors = tested_klass.new({array_key: [], other_key: 1}).errors
+    errors = tested_klass.new({array_key: [], other_key: 1}).errors(if: error_proc)
     # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]

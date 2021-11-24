@@ -618,15 +618,23 @@ class FormTest < Minitest::Test
     
     # test all forms are yielded, only once
     forms = []
-    form1.each_form do |current_form, current_level|
+    form1.each_form do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
     assert_empty (forms - [form1, form2, form3, form4, form5, form6])
 
+    # test yields
+    # form1.each_form do |current_form, condition, skip_branch_proc, current_level|
+    #   assert_instance_of JSF::Forms::Form, current_form
+    #   assert_equal true, (condition.nil? || condition.is_a?(JSF::Forms::Condition))
+    #   assert_instance_of Proc, skip_branch_proc
+    #   assert_instance_of Integer, current_level
+    # end
+
     # ignore_definitions
     forms = []
-    form1.each_form(ignore_definitions: true) do |current_form, current_level|
+    form1.each_form(ignore_definitions: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
@@ -634,7 +642,7 @@ class FormTest < Minitest::Test
 
     # ignore_all_of
     forms = []
-    form1.each_form(ignore_all_of: true) do |current_form, current_level|
+    form1.each_form(ignore_all_of: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 2, forms.size
@@ -642,7 +650,7 @@ class FormTest < Minitest::Test
 
     # ignore_sections
     forms = []
-    form1.each_form(ignore_sections: true) do |current_form, current_level|
+    form1.each_form(ignore_sections: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 4, forms.size
@@ -650,7 +658,7 @@ class FormTest < Minitest::Test
 
     # test trees are halted when yielded skip_branch_proc proc is called
     forms = []
-    form1.each_form() do |current_form, current_level, skip_branch_proc|
+    form1.each_form() do |current_form, condition, skip_branch_proc|
       skip_branch_proc.call if current_form.dig(:properties, :switch_2)
       forms.push(current_form)
     end
@@ -661,7 +669,7 @@ class FormTest < Minitest::Test
     hide_props = ['switch_1', 'section_1']
     hide_props.each{|key| form1.get_property(key).hidden = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: false) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: false) do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
@@ -672,7 +680,7 @@ class FormTest < Minitest::Test
     hide_props = ['switch_1']
     hide_props.each{|key| form1.get_property(key).hidden = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: true) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 2, forms.size
@@ -683,7 +691,7 @@ class FormTest < Minitest::Test
     hide_props = ['section_1']
     hide_props.each{|key| form1.get_property(key).hidden = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: true) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 5, forms.size
@@ -694,7 +702,7 @@ class FormTest < Minitest::Test
     hide_props = ['switch_1', 'section_1']
     hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: false) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: false) do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
@@ -705,7 +713,7 @@ class FormTest < Minitest::Test
     hide_props = ['switch_1', 'section_1']
     hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: true, is_create: false) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: true, is_create: false) do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
@@ -716,7 +724,7 @@ class FormTest < Minitest::Test
     hide_props = ['switch_1']
     hide_props.each{|key| form1.get_property(key).hideOnCreate = true }
     forms = []
-    form1.each_form(skip_tree_when_hidden: true, is_create: true) do |current_form, current_level|
+    form1.each_form(skip_tree_when_hidden: true, is_create: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 2, forms.size
@@ -725,11 +733,66 @@ class FormTest < Minitest::Test
 
   end
 
-  # def test_max_score
+  # def test_each_form_with_document
   # end
 
+  def test_cleaned_document
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:switch_1, example('switch')) do |form, field, key|
+        form.append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
+          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
+          end
+        end
+      end
+
+      append_property(:section_1, example('section')) do |form, field, key|
+        field.form.append_property(:switch_6, example('switch'))
+      end
+    end
+
+    # allows meta
+    document = {'meta' => {'some_key' => 1}}
+    expected =  "{\"section_1\"=>[], \"meta\"=>{\"some_key\"=>1}}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # empty document
+    document = {}
+    expected =  "{\"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # known property
+    document = {'switch_1' => true }
+    expected = "{\"switch_1\"=>true, \"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # unknown property
+    document = {'other_prop' => true }
+    expected = "{\"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # known dynamic property
+    document = {'switch_1' => true, 'switch_2' => true }
+    expected = "{\"switch_1\"=>true, \"section_1\"=>[], \"switch_2\"=>true}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # hidden dynamic property
+    document = {'switch_1' => false, 'switch_2' => true }
+    expected = "{\"switch_1\"=>false, \"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # unknown property in section
+    document = {'section_1' => [{ "some_prop" => 3 }] }
+    expected = "{\"section_1\"=>[{}]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # known property in section
+    document = {'section_1' => [{ "switch_6" => true }] }
+    expected = "{\"section_1\"=>[{\"switch_6\"=>true}]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+  end
+
   # non scorable fields
-  def test_specific_max_score
+  def test_set_specific_max_scores!
 
     ### NON SCORABLE FIELDS ###
 
@@ -743,7 +806,12 @@ class FormTest < Minitest::Test
     [empty_form, root_non_scorable_form].each do |form|
       [true, false].each do |is_create|
         [{}, {'some_key' => 1}].each do |doc|
-          assert_nil form.specific_max_score(doc, is_create: is_create)
+          assert_nil form.set_specific_max_scores!(doc, is_create: is_create)
+          if doc.key? 'some_key'
+            assert_equal "{\"some_key\"=>1, \"meta\"=>{\"specific_max_score_hash\"=>{}, \"specific_max_score_total\"=>nil}}", doc.to_s
+          else
+            assert_equal "{\"meta\"=>{\"specific_max_score_hash\"=>{}, \"specific_max_score_total\"=>nil}}", doc.to_s
+          end
         end
       end
     end
@@ -822,26 +890,32 @@ class FormTest < Minitest::Test
 
     # test multiple documents for a form with no hidden fields
     form = scored_form_proc.call
-    assert_equal 7.0, form.specific_max_score({})
-    assert_equal 17.0, form.specific_max_score({'section_1' => [{}]} )
-    assert_equal 27.0, form.specific_max_score({'section_1' => [{}, {}]} )
-    assert_equal 17.0, form.specific_max_score({'switch_1' => true, 'section_1' => [{}]})
-    assert_equal 17.0, form.specific_max_score({'switch_1' => false, 'slider_sec_1' => 8, 'section_1' => [{}]})
-    assert_equal 17.0, form.specific_max_score({'select_1' => nil, 'section_1' => [{}]})
-    assert_equal 13.0, form.specific_max_score({'select_1' => 'nil_score', 'section_1' => [{}]})
-    assert_equal 16.0, form.specific_max_score({'select_1' => 'score_3', 'section_1' => [{}]})
-    assert_equal 17.0, form.specific_max_score({'select_1' => 'score_6', 'section_1' => [{}] })
-    assert_equal 20.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{}] })
-    assert_equal 20.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}] })
-    assert_equal 22.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}] })
-    assert_equal 32.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}, {'number_input_sec_2' => 1}] })
-    assert_equal 34.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1}] })
-    assert_equal 33.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] })
-    assert_equal 35.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] })
-    assert_equal 35.0, form.specific_max_score({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1', 'section_1_1_1' => [{}, {}]}] })
+    assert_equal 7.0, form.set_specific_max_scores!({})
+    assert_equal 17.0, form.set_specific_max_scores!({'section_1' => [{}]} )
+    assert_equal 27.0, form.set_specific_max_scores!({'section_1' => [{}, {}]} )
+    assert_equal 17.0, form.set_specific_max_scores!({'switch_1' => true, 'section_1' => [{}]})
+    assert_equal 17.0, form.set_specific_max_scores!({'switch_1' => false, 'slider_sec_1' => 8, 'section_1' => [{}]})
+    assert_equal 17.0, form.set_specific_max_scores!({'select_1' => nil, 'section_1' => [{}]})
+    assert_equal 13.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'section_1' => [{}]})
+    assert_equal 16.0, form.set_specific_max_scores!({'select_1' => 'score_3', 'section_1' => [{}]})
+    assert_equal 17.0, form.set_specific_max_scores!({'select_1' => 'score_6', 'section_1' => [{}] })
+    assert_equal 20.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{}] })
+    assert_equal 20.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}] })
+    assert_equal 22.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}] })
+    assert_equal 32.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}, {'number_input_sec_2' => 1}] })
+    assert_equal 34.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1}] })
+    assert_equal 33.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] })
+    assert_equal 35.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] })
+    assert_equal 35.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1', 'section_1_1_1' => [{}, {}]}] })
   end
 
-  # def test_cleaned_document
+  # def test_set_scores!
+  # end
+
+  # def test_set_failures!
+  # end
+
+  # def test_max_score
   # end
 
   def test_scored?

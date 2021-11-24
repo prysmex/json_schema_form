@@ -808,31 +808,90 @@ module JSF
 
       end
 
-      # def each_form_with_document(document, document_path: [], **kwargs, &block)
-      #   each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc|
+      # Similar to each_form with the following differences:
+      #
+      # - adds two yield params, document and document_path
+      # - when it encounters a JSF::Forms::Section, it yields the same for for each value in the document's array
+      #
+      # @note if you want forms to only be yielded once, use each_form
+      #
+      # @return [void] <description>
+      def each_form_with_document(document, **kwargs, &block)
+        empty_document = {}
+        document_path = []
+        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc|
 
-      #     yield(form, condition, skip_branch_proc, document, document_path)
+          yield(form, condition, skip_branch_proc, document, empty_document, document_path)
 
-      #     # handle all properties that have a value that is a hash or an array because the document_path is modified
-      #     form[:properties].each do |key, property|
-      #       next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: is_create)
-      #       value = document[key]
+          # handle all properties that have a value that is a hash or an array because the document_path is modified
+          form[:properties].each do |key, property|
+            next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: kwargs[:is_create])
+            value = document[key]
 
-      #       # go recursive
-      #       case property
-      #       when JSF::Forms::Section
-      #         value&.map.with_index do |doc, i|
-      #           property.form.each_form_with_document(doc, is_create: is_create, document_path: (document_path + [key + i]), **kwargs, &block)
-      #         end
-      #       # when JSF::Forms::Field::Component
-      #       #   property
-      #       #     .component_definition
-      #       #     .each_form_with_document(value, is_create: is_create, document_path: (document_path + [key]), **kwargs, &block)
-      #       end
-      #     end
+            # go recursive
+            case property
+            when JSF::Forms::Section
+              empty_document[key] ||= []
+              value&.map&.with_index do |doc, i|
+                document_path = document_path + [key, i]
+                empty_document[key][i] = property
+                  .form
+                  .each_form_with_document(
+                    doc,
+                    **kwargs,
+                    &block
+                  )
+              end
+            when JSF::Forms::Field::Component
+              document_path = (document_path + [key])
+              empty_document[key] = property
+                .component_definition
+                .each_form_with_document(
+                  value,
+                  **kwargs,
+                  &block
+                )
+            end
+          end
 
-      #   end
-      # end
+        end
+        empty_document
+      end
+
+      # Builds a new hash considering the following:
+      #
+      # - removes all nil values
+      # - removes all unknown keys
+      # - removes all keys with displayProperties.hidden
+      # - removes all keys with displayProperties.hideOnCreate if record is new
+      # - removes all keys in unactive trees
+      #
+      # @return [JSF::Forms::Document] mutated document
+      def cleaned_document(document, is_create: false, condition_proc: nil, **kwargs)
+        # iterate recursively through schemas
+        new_document = each_form_with_document(
+          document,
+          skip_tree_when_hidden: true,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+          
+          # skip unactive trees
+          skip_branch_proc.call if condition&.evaluate(document, &condition_proc) == false
+          
+          form[:properties].each do |key, property|
+            next unless property.visible(is_create: is_create)
+
+            value = current_doc[key]
+            next if value.nil? # skip nil value
+
+            current_empty_doc[key] = value
+          end
+        end
+
+        new_document['meta'] = document['meta'] if document.key?('meta')
+        new_document
+      end
 
       # Calculates the maximum attainable score given a document. This
       # considers which paths are active in the form.
@@ -843,105 +902,136 @@ module JSF
       #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
-      def specific_max_score(document, is_create: false, condition_proc: nil, **kwargs)
+      def set_specific_max_scores!(document, is_create: false, condition_proc: nil, **kwargs)
 
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        each_form(skip_tree_when_hidden: true, is_create: is_create, ignore_sections: true, **kwargs) do |form, condition, skip_branch_proc|
+        specific_max_score_document = each_form_with_document(
+          document,
+          skip_tree_when_hidden: true,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
 
-          if condition&.evaluate(document, &condition_proc) == false
-            skip_branch_proc.call
-          end
+          # skip unactive trees
+          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
 
-          # iterate properties and increment score_value if needed
-          score_value = form[:properties].reduce(score_value) do |sum,(k, prop)|
-            next sum unless prop.visible(is_create: is_create)
+          # iterate properties
+          form[:properties].each do |k, prop|
+            next unless prop.visible(is_create: is_create)
+            next unless JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class)
 
-            value = document.dig(k)
+            value = current_doc.dig(k)
 
-            field_score = case prop
-            when JSF::Forms::Section
-              # Since JSF::Forms::Section are repeatable, we iterate recursively for each value
-              scores = value&.map do |doc|
-                prop.form.specific_max_score(doc, is_create: is_create, condition_proc: condition_proc, **kwargs)
+            field_score = if value.nil?
+              prop.max_score
+            else
+
+              # check for any visible child field
+              visible_children = prop.dependent_conditions.any? do |cond|
+                next unless cond.evaluate(current_doc, &condition_proc)
+
+                cond.dig(:then, :properties)&.any? do |k,v|
+                  v.visible(is_create: is_create)
+                end
               end
-              scores&.compact&.inject(&:+)
-            when *JSF::Forms::Form::SCORABLE_FIELDS
-              if value.nil?
-                prop.max_score
+        
+              if visible_children
+                prop.score_for_value(value)
               else
-  
-                # check for any visible child field
-                visible_children = prop.dependent_conditions.any? do |cond|
-                  next unless cond.evaluate(document, &condition_proc)
-  
-                  cond.dig(:then, :properties)&.any? do |k,v|
-                    v.visible(is_create: is_create)
-                  end
-                end
-          
-                if visible_children
-                  prop.score_for_value(value)
-                else
-                  prop.max_score
-                end
+                prop.max_score
               end
             end
 
-            [sum, field_score].compact.inject(&:+)
+            # set for field
+            current_empty_doc[k] ||= field_score
+
+            # sum values
+            score_value = [score_value, field_score].compact.inject(&:+)
           end
         end
+
+        document['meta'] ||= {}
+        document['meta']['specific_max_score_hash'] = specific_max_score_document
+        document['meta']['specific_max_score_total'] = score_value
         
         score_value
       end
 
-      # # @note This mutates the document!
-      # #
-      # # - removes all nil values
-      # # - removes all unknown keys
-      # # - removes all keys with displayProperties.hidden
-      # # - removes all keys with displayProperties.hideOnCreate if record is new
-      # # - removes all keys in unactive trees
-      # #
-      # # @todo clean document extras and meta
-      # #
-      # # @return [JSF::Forms::Document] mutated document
-      # def cleaned_document(document, is_create: false, is_inspection: false)
-      #   new_document = {}
+      def set_scores!(document, is_create: false, condition_proc: nil, **kwargs)
+        score_value = self.score_initial_value
 
-      #   # iterate recursively through schemas, skips hidden and hideOnCreate
-      #   each_form(is_create: is_create, skip_tree_when_hidden: true, ignore_sections: true) do |form, condition, skip_branch_proc|
+        # iterate recursively through schemas
+        failed_document = each_form_with_document(
+          document,
+          skip_tree_when_hidden: true,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
 
-      #     # skip unactive trees
-      #     skip_branch_proc.call if condition&.evaluate(document, &block) == false
+          # skip unactive trees
+          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
 
-      #     form[:properties].each do |key, property|
-      #       next unless property.visible(is_create: is_create)
-      #       value = document[key]
-      #       next if document.nil? # skip nil value
+          # iterate properties and increment score_value if needed
+          form[:properties].each do |k, prop|
+            next unless prop.visible(is_create: is_create)
+            next unless prop.respond_to?(:score_for_value)
 
-      #       new_value = case property
-      #       # go recursive
-      #       when JSF::Forms::Section
-      #         value&.map do |doc|
-      #           property.form.cleaned_document(doc, is_create: is_create, is_inspection: is_inspection)
-      #         end
-      #       # go recursive
-      #       when JSF::Forms::Field::Component
-      #         property
-      #           .component_definition
-      #           .cleaned_document(value, is_create: is_create, is_inspection: is_inspection) 
-      #       else
-      #         value
-      #       end
+            value = current_doc.dig(k)
+            field_score = prop.score_for_value(value) if !value.nil?
 
-      #       new_document[key] = new_value
-      #     end
-      #   end
+            # set for field
+            current_empty_doc[k] = field_score
 
-      #   new_document
-      # end
+            # update global score
+            score_value = [score_value, field_score].compact.inject(&:+)
+          end
+        end
+
+        document['meta'] ||= {}
+        document['meta']['score_hash'] = score_document
+        document['meta']['score_total'] = total_score
+
+        score_value
+      end
+
+      def set_failures!(document, is_create: false, condition_proc: nil, **kwargs)
+        total_failed = 0
+
+        # iterate recursively through schemas
+        failed_document = each_form_with_document(
+          document,
+          skip_tree_when_hidden: true,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+
+          # skip unactive trees
+          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
+
+          # iterate properties
+          form[:properties].each do |k, prop|
+            next unless prop.visible(is_create: is_create)
+            next unless prop.respond_to?(:value_fails?)
+
+            value = current_doc.dig(k)
+            failed = !!property_definition.value_fails?(value)
+
+            # set for field
+            current_empty_doc[k] = failed
+
+            # add global failed
+            total_failed += 1 if failed
+          end
+        end
+
+        document['meta'] ||= {}
+        document['meta']['failed_hash'] = failed_document
+        document['meta']['failed_total'] = total_failed
+
+        total_failed
+      end
 
       # Checks if the form has fields with scoring
       #
