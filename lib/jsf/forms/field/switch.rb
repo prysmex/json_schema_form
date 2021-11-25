@@ -44,7 +44,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:type)
           end
         end
@@ -104,9 +104,6 @@ module JSF
         # @return [Boolean]
         def scored?
           true
-        end
-
-        def migrate!
         end
   
       end

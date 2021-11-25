@@ -63,7 +63,7 @@ module JSF
               required(:label).filled(:bool)
             end
           end
-          required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+          # required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
           optional(:maxItems).filled(:integer)
           required(:items).hash do
             optional(:properties)

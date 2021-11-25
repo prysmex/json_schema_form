@@ -32,7 +32,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:format).filled(Types::String.enum('date-time'))
             required(:type)
           end
@@ -41,9 +41,6 @@ module JSF
         ##############
         ###METHODS####
         ##############
-  
-        def migrate!
-        end
   
       end
     end

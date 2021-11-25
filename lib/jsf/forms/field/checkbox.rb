@@ -37,7 +37,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:items).hash do
               if skip_ref_presence
                 required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
@@ -95,9 +95,6 @@ module JSF
             &.find do |response|
               value.include?(response[:const]) && response[:failed] == true
             end.nil?
-        end
-  
-        def migrate!
         end
   
       end

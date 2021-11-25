@@ -1188,12 +1188,32 @@ module JSF
       # The method is only the last migration script (not versioned)
       #
       # @return [void]
-      def migrate!
-        return if self[:schemaFormVersion] == '3.1.0'
+      def migrate!(is_inspection: )
+        # return if self[:schemaFormVersion] == '3.1.0'
 
         if !self.meta[:is_subschema]
-          self[:hasScoring] = !self[:maxScore].nil? if self.key?('maxScore')
-          self[:schemaFormVersion] = '3.1.0'
+          if self.key?('maxScore')
+            self[:hasScoring] = !self.delete('maxScore').nil?
+          end
+          self[:schemaFormVersion] = VERSION
+        end
+
+        klasses = [
+          JSF::Forms::Field::Checkbox,
+          JSF::Forms::Field::DateInput,
+          JSF::Forms::Field::FileInput,
+          JSF::Forms::Field::NumberInput,
+          JSF::Forms::Field::Select,
+          JSF::Forms::Field::Slider,
+          JSF::Forms::Field::Switch,
+          JSF::Forms::Field::TextInput,
+        ]
+        self.properties.each do |k, prop|
+          if is_inspection && klasses.include?(prop.class)
+            SuperHash::Utils.bury(prop, 'extra', ['reports', 'notes', 'pictures'])
+          else
+            prop.delete('extra')
+          end
         end
 
       end

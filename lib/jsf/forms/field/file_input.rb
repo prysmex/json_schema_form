@@ -31,7 +31,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:items).hash do
               required(:format).filled(Types::String.enum('uri'))
               required(:'type').filled(Types::String.enum('string'))
@@ -45,9 +45,6 @@ module JSF
         ##################
         #####METHODS######
         ##################
-  
-        def migrate!
-        end
   
       end
     end

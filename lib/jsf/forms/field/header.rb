@@ -40,9 +40,6 @@ module JSF
         ###METHODS####
         ##############
   
-        def migrate!
-        end
-  
       end
     end
   end

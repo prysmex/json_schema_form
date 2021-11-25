@@ -52,7 +52,7 @@ module JSF
               end
             end
             required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['actions', 'failed', 'notes', 'pictures', 'score']) if is_inspection
+            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:type)
           end
         end
@@ -158,9 +158,6 @@ module JSF
         # @return [Boolean]
         def scored?
           true
-        end
-  
-        def migrate!
         end
   
       end
