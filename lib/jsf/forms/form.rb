@@ -817,7 +817,7 @@ module JSF
       # @note if you want forms to only be yielded once, use each_form
       #
       # @return [void] <description>
-      def each_form_with_document(document, **kwargs, &block)
+      def each_form_with_document(document, skip_definitions: false,  **kwargs, &block)
         empty_document = {}
         document_path = []
         each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc|
@@ -844,7 +844,7 @@ module JSF
                   )
               end
             when JSF::Forms::Field::Component
-              next if kwargs[:skip_definitions]
+              next if skip_definitions
               document_path = (document_path + [key])
               empty_document[key] = property
                 .component_definition
