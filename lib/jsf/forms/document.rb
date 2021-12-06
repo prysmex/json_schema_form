@@ -35,7 +35,7 @@ module JSF
       # @param hash (used for recursion)
       # @return [void]
       def each_extras_hash(hash = self.dig(:meta, :extras), &block)
-        yield(hash)
+        yield(hash) if hash
         hash&.each do |key, value|
           case value
           when Array
