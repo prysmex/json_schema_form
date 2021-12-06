@@ -964,7 +964,7 @@ module JSF
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
-        failed_document = each_form_with_document(
+        score_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
           is_create: is_create,
