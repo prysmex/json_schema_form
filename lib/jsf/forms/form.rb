@@ -844,6 +844,7 @@ module JSF
                   )
               end
             when JSF::Forms::Field::Component
+              next if kwargs[:skip_definitions]
               document_path = (document_path + [key])
               empty_document[key] = property
                 .component_definition
