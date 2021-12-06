@@ -992,7 +992,7 @@ module JSF
 
         document['meta'] ||= {}
         document['meta']['score_hash'] = score_document
-        document['meta']['score_total'] = total_score
+        document['meta']['score_total'] = score_value
 
         score_value
       end
