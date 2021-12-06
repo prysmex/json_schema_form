@@ -1017,7 +1017,7 @@ module JSF
             next unless prop.respond_to?(:value_fails?)
 
             value = current_doc.dig(k)
-            failed = !!property_definition.value_fails?(value)
+            failed = !!prop.value_fails?(value)
 
             # set for field
             current_empty_doc[k] = failed
