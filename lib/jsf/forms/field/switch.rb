@@ -44,7 +44,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
+            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
             required(:type)
           end
         end
