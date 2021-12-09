@@ -1189,13 +1189,16 @@ module JSF
       #
       # @return [void]
       def migrate!(allow_extra: )
-        # return if self[:schemaFormVersion] == '3.1.0'
+        # add schemaFormVersion
+        if !self.meta[:is_subschema]
+          self[:schemaFormVersion] = VERSION
+        end
 
+        # migrate maxScore => hasScoring
         if !self.meta[:is_subschema]
           if self.key?('maxScore')
             self[:hasScoring] = !self.delete('maxScore').nil?
           end
-          self[:schemaFormVersion] = VERSION
         end
 
         klasses = [
@@ -1209,6 +1212,8 @@ module JSF
           JSF::Forms::Field::TextInput,
         ]
         self.properties.each do |k, prop|
+
+          # migrate extras
           if allow_extra && klasses.include?(prop.class)
             SuperHash::Utils.bury(prop, 'extra', ['reports', 'notes', 'pictures'])
           else
