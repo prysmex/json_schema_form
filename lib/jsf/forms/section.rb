@@ -36,8 +36,6 @@ module JSF
       ##################
 
       def validation_schema(passthru)
-        is_inspection = passthru[:is_inspection]
-
         Dry::Schema.define(parent: super) do
 
           before(:key_validator) do |result|
@@ -63,7 +61,6 @@ module JSF
               required(:label).filled(:bool)
             end
           end
-          # optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
           optional(:maxItems).filled(:integer)
           required(:items).hash do
             optional(:properties)

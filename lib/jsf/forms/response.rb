@@ -31,7 +31,6 @@ module JSF
       ##################
       
       def validation_schema(passthru)
-        is_inspection = passthru[:is_inspection]
         Dry::Schema.JSON do
           config.validate_keys = true
           required(:type).filled(Types::String.enum('string'))
@@ -44,7 +43,7 @@ module JSF
             end
             optional(:color).maybe(:string)
           end
-          if is_inspection
+          if passthru[:is_inspection]
             required(:enableScore).value(Types::True) #deprecate?
             required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
             required(:failed).value(:bool)

@@ -13,8 +13,6 @@ module JSF
         ##################
   
         def validation_schema(passthru)
-          is_inspection = passthru[:is_inspection]
-
           Dry::Schema.define(parent: super) do
             optional(:default).value(:bool)
             required(:displayProperties).hash do
@@ -44,7 +42,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
+            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if passthru[:is_inspection] || passthru[:is_shared]
             required(:type)
           end
         end

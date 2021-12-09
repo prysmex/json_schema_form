@@ -16,8 +16,6 @@ module JSF
         ##################
   
         def validation_schema(passthru)
-          is_inspection = passthru[:is_inspection]
-
           Dry::Schema.define(parent: super) do
   
             before(:key_validator) do |result|
@@ -52,7 +50,7 @@ module JSF
               end
             end
             required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
-            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if is_inspection
+            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if passthru[:is_inspection] || passthru[:is_shared]
             required(:type)
           end
         end

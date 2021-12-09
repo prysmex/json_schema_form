@@ -163,7 +163,6 @@ module JSF
       # @return [Dry::Schema::JSON] Schema
       def validation_schema(passthru)
         is_subschema = meta[:is_subschema]
-        is_inspection = passthru[:is_inspection]
         Dry::Schema.JSON do
           config.validate_keys = true
     
@@ -182,7 +181,7 @@ module JSF
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
             required(:type).filled(Types::String.enum('object'))
-            if is_inspection
+            if passthru[:is_inspection]
               required(:hasScoring) { bool? }
             end
           else
@@ -1189,7 +1188,7 @@ module JSF
       # The method is only the last migration script (not versioned)
       #
       # @return [void]
-      def migrate!(is_inspection: )
+      def migrate!(allow_extra: )
         # return if self[:schemaFormVersion] == '3.1.0'
 
         if !self.meta[:is_subschema]
@@ -1210,7 +1209,7 @@ module JSF
           JSF::Forms::Field::TextInput,
         ]
         self.properties.each do |k, prop|
-          if is_inspection && klasses.include?(prop.class)
+          if allow_extra && klasses.include?(prop.class)
             SuperHash::Utils.bury(prop, 'extra', ['reports', 'notes', 'pictures'])
           else
             prop.delete('extra')
