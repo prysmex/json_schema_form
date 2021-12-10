@@ -838,6 +838,7 @@ module JSF
                   .form
                   .each_form_with_document(
                     doc,
+                    skip_definitions: skip_definitions,
                     **kwargs,
                     &block
                   )
@@ -849,6 +850,7 @@ module JSF
                 .component_definition
                 .each_form_with_document(
                   value,
+                  skip_definitions: skip_definitions,
                   **kwargs,
                   &block
                 )
@@ -878,7 +880,7 @@ module JSF
         ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
           
           # skip unactive trees
-          skip_branch_proc.call if condition&.evaluate(document, &condition_proc) == false
+          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
           
           form[:properties].each do |key, property|
             next unless property.visible(is_create: is_create)

@@ -738,6 +738,20 @@ class FormTest < Minitest::Test
 
   def test_cleaned_document
     form = JSF::Forms::FormBuilder.build do
+
+      # add response sets
+      add_response_set(:'bc0214f2-807c-4806-8edf-17d118467825', example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'option_1'
+        end
+      end
+
+      # field with response set
+      append_property(:'select', example('select')) do |form, field, key|
+        field.response_set_id = 'bc0214f2-807c-4806-8edf-17d118467825'
+      end
+
+      # nested conditional
       append_property(:switch_1, example('switch')) do |form, field, key|
         form.append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
           subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
@@ -745,15 +759,48 @@ class FormTest < Minitest::Test
         end
       end
 
-      append_property(:section_1, example('section')) do |form, field, key|
-        field.form.append_property(:switch_6, example('switch'))
+      # section
+      append_property(:'section_1', example('section')) do |_, field, _|
+        field.form.append_property(:'number_input_section', example('number_input')) do |form, field, key|
+          form.append_conditional_property(:'sub_section_1', example('section'), dependent_on: key, type: :const, value: 1) do |_, field, _|
+            field.form.append_property(:'multiselect_section', example('select')) do |form, field, key|
+              field.response_set_id = 'bc0214f2-807c-4806-8edf-17d118467825'
+            end
+          end
+        end
       end
+
+      # hidden on create
+      append_property(:'hide_on_create', example('text_input')) do |form, field, key|
+        SuperHash::Utils.bury(field, :displayProperties, :hideOnCreate, true)
+      end
+
+      # hidden
+      append_property(:'hidden', example('text_input')) do |form, field, key|
+        SuperHash::Utils.bury(field, :displayProperties, :hidden, true)
+      end
+
     end
 
     # allows meta
     document = {'meta' => {'some_key' => 1}}
     expected =  "{\"section_1\"=>[], \"meta\"=>{\"some_key\"=>1}}"
     assert_equal expected, form.cleaned_document(document).to_s
+
+    # removes hidden
+    document = {'hidden' => 'hey' }
+    expected = "{\"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # allows hide_on_create on create when not is_create
+    document = {'hide_on_create' => 'hey' }
+    expected = "{\"hide_on_create\"=>\"hey\", \"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # removes hide_on_create on create when is_create
+    document = {'hide_on_create' => 'hey' }
+    expected = "{\"section_1\"=>[]}"
+    assert_equal expected, form.cleaned_document(document, is_create: true).to_s
 
     # empty document
     document = {}
@@ -780,14 +827,24 @@ class FormTest < Minitest::Test
     expected = "{\"switch_1\"=>false, \"section_1\"=>[]}"
     assert_equal expected, form.cleaned_document(document).to_s
 
+    # deep hidden dynamic property
+    document = {'switch_1' => true, 'switch_2' => false, 'switch_3' => true }
+    expected = "{\"switch_1\"=>true, \"section_1\"=>[], \"switch_2\"=>false}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
     # unknown property in section
     document = {'section_1' => [{ "some_prop" => 3 }] }
     expected = "{\"section_1\"=>[{}]}"
     assert_equal expected, form.cleaned_document(document).to_s
 
     # known property in section
-    document = {'section_1' => [{ "switch_6" => true }] }
-    expected = "{\"section_1\"=>[{\"switch_6\"=>true}]}"
+    document = {'section_1' => [{ "number_input_section" => 2 }] }
+    expected = "{\"section_1\"=>[{\"number_input_section\"=>2}]}"
+    assert_equal expected, form.cleaned_document(document).to_s
+
+    # dynamic property in section
+    document = {'section_1' => [{ "number_input_section" => 1 }] }
+    expected = "{\"section_1\"=>[{\"number_input_section\"=>1, \"sub_section_1\"=>[]}]}"
     assert_equal expected, form.cleaned_document(document).to_s
   end
 
