@@ -30,10 +30,9 @@ class ConditionTest < Minitest::Test
   def test_condition_property
     prop = nil
     form = JSF::Forms::FormBuilder.build do
-      prop = append_property(:switch_1, example('switch')) do |form, field, key|
-        form.append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true)
+      prop = append_property(:switch_1, example('switch')) do |f, key|
+        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true)
       end
-
     end
 
     assert_same prop, form.dig(:allOf, 0).condition_property
@@ -60,11 +59,11 @@ class ConditionTest < Minitest::Test
 
   def test_evaluate
     form = JSF::Forms::FormBuilder.build do
-      append_property(:switch_1, example('switch')) do |form, field, key|
-        form.append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
-        form.append_conditional_property(:switch_1_2, example('switch'), dependent_on: key, type: :not_const, value: true)
-        form.append_conditional_property(:switch_1_3, example('switch'), dependent_on: key, type: :enum, value: [true])
-        form.append_conditional_property(:switch_1_4, example('switch'), dependent_on: key, type: :not_enum, value: [true])
+      append_property(:switch_1, example('switch')) do |f, key|
+        append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+        append_conditional_property(:switch_1_2, example('switch'), dependent_on: key, type: :not_const, value: true)
+        append_conditional_property(:switch_1_3, example('switch'), dependent_on: key, type: :enum, value: [true])
+        append_conditional_property(:switch_1_4, example('switch'), dependent_on: key, type: :not_enum, value: [true])
       end
     end
 

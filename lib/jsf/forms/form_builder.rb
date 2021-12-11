@@ -107,6 +107,8 @@ module JSF
     #
     # Class that can be used to easily create JSF::Forms::Form instances
     #
+    # @note should we deprecate this and just add the build method to JSF::Forms::Form?
+    #
     class FormBuilder
 
       extend JSF::Forms::FormExamples
@@ -122,6 +124,7 @@ module JSF
         @block = block
       end
     
+      # handle unknown methods by calling them to the form instance
       ruby2_keywords def method_missing(method_name, *args, &block)
         @form.public_send(method_name, *args, &block)
       end
@@ -131,10 +134,10 @@ module JSF
         @form
       end
     
-      def example(*args, &block)
-        self.class.example(*args, &block)
-      end
-    
+      # def example(*args, &block)
+      #   self.class.example(*args, &block)
+      # end
+
     end
 
   end

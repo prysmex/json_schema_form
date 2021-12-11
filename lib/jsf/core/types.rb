@@ -59,7 +59,7 @@ module JSF
           end
 
           added_property = self[:properties][name]
-          yield(self, added_property, name.to_s) if block_given?
+          yield(added_property, name.to_s, self) if block_given?
           added_property
         end
   
@@ -96,7 +96,7 @@ module JSF
           self[:definitions].merge!({ id => definition })
           self[:definitions] = self[:definitions] # trigger transforms
           added_definition = self[:definitions][id]
-          yield(self, added_definition, id.to_s) if block_given?
+          yield(added_definition, id.to_s, self) if block_given?
           added_definition
         end
 

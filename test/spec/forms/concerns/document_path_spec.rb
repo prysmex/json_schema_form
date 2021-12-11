@@ -10,27 +10,31 @@ class FormTest < Minitest::Test
         db_id: 1,
         index: :prepend,
         definition: JSF::Forms::FormBuilder.build() do
-          append_property(:shared_switch_1, example('switch')) do |form, field, key|
-            form.append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+          append_property(:shared_switch_1, example('switch')) do |f, key|
+            append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
           end
         end
       )
 
       # Section
-      append_property(:section, example('section')) do |_, section|
-        section.form.append_property(:switch_2, example('switch'))
-
-        # nested Section
-        section.form.append_property(:section_1_3, example('section')) do |_, section|
-          section.form.append_property(:switch_1_1_1, example('switch')) do |form, field, key|
-            form.append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+      append_property(:section, example('section')) do |f|
+        f.form.instance_eval do
+          append_property(:switch_2, example('switch'))
+  
+          # nested Section
+          append_property(:section_1_3, example('section')) do |f|
+            f.form.instance_eval do
+              append_property(:switch_1_1_1, example('switch')) do |f, key|
+                append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+              end
+            end
           end
         end
       end
 
       # Field
-      append_property(:switch_1, example('switch')) do |form, field, key|
-        form.append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true) do |subform, field, key|
+      append_property(:switch_1, example('switch')) do |f, key|
+        append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
           subform.append_conditional_property(:switch_1_2, example('switch'), dependent_on: key, type: :const, value: true)
         end
       end

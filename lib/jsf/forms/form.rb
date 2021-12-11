@@ -333,6 +333,10 @@ module JSF
       ##############
       ###METHODS####
       ##############
+
+      def example(*args, &block)
+        JSF::Forms::FormBuilder.example(*args, &block)
+      end
     
       ###########################
       ###COMPONENT MANAGEMENT####
@@ -826,11 +830,11 @@ module JSF
           # handle all properties that have a value that is a hash or an array because the document_path is modified
           form[:properties].each do |key, property|
             next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: kwargs[:is_create])
-            value = document[key]
-
+            
             # go recursive
             case property
             when JSF::Forms::Section
+              value = document[key]
               empty_document[key] ||= []
               value&.map&.with_index do |doc, i|
                 document_path = document_path + [key, i]
@@ -845,6 +849,7 @@ module JSF
               end
             when JSF::Forms::Field::Component
               next if skip_definitions
+              value = document[key] || {}
               document_path = (document_path + [key])
               empty_document[key] = property
                 .component_definition
