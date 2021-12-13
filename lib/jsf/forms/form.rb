@@ -651,6 +651,7 @@ module JSF
         #ensure transform is triggered
         self[:allOf] = (self[:allOf] || []) << {
           if: {
+            required: [dependent_on.to_s],
             properties: {
               :"#{dependent_on}" => SuperHash::Utils.bury({}, *CONDITION_TYPE_TO_PATH.call(type), value)
             }
@@ -1195,7 +1196,7 @@ module JSF
       # The method is only the last migration script (not versioned)
       #
       # @return [void]
-      def migrate!(allow_extra: )
+      def migrate!(allow_extra: false)
         # add schemaFormVersion
         if !self.meta[:is_subschema]
           self[:schemaFormVersion] = VERSION

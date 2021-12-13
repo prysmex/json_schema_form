@@ -47,6 +47,7 @@ module JSF
           end
         
           required(:if).hash do
+            required(:required).value(:array?).array(:str?)
             required(:properties).filled(:hash) do
               required(prop.to_sym).filled(:hash) do #this key is always valid if present
                 optional(:const)
