@@ -58,7 +58,7 @@ module JSF
           next if self == subschema # skip own call
           next unless subschema.respond_to?(:errors)
 
-          subschema_errors = subschema.errors(**passthru)
+          subschema_errors = subschema.errors(**passthru, recursive: false)
           next if subschema_errors.empty?
   
           relative_path = subschema.meta[:path].slice((self.meta[:path].size)..-1)
