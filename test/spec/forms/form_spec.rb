@@ -737,7 +737,95 @@ class FormTest < Minitest::Test
 
   end
 
-  # def test_each_form_with_document
+  def test_each_form_with_document
+
+    # build the form
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:switch_1, example('switch')) do |f, key|
+        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          end
+        end
+
+        append_conditional_property(:section_1, example('section'), dependent_on: key, type: :const, value: false) do |f, key, subform|
+          f.form.instance_eval do
+            append_property(:switch_4, example('switch'))
+          end
+        end
+      end
+    end
+
+    # when the document is empty
+    count = 0
+    form.each_form_with_document({}) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      count += 1
+      assert_empty current_doc
+      assert_empty current_empty_doc
+      assert_empty document_path
+    end
+    assert_equal 4, count
+
+    # when the document has values
+    count = 0
+    document = {'switch_1' => true, 'switch_2' => true, 'switch_2' => true, 'section_1' => [{'switch_4' => true}, {'switch_4' => false}]}
+    form.each_form_with_document(document) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      count += 1
+      
+      if (form.properties.keys & ['switch_1', 'switch_2', 'switch_3', 'section_1']).size > 0
+        assert_empty document_path
+        assert_equal "{\"switch_1\"=>true, \"switch_2\"=>true, \"section_1\"=>[{\"switch_4\"=>true}, {\"switch_4\"=>false}]}", current_doc.to_s
+      else
+        refute_empty document_path
+        case document_path.to_s
+        when "[\"section_1\", 0]"
+          assert_equal "{\"switch_4\"=>true}", current_doc.to_s
+        when "[\"section_1\", 1]"
+          assert_equal "{\"switch_4\"=>false}", current_doc.to_s
+        else
+          raise StandardError.new
+        end
+      end
+      
+      assert_empty current_empty_doc
+    end
+    assert_equal 6, count
+
+  end
+
+  # def test_document_path_for_property
+  #   form = JSF::Forms::FormBuilder.build() do
+  #     append_property(:switch_1, example('switch')) do |f, key|
+  #       append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+  #         subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+  #         end
+  #       end
+
+  #       append_conditional_property(:section_1, example('section'), dependent_on: key, type: :const, value: false) do |f, key, subform|
+  #         f.form.instance_eval do
+  #           append_property(:switch_4, example('switch'))
+  #         end
+  #       end
+  #     end
+  #   end
+
+  #   # property does not exist
+  #   assert_nil form.document_path_for_property('hello')
+
+  #   # property in root schema
+  #   assert_empty form.document_path_for_property('switch_1')
+
+  #   # root conditional property
+  #   assert_empty form.document_path_for_property('switch_2')
+
+  #   # nested conditional property
+  #   assert_empty form.document_path_for_property('switch_3')
+
+  #   # section
+  #   assert_empty form.document_path_for_property('section_1')
+
+  #   # field in section when section document does not contain value
+  #   assert_empty form.document_path_for_property('switch_4')
+
   # end
 
   def test_cleaned_document

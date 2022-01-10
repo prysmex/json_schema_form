@@ -712,7 +712,7 @@ module JSF
         self.meta[:path].first == 'definitions'
       end
 
-      # Utilt that recursively iterates and yields each JSF::Forms::Form along with other relevant
+      # Util that recursively iterates and yields each JSF::Forms::Form along with other relevant
       # params.
       #
       # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
@@ -723,10 +723,10 @@ module JSF
       # @param skip_tree_when_hidden [Boolean] forces skiping trees when hidden
       # @param start_level [Integer] Depth of allOf nesting to ignore (0 includes current)
       #
-      # @yieldparam [JSF::Forms::Form] form
-      # @yieldparam [JSF::Forms::Condition] condition
-      # @yieldparam [Proc] skip_branch_proc
-      # @yieldparam [Integer] nested level, 0 for root
+      # @yieldparam [JSF::Forms::Form] form, the current form
+      # @yieldparam [JSF::Forms::Condition] condition, condition the form depends on
+      # @yieldparam [Proc] skip_branch_proc, halts execution in a branch if returns true
+      # @yieldparam [Integer] nested level, 0 for root form
       #
       # @return [void]
       def each_form(
@@ -815,22 +815,35 @@ module JSF
 
       # Similar to each_form with the following differences:
       #
-      # - adds two yield params, document and document_path
-      # - when it encounters a JSF::Forms::Section, it yields the same for for each value in the document's array
+      # - adds three yield params, document, empty_document and document_path
       #
-      # @note if you want forms to only be yielded once, use each_form
+      # @note when it encounters a JSF::Forms::Section, it yields the same JSF::Forms::Form
+      #   for each value in the document's array. If you want forms to only be yielded once,
+      #   use each_form
       #
-      # @return [void] <description>
-      def each_form_with_document(document, skip_definitions: false,  **kwargs, &block)
+      # @param skip_property_proc [Proc] skips a property if it returns true when called
+      #
+      # @yieldparam [JSF::Forms::Form] form
+      # @yieldparam [JSF::Forms::Condition] condition
+      # @yieldparam [Proc] skip_branch_proc
+      # @yieldparam [Hash] document, the current document for the yielded JSF::Forms::Form
+      # @yieldparam [Hash] empty_document
+      # @yieldparam [Array<String,Integer>] document_path
+      #
+      # @return [void]
+      def each_form_with_document(document, document_path: [], skip_property_proc: nil,  **kwargs, &block)
         empty_document = {}
-        document_path = []
-        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc|
 
-          yield(form, condition, skip_branch_proc, document, empty_document, document_path)
+        # since JSF::Forms::Field::Component and JSF::Forms::Section are already
+        # handled, we ignore them in the each_form iterator
+        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, *args|
+
+          yield(form, *args, document, empty_document, document_path)
 
           # handle all properties that have a value that is a hash or an array because the document_path is modified
           form[:properties].each do |key, property|
             next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: kwargs[:is_create])
+            next if skip_property_proc&.call(key, property)
             
             # go recursive
             case property
@@ -838,25 +851,24 @@ module JSF
               value = document[key]
               empty_document[key] ||= []
               value&.map&.with_index do |doc, i|
-                document_path = document_path + [key, i]
                 empty_document[key][i] = property
                   .form
                   .each_form_with_document(
                     doc,
-                    skip_definitions: skip_definitions,
+                    document_path: document_path + [key, i],
+                    skip_property_proc: skip_property_proc,
                     **kwargs,
                     &block
                   )
               end
             when JSF::Forms::Field::Component
-              next if skip_definitions
               value = document[key] || {}
-              document_path = (document_path + [key])
               empty_document[key] = property
                 .component_definition
                 .each_form_with_document(
                   value,
-                  skip_definitions: skip_definitions,
+                  document_path: (document_path + [key]),
+                  skip_property_proc: skip_property_proc,
                   **kwargs,
                   &block
                 )
@@ -864,8 +876,31 @@ module JSF
           end
 
         end
+
         empty_document
       end
+
+      # # Recursively calculates the document path for a property
+      # #
+      # # @ToDo this has the problem that properties inside a section are ignored
+      # #
+      # # @param [String] key name of the property
+      # # @return [Array<String>]
+      # def document_path_for_property(key, **kwargs)
+      #   path = nil
+
+      #   self.each_form_with_document(
+      #     {},
+      #     **kwargs
+      #   ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      #     if form.properties.key?(key.to_s)
+      #       path = document_path
+      #       break
+      #     end
+      #   end
+
+      #   path
+      # end
 
       # Builds a new hash considering the following:
       #
@@ -883,7 +918,7 @@ module JSF
           skip_tree_when_hidden: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
           
           # skip unactive trees
           skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
@@ -921,7 +956,7 @@ module JSF
           skip_tree_when_hidden: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
 
           # skip unactive trees
           skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
@@ -977,7 +1012,7 @@ module JSF
           skip_tree_when_hidden: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
 
           # skip unactive trees
           skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
@@ -1014,7 +1049,7 @@ module JSF
           skip_tree_when_hidden: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_doc, current_empty_doc, document_path|
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
 
           # skip unactive trees
           skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
