@@ -1185,6 +1185,23 @@ class FormTest < Minitest::Test
     assert_equal 'Missing Translation', i18n_doc.dig('section', 0, 'switch_2')
   end
 
+  # def test_dup_with_new_references
+  #   property_id_proc = ->(id){ id + '__1__' },
+  #   response_set_id_proc = ->(id){ id + '__2__' }
+
+  #   # nothing changes for empty schema
+  #   original = JSF::Forms::FormBuilder.build
+  #   dup = original.dup_with_new_references
+  #   assert_equal original.to_s, dup.to_s
+
+  #   # property changes
+  #   original = JSF::Forms::FormBuilder.build do
+  #     append_property(:number_input, example('number_input'))
+  #   end
+  #   dup = original.dup_with_new_references(property_id_proc: property_id_proc, response_set_id_proc: response_set_id_proc)
+  #   # assert_equal 
+  # end
+
   # def test_compile
   # end
 

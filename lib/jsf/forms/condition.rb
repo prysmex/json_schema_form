@@ -49,7 +49,7 @@ module JSF
           required(:if).hash do
             required(:required).value(:array?).array(:str?)
             required(:properties).filled(:hash) do
-              required(prop.to_sym).filled(:hash) do #this key is always valid if present
+              required(prop.to_sym).filled(:hash) do # ToDo this key is always valid if present, can be improve
                 optional(:const)
                 optional(:enum).value(:array, min_size?: 1)# unless field.is_a?(JSF::Forms::Field::NumberInput)
                 optional(:not).filled(:hash) do
@@ -82,16 +82,54 @@ module JSF
       #####METHODS######
       ##################
 
+      # @return [NilClass, String]
       def condition_property_key
         self.dig('if', 'properties')&.keys&.first
       end
 
+      # @return [NilClass, String]
       def condition_property
         self.meta[:parent]&.dig(:properties, condition_property_key)
       end
 
+      # @return [Boolean]
       def negated
         !!self.dig('if', 'properties', condition_property_key)&.key?('not')
+      end
+
+      # @return [nil, 'enum', 'const']
+      def condition_type
+        if negated
+          self.dig('if', 'properties', condition_property_key, 'not')&.keys&.first
+        else
+          self.dig('if', 'properties', condition_property_key)&.keys&.first
+        end
+      end
+
+      # @return [NilClass, String]
+      def value
+        if negated
+          self.dig('if', 'properties', condition_property_key, 'not', condition_type)
+        else
+          self.dig('if', 'properties', condition_property_key, condition_type)
+        end
+      end
+
+      # Sets a new value for the condition
+      #
+      # @param [String, Boolean, Number] value
+      # @param [Boolean] negated
+      # @param ['const', 'enum']
+      #
+      # @return [void]
+      def set_value(value, negated: self.negated, condition_type: self.condition_type)
+        self.dig('if', 'properties')&.clear
+
+        path = ['if', 'properties', condition_property_key]
+        path.push('not') if negated
+        path.push(condition_type)
+
+        SuperHash::Utils.bury(self, *path, value)
       end
 
       # Takes a document or a part of a document (for nested hashes like JSF::Forms::Section) and
@@ -99,7 +137,7 @@ module JSF
       # easy evaluation
       #
       # @param [Hash{String}] local_document must have the root key that will be evaluated
-      # @return [<Type>] <description>
+      # @return [Boolean]
       def evaluate(local_document)
         condition_prop = self.condition_property
         key = self.condition_property_key

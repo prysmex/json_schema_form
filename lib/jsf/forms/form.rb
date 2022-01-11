@@ -1220,6 +1220,79 @@ module JSF
           hash[key] = i18n_value
         end
       end
+
+      # Changes all important references to support a 'duplicate' feature. 
+      #
+      # @note
+      # 
+      # - 'const' key inside the response sets is NOT modified since it does not have to be unique,
+      #    JSF::Forms::Condition(s) values are also not migrated for that reason
+      # - does not migrate JSF::Forms::Field::Component, because the property key must not change
+      #
+      # @ToDo consider shared fields
+      #
+      # @return [JSF::Forms::Form] new instance with changed ids
+      def dup_with_new_references(
+        property_id_proc: ->(id){ id.slice(0...-6) + SecureRandom.uuid[0...6] },
+        response_set_id_proc: ->(id){ SecureRandom.uuid }
+      )
+        migrated_response_sets = {}
+
+        serialized_form = self.as_json
+        dupped_form = self.class.new(serialized_form)
+
+        dupped_form.each_form(ignore_definitions: false) do |form, condition, skip_branch_proc|
+
+          migrated_props = {}
+        
+          # migrate properties
+          prop_keys = form['properties'].keys
+          prop_keys.each do |prop_key|
+            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)
+          
+            prop = form['properties'].delete(prop_key)
+            next if prop.is_a?(JSF::Forms::Field::Component)
+            
+            # migrate property
+            prop['$id'] = "#/properties/#{new_key}"
+            form['properties'][new_key] = prop
+        
+            # migrate response sets
+            if prop.respond_to?(:response_set_id)
+              id = prop.response_set_id.sub('#/definitions/', '')
+              new_id = migrated_response_sets[id] ||= response_set_id_proc.call(id)
+              root_form = form.meta[:is_subschema] ? form.root_parent : form
+        
+              # migrate the response set, unless already migrated
+              if root_form['definitions'].key?(id)
+                resp_set = root_form['definitions'].delete(id)
+                root_form['definitions'][new_id] = resp_set
+              end
+        
+              prop.response_set_id = new_id
+            end
+
+          end
+
+          # migrate conditions
+          form[:allOf].each do |condition|
+            prop_key = condition.condition_property_key
+            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)
+        
+            # set property key
+            cond_hash = condition.dig('if', 'properties')
+            cond_hash[new_key] = cond_hash.delete(prop_key)
+
+            # update required to match property key
+            condition['if']['required'] = [new_key]
+          end
+        
+          # migrate required
+          form[:required].map!{|k| migrated_props[k] }
+        end
+
+        dupped_form
+      end
     
       # Mutates the entire Form to a json schema compliant
       #

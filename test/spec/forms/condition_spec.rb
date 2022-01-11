@@ -57,6 +57,86 @@ class ConditionTest < Minitest::Test
     assert_equal false, instance.negated
   end
 
+  def test_condition_type
+    instance = JSF::Forms::Condition.new({
+      if: {
+        properties: {
+          some_prop: {}
+        }
+      },
+      then: {}
+    })
+
+    # not const
+    instance['if']['properties']['some_prop'] = { not: { const: true } }
+    assert_equal 'const', instance.condition_type
+
+    # not enum
+    instance['if']['properties']['some_prop'] = { not: { enum: true } }
+    assert_equal 'enum', instance.condition_type
+
+    # const
+    instance['if']['properties']['some_prop'] = { const: true }
+    assert_equal 'const', instance.condition_type
+
+    # const
+    instance['if']['properties']['some_prop'] = { enum: true }
+    assert_equal 'enum', instance.condition_type
+  end
+
+  def test_value
+    instance = JSF::Forms::Condition.new({
+      if: {
+        properties: {
+          some_prop: {}
+        }
+      },
+      then: {}
+    })
+
+    # not const
+    instance['if']['properties']['some_prop'] = { not: { const: 1 } }
+    assert_equal 1, instance.value
+
+    # not enum
+    instance['if']['properties']['some_prop'] = { not: { enum: 2 } }
+    assert_equal 2, instance.value
+
+    # const
+    instance['if']['properties']['some_prop'] = { const: 3 }
+    assert_equal 3, instance.value
+
+    # const
+    instance['if']['properties']['some_prop'] = { enum: 4 }
+    assert_equal 4, instance.value
+  end
+
+  def test_set_value
+    instance = JSF::Forms::Condition.new({
+      if: {
+        properties: {
+          some_prop: { not: {const: 'hey'} }
+        }
+      },
+      then: {}
+    })
+
+    instance.set_value(1)
+    assert_equal true, instance.negated
+    assert_equal 'const', instance.condition_type
+    assert_equal 1, instance.value
+
+    instance.set_value(2, condition_type: 'enum')
+    assert_equal true, instance.negated
+    assert_equal 'enum', instance.condition_type
+    assert_equal 2, instance.value
+    
+    instance.set_value(3, condition_type: 'enum', negated: false)
+    assert_equal false, instance.negated
+    assert_equal 'enum', instance.condition_type
+    assert_equal 3, instance.value
+  end
+
   def test_evaluate
     form = JSF::Forms::FormBuilder.build do
       append_property(:switch_1, example('switch')) do |f, key|
