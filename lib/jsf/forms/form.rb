@@ -1248,13 +1248,19 @@ module JSF
           # migrate properties
           prop_keys = form['properties'].keys
           prop_keys.each do |prop_key|
-            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)
-          
-            prop = form['properties'].delete(prop_key)
+            prop = form['properties'][prop_key]
+            next if prop.is_a?(JSF::Forms::Field::Static)
             next if prop.is_a?(JSF::Forms::Field::Component)
+
+            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)      
+            
+            # remove the prop
+            form['properties'].delete(prop_key)
             
             # migrate property
             prop['$id'] = "#/properties/#{new_key}"
+
+            # set new prop
             form['properties'][new_key] = prop
         
             # migrate response sets
@@ -1263,7 +1269,7 @@ module JSF
               new_id = migrated_response_sets[id] ||= response_set_id_proc.call(id)
               root_form = form.meta[:is_subschema] ? form.root_parent : form
         
-              # migrate the response set, unless already migrated
+              # only migrate once
               if root_form['definitions'].key?(id)
                 resp_set = root_form['definitions'].delete(id)
                 root_form['definitions'][new_id] = resp_set
