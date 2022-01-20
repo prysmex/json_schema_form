@@ -77,21 +77,21 @@ module JSF
             end
     
             klass = case value[:type]
-              when 'string', :string
+              when 'string'
                 if value[:format] == 'date-time'
                   JSF::Forms::Field::DateInput
                 else
                   JSF::Forms::Field::TextInput
                 end
-              when 'number', :number, 'integer', :integer
+              when 'number'
                 if value&.dig(:displayProperties, :useSlider)
                   JSF::Forms::Field::Slider
                 else
                   JSF::Forms::Field::NumberInput
                 end
-              when 'boolean', :boolean
+              when 'boolean'
                 JSF::Forms::Field::Switch
-              when 'array', :array
+              when 'array'
                 if value.dig(:items, :format) == 'uri'
                   JSF::Forms::Field::FileInput
                 elsif value.dig(:displayProperties, :useSection)
@@ -99,13 +99,17 @@ module JSF
                 else
                   JSF::Forms::Field::Checkbox
                 end
-              when 'null', :null
+              when 'null'
                 if value&.dig(:displayProperties, :useHeader)
                   JSF::Forms::Field::Header
                 elsif value&.dig(:displayProperties, :useInfo)
                   JSF::Forms::Field::Info
                 elsif value[:static]
                   JSF::Forms::Field::Static
+                end
+              when 'object'
+                if value&.dig(:displayProperties, :component) == 'signature'
+                  JSF::Forms::Field::Signature
                 end
               end
       

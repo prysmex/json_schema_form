@@ -17,6 +17,8 @@ class FormbuilderTest < Minitest::Test
         {trait: :is_inspection, errors_args: {is_inspection: true}}
       ],
       JSF::Forms::Section => [],
+
+      # fields
       JSF::Forms::Field::Checkbox => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
@@ -31,6 +33,7 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Select => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
+      JSF::Forms::Field::Signature => [],
       JSF::Forms::Field::Slider => [],
       JSF::Forms::Field::Static => [],
       JSF::Forms::Field::Switch => [],
@@ -94,8 +97,6 @@ class FormbuilderTest < Minitest::Test
           end
         end
       end
-    
-    
     
     end
   end

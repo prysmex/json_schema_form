@@ -55,6 +55,8 @@ module JSF
             '/field/number_input.json'
           when 'select'
             '/field/select.json'
+          when 'signature'
+            '/field/signature.json'
           when 'slider'
             '/field/slider.json'
           when 'static'
