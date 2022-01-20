@@ -24,7 +24,7 @@
       "format": "uri",
       "type": "string"
     },
-    "worker_id": {
+    "db_id": {
       "type": "number"
     }
   },

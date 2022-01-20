@@ -32,7 +32,7 @@ module JSF
               end
             end
             required(:properties).hash do
-              required(:worker_id).hash do
+              required(:db_id).hash do
                 required(:type).value(included_in?: ['number'])
               end
               required(:name).hash do
