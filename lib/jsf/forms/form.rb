@@ -1307,7 +1307,12 @@ module JSF
       # Mutates the entire Form to a json schema compliant
       #
       # @return [void]
-      def compile!
+      def legalize!
+        if !self.meta[:is_subschema]
+          self.delete('schemaFormVersion')
+          self.delete('availableLocales')
+          self.delete('hasScoring')
+        end
       end
     
       # Allows the definition of migrations to 'upgrade' schemas when the standard changes
@@ -1319,34 +1324,6 @@ module JSF
         if !self.meta[:is_subschema]
           self[:schemaFormVersion] = VERSION
         end
-
-        # migrate maxScore => hasScoring
-        if !self.meta[:is_subschema]
-          if self.key?('maxScore')
-            self[:hasScoring] = !self.delete('maxScore').nil?
-          end
-        end
-
-        klasses = [
-          JSF::Forms::Field::Checkbox,
-          JSF::Forms::Field::DateInput,
-          JSF::Forms::Field::FileInput,
-          JSF::Forms::Field::NumberInput,
-          JSF::Forms::Field::Select,
-          JSF::Forms::Field::Slider,
-          JSF::Forms::Field::Switch,
-          JSF::Forms::Field::TextInput,
-        ]
-        self.properties.each do |k, prop|
-
-          # migrate extras
-          if allow_extra && klasses.include?(prop.class)
-            SuperHash::Utils.bury(prop, 'extra', ['reports', 'notes', 'pictures'])
-          else
-            prop.delete('extra')
-          end
-        end
-
       end
     
       private

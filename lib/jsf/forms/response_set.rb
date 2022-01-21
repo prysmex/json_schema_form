@@ -108,8 +108,8 @@ module JSF
       # def get_passing_responses
       # end
 
-      def compile!
-        self[:anyOf]&.each{|r| r.compile! }
+      def legalize!
+        self.delete('isResponseSet')
       end
 
       # Returns true if the response set has responses with scoring

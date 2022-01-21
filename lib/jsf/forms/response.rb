@@ -82,8 +82,11 @@ module JSF
         SuperHash::Utils.bury(self, :displayProperties, :i18n, locale, label)
       end
 
-      def compile!
+      def legalize!
         self.delete(:displayProperties)
+        self.delete(:enableScore)
+        self.delete(:failed)
+        self.delete(:score)
       end
 
       # Checks if the response has an assigned score value

@@ -69,7 +69,7 @@ class ResponseSetTest < Minitest::Test
 
   # @todo get_passing_responses
 
-  # @todo compile!
+  # @todo legalize!
 
   def test_scored?
     instance = build_response_set_instance(:default)

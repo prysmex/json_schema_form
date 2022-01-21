@@ -34,15 +34,15 @@ module JSF
               self
             )
 
-            if run_validation?(passthru, self, :hidden_and_required)
-              if self.hideOnCreate? && self.required?
-                add_error_on_path(
-                  errors,
-                  ['base'],
-                  'cannot be hideOnCreate and required'
-                )
-              end
-            end
+            # if run_validation?(passthru, self, :hidden_and_required)
+            #   if self.hidden? && self.required?
+            #     add_error_on_path(
+            #       errors,
+            #       ['base'],
+            #       'cannot be hidden and required'
+            #     )
+            #   end
+            # end
 
             super.merge(errors)
           end
@@ -84,7 +84,7 @@ module JSF
           # @todo should this be renamed?
           #
           # @return [void]
-          def compile!
+          def legalize!
             self.delete(:displayProperties)
           end
     
