@@ -165,8 +165,7 @@ A `form` is composed of the follow classes:
   - `JSF::Forms::Field::Checkbox`
   - `JSF::Forms::Field::Component`
   - `JSF::Forms::Field::DateInput`
-  - `JSF::Forms::Field::Header`
-  - `JSF::Forms::Field::Info`
+  - `JSF::Forms::Field::Markdown`
   - `JSF::Forms::Field::NumberInput`
   - `JSF::Forms::Field::Select`
   - `JSF::Forms::Field::Slider`

@@ -23,6 +23,7 @@ module JSF
               required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['select'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
@@ -32,7 +33,6 @@ module JSF
                   end
                 end
               end
-              required(:isSelect).filled(Types::True)
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do

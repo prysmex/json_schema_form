@@ -27,6 +27,7 @@ module JSF
             end
   
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['slider'])
               optional(:hideOnCreate).filled(:bool)
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
@@ -44,7 +45,6 @@ module JSF
               end
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
-              required(:useSlider).filled(:bool)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end

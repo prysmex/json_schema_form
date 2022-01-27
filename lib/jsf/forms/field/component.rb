@@ -22,6 +22,7 @@ module JSF
               required(:$ref).filled{ str? & format?(REF_REGEX) }
             end
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['component'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do

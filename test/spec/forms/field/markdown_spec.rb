@@ -1,7 +1,7 @@
 require 'test_helper'
 require_relative 'methods/base'
 
-class HeaderTest < Minitest::Test
+class MarkdownTest < Minitest::Test
 
   include BaseMethodsTests
 
@@ -10,5 +10,4 @@ class HeaderTest < Minitest::Test
   ##################
 
   # @todo
-
 end

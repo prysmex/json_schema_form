@@ -2,6 +2,7 @@
   // "$id": "",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
+    "component": "date_input",
     // "hidden": false
     // "hideOnCreate": false,
     "i18n": {

@@ -2,7 +2,7 @@ module JSF
   module Forms
     DEFAULT_LOCALE = 'es'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
-    VERSION = '3.1.0'.freeze
+    VERSION = '3.2.0'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -41,6 +41,72 @@ module JSF
         JSF::Forms::Field::Select
       ].freeze
 
+      COMPONENT_PROPERTY_CLASS_PROC = Proc.new do |value|
+        is_string = value.is_a?(::String)
+
+        hash = {
+          'checkbox' => JSF::Forms::Field::Checkbox,
+          'component' => JSF::Forms::Field::Component,
+          'date_input' => JSF::Forms::Field::DateInput,
+          'file_input' => JSF::Forms::Field::FileInput,
+          'markdown' => JSF::Forms::Field::Markdown,
+          'number_input' => JSF::Forms::Field::NumberInput,
+          'select' => JSF::Forms::Field::Select,
+          'signature' => JSF::Forms::Field::Signature,
+          'slider' => JSF::Forms::Field::Slider,
+          'static' => JSF::Forms::Field::Static,
+          'switch' => JSF::Forms::Field::Switch,
+          'text_input' => JSF::Forms::Field::TextInput,
+        }
+
+        if is_string
+          hash[value]
+        else
+          hash.find{|component, klass| klass == value || value.is_a?(klass) }&.first
+        end
+      end
+
+      # TODO remove after 3.2.0 migrate!
+      DEPRECATED_PROPERTY_MAP = Proc.new do |value|
+        if value.key?(:$ref)
+          if value.dig(:displayProperties, :isSelect)
+            JSF::Forms::Field::Select
+          else
+            ::JSF::Forms::Field::Component
+          end
+        else
+          case value[:type]
+          when 'string'
+            if value[:format] == 'date-time'
+              JSF::Forms::Field::DateInput
+            else
+              JSF::Forms::Field::TextInput
+            end
+          when 'number'
+            if value&.dig(:displayProperties, :useSlider)
+              JSF::Forms::Field::Slider
+            else
+              JSF::Forms::Field::NumberInput
+            end
+          when 'boolean'
+            JSF::Forms::Field::Switch
+          when 'array'
+            if value.dig(:items, :format) == 'uri'
+              JSF::Forms::Field::FileInput
+            else
+              JSF::Forms::Field::Checkbox
+            end
+          when 'null'
+            if value&.dig(:displayProperties, :useHeader) || value&.dig(:displayProperties, :useInfo)
+              JSF::Forms::Field::Markdown
+            elsif value[:static]
+              JSF::Forms::Field::Static
+            end
+          end
+        end
+
+      end
+
       # converts and Integer into a string that can be used for
       # JSF::Forms::ComponentRef and JSF::Forms::Form inside 'definitions'
       #
@@ -53,71 +119,38 @@ module JSF
       # Defined in a Proc so it can be reused:
       ATTRIBUTE_TRANSFORM = ->(attribute, value, instance, init_options) {
     
-        case instance
+        klass = case instance
         when JSF::Forms::Form
     
           case attribute
           when 'definitions'
             if value[:isResponseSet]
-              return JSF::Forms::ResponseSet.new(value, init_options)
+              JSF::Forms::ResponseSet
             elsif value[:type] == 'object' #replaced schemas
-              return JSF::Forms::Form.new(value, init_options)
+              JSF::Forms::Form
             elsif value.key?(:$ref) # shared definition
-              return JSF::Forms::ComponentRef.new(value, init_options)
+              JSF::Forms::ComponentRef
             end
           when 'allOf'
-            return JSF::Forms::Condition.new(value, init_options)
+            JSF::Forms::Condition
           when 'properties'
-            if value.key?(:$ref)
-              if value.dig(:displayProperties, :isSelect)
-                return JSF::Forms::Field::Select.new(value, init_options)
+            if value.dig(:displayProperties, :useSection)
+              JSF::Forms::Section
+            else
+              component_name = value.dig(:displayProperties, :component)
+              if component_name
+                COMPONENT_PROPERTY_CLASS_PROC.call(component_name)
               else
-                return ::JSF::Forms::Field::Component.new(value, init_options)
+                DEPRECATED_PROPERTY_MAP.call(value)
               end
             end
-    
-            klass = case value[:type]
-              when 'string'
-                if value[:format] == 'date-time'
-                  JSF::Forms::Field::DateInput
-                else
-                  JSF::Forms::Field::TextInput
-                end
-              when 'number'
-                if value&.dig(:displayProperties, :useSlider)
-                  JSF::Forms::Field::Slider
-                else
-                  JSF::Forms::Field::NumberInput
-                end
-              when 'boolean'
-                JSF::Forms::Field::Switch
-              when 'array'
-                if value.dig(:items, :format) == 'uri'
-                  JSF::Forms::Field::FileInput
-                elsif value.dig(:displayProperties, :useSection)
-                  JSF::Forms::Section
-                else
-                  JSF::Forms::Field::Checkbox
-                end
-              when 'null'
-                if value&.dig(:displayProperties, :useHeader)
-                  JSF::Forms::Field::Header
-                elsif value&.dig(:displayProperties, :useInfo)
-                  JSF::Forms::Field::Info
-                elsif value[:static]
-                  JSF::Forms::Field::Static
-                end
-              when 'object'
-                if value&.dig(:displayProperties, :component) == 'signature'
-                  JSF::Forms::Field::Signature
-                end
-              end
-      
-            return klass.new(value, init_options) if klass
           end
           
         end
-    
+        
+        # return if a condition is met, otherwise let error be raised
+        return klass.new(value, init_options) if klass
+
         raise StandardError.new("JSF::Forms::Form transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
     
@@ -1324,6 +1357,38 @@ module JSF
         if !self.meta[:is_subschema]
           self[:schemaFormVersion] = VERSION
         end
+
+        # add displayProperties.component to all properties
+        self.properties.each do |key, prop|
+
+          if prop.dig(:displayProperties).key?('useHeader')
+            prop.dig(:displayProperties)&.delete('useHeader')
+            level = prop.dig(:displayProperties)&.delete('level')
+            prop.dig(:displayProperties, :i18n, :label).transform_values! do |value|
+              if value
+                if level == 1
+                  "# #{value}"
+                else
+                  "## #{value}"
+                end
+              end
+            end
+            SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
+          end
+
+          prop.dig(:displayProperties)&.delete('useInfo')
+          prop.dig(:displayProperties)&.delete('icon')
+
+          prop.dig(:displayProperties)&.delete('useSlider')
+
+          prop.dig(:displayProperties)&.delete('isSelect')
+
+          # prop.dig(:displayProperties)&.delete('useSection')
+
+          component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
+          SuperHash::Utils.bury(prop, :displayProperties, :component, component_name) if component_name
+        end
+
       end
     
       private

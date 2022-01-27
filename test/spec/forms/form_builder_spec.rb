@@ -27,8 +27,7 @@ class FormbuilderTest < Minitest::Test
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::FileInput => [],
-      JSF::Forms::Field::Header => [],
-      JSF::Forms::Field::Info => [],
+      JSF::Forms::Field::Markdown => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}

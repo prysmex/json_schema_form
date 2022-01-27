@@ -17,6 +17,7 @@ module JSF
           can_be_hidden_on_create = (passthru[:hideable_on_create_static_fields] || []).map(&:to_s).include?(self.key_name)
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['static'])
               optional(:hidden).filled(:bool) if can_be_hidden
               optional(:hideOnCreate).filled(:bool) if can_be_hidden_on_create
               required(:sort).filled(:integer)

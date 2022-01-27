@@ -16,6 +16,7 @@ module JSF
           Dry::Schema.define(parent: super) do
             optional(:default).value(:bool)
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['switch'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do

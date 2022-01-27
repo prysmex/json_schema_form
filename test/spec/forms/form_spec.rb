@@ -18,8 +18,7 @@ class FormTest < Minitest::Test
       append_property(:component, example('component'))
       append_property(:date_input, example('date_input'))
       append_property(:file_input, example('file_input'))
-      append_property(:header, example('header'))
-      append_property(:info, example('info'))
+      append_property(:markdown, example('markdown'))
       append_property(:number_input, example('number_input'))
       append_property(:select, example('select')) do |f, key|
         # conditional properties
@@ -28,6 +27,7 @@ class FormTest < Minitest::Test
       append_property(:slider, example('slider'))
       append_property(:static, example('static'))
       append_property(:text_input, example('text_input'))
+      append_property(:signature, example('signature'))
 
     end
 
@@ -226,7 +226,7 @@ class FormTest < Minitest::Test
 
   def test_not_valid_for_locale_when_field_is_not_valid
     form = JSF::Forms::FormBuilder.build do
-      append_property :prop1, JSF::Forms::FormBuilder.example('info')
+      append_property :prop1, JSF::Forms::FormBuilder.example('markdown')
     end
 
     assert_equal true, form.valid_for_locale?
@@ -237,12 +237,12 @@ class FormTest < Minitest::Test
   def test_not_valid_for_locale_when_conditional_field_is_not_valid
     form = JSF::Forms::FormBuilder.build do
       append_property :switch1, JSF::Forms::FormBuilder.example('switch') do |f, key|
-        append_conditional_property :dependent_info, example('info'), dependent_on: key, type: :const, value: true
+        append_conditional_property :dependent_markdown, example('markdown'), dependent_on: key, type: :const, value: true
       end
     end
 
     assert_equal true, form.valid_for_locale?
-    form.get_merged_property(:dependent_info).set_label_for_locale(nil)
+    form.get_merged_property(:dependent_markdown).set_label_for_locale(nil)
     assert_equal false, form.valid_for_locale?
   end
 
@@ -952,7 +952,7 @@ class FormTest < Minitest::Test
     empty_form = JSF::Forms::FormBuilder.build
 
     root_non_scorable_form = JSF::Forms::FormBuilder.build do
-      append_property(:info_1, example('info'))
+      append_property(:markdown_1, example('markdown'))
     end
 
     # general cases where nil
@@ -1004,7 +1004,7 @@ class FormTest < Minitest::Test
           end
         end
   
-        append_property(:info_1, example('info'))
+        append_property(:markdown_1, example('markdown'))
         append_property(:switch_1, example('switch'))
   
         append_property(:select_1, example('select')) do |f, key|
@@ -1081,7 +1081,7 @@ class FormTest < Minitest::Test
     assert_equal false, form.scored?
 
     # not scored field
-    form.append_property(:info_1, JSF::Forms::FormBuilder.example('info'))
+    form.append_property(:markdown_1, JSF::Forms::FormBuilder.example('markdown'))
     assert_equal false, form.scored?
 
     # scored field
@@ -1091,7 +1091,7 @@ class FormTest < Minitest::Test
     # non root
     complex_non_scorable_form = JSF::Forms::FormBuilder.build do
       append_property(:number_input_1, example('number_input')) do |f, key|
-        append_conditional_property(:info_1_1, example('info'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
+        append_conditional_property(:markdown_1_1, example('markdown'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
           subform.append_property(:section, example('section')) do |f|
             f.form.instance_eval do
               append_property(:switch, example('switch')) #scored

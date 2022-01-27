@@ -2,6 +2,7 @@
   // "$id": "",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
+    "component": "slider",
     // "hidden": false,
     // "hideOnCreate": false,
     "i18n": {
@@ -30,7 +31,6 @@
     },
     "pictures": [],
     "sort": 0,
-    "useSlider": true,
     "visibility": {
       "label": true
     }

@@ -21,6 +21,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
+              required(:component).value(included_in?: ['checkbox'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
