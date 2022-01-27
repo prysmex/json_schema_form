@@ -7,7 +7,6 @@
     // "hideOnCreate": false,
     "sort": 0
   },
-  "static": true,
   "title": "Description",
   "type": "null"
 }

@@ -22,7 +22,6 @@ module JSF
               optional(:hideOnCreate).filled(:bool) if can_be_hidden_on_create
               required(:sort).filled(:integer)
             end
-            required(:static).filled(Types::True)
             required(:type)
           end
         end
