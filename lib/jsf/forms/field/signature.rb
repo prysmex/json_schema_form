@@ -32,7 +32,7 @@ module JSF
               end
             end
             required(:properties).hash do
-              required(:db_id).hash do
+              required(:db_identifier).hash do
                 required(:type).value(included_in?: ['number'])
               end
               required(:name).hash do
@@ -43,6 +43,7 @@ module JSF
                 required(:format).value(included_in?: ['uri'])
               end
             end
+            required(:additionalProperties).value(eql?: false)
             optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if passthru[:is_inspection] || passthru[:is_shared]
             required(:required).value(:array, min_size?: 0, max_size?: 3).each(:str?)
             required(:type)

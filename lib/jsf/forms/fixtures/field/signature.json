@@ -24,10 +24,11 @@
       "format": "uri",
       "type": "string"
     },
-    "db_id": {
+    "db_identifier": {
       "type": "number"
     }
   },
+  "additionalProperties": false,
   "required": [],
   "title": "firma9386",
   "type": "object"
