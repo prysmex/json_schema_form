@@ -33,6 +33,7 @@ module JSF
                   end
                 end
               end
+              optional(:isSelect).filled(Types::True)
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do

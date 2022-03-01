@@ -35,10 +35,11 @@ class SwitchTest < Minitest::Test
 
   def test_i18n_value
     field = JSF::Forms::Field::Switch.new(JSF::Forms::FormBuilder.example('switch'))
-    SuperHash::Utils.bury(field, :displayProperties, :i18n, :trueLabel, :es, 'positive')
-    SuperHash::Utils.bury(field, :displayProperties, :i18n, :falseLabel, :es, 'negative')
-    assert_equal 'positive', field.i18n_value(true)
-    assert_equal 'negative', field.i18n_value(false)
+    locale = JSF::Forms::DEFAULT_LOCALE
+    SuperHash::Utils.bury(field, :displayProperties, :i18n, :trueLabel, locale, 'positive')
+    SuperHash::Utils.bury(field, :displayProperties, :i18n, :falseLabel, locale, 'negative')
+    assert_equal 'positive', field.i18n_value(true, locale)
+    assert_equal 'negative', field.i18n_value(false, locale)
   end
 
   # max_score

@@ -1,6 +1,6 @@
 module JSF
   module Forms
-    DEFAULT_LOCALE = 'es'.freeze
+    DEFAULT_LOCALE = 'en'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
     VERSION = '3.2.0'.freeze
     
@@ -1352,7 +1352,7 @@ module JSF
       # The method is only the last migration script (not versioned)
       #
       # @return [void]
-      def migrate!(allow_extra: false)
+      def migrate!
         # add schemaFormVersion
         if !self.meta[:is_subschema]
           self[:schemaFormVersion] = VERSION
@@ -1375,15 +1375,6 @@ module JSF
             end
             SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
           end
-
-          prop.dig(:displayProperties)&.delete('useInfo')
-          prop.dig(:displayProperties)&.delete('icon')
-
-          prop.dig(:displayProperties)&.delete('useSlider')
-
-          prop.dig(:displayProperties)&.delete('isSelect')
-
-          # prop.dig(:displayProperties)&.delete('useSection')
 
           component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
           SuperHash::Utils.bury(prop, :displayProperties, :component, component_name) if component_name

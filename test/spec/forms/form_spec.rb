@@ -1168,19 +1168,19 @@ class FormTest < Minitest::Test
 
     # translates switch
     i18n_doc = form.i18n_document({'switch' => true})
-    assert_equal 'Algun texto positivo', i18n_doc['switch']
+    assert_equal 'Some positive text', i18n_doc['switch']
     i18n_doc = form.i18n_document({'switch' => 'other_value'})
     assert_equal 'Missing Translation', i18n_doc['switch']
 
     # translates logic field
     i18n_doc = form.i18n_document({'switch_1' => true})
-    assert_equal 'Algun texto positivo', i18n_doc['switch_1']
+    assert_equal 'Some positive text', i18n_doc['switch_1']
     i18n_doc = form.i18n_document({'switch_1' => 'other_value'})
     assert_equal 'Missing Translation', i18n_doc['switch_1']
 
     # translates field in section
     i18n_doc = form.i18n_document({'section' => [{"switch_2" => true}]})
-    assert_equal 'Algun texto positivo', i18n_doc.dig('section', 0, 'switch_2')
+    assert_equal 'Some positive text', i18n_doc.dig('section', 0, 'switch_2')
     i18n_doc = form.i18n_document({'section' => [{"switch_2" => 'other_value'}]})
     assert_equal 'Missing Translation', i18n_doc.dig('section', 0, 'switch_2')
   end
