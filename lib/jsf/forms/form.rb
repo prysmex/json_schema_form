@@ -45,6 +45,7 @@ module JSF
         is_string = value.is_a?(::String)
 
         hash = {
+          # fields
           'checkbox' => JSF::Forms::Field::Checkbox,
           'component' => JSF::Forms::Field::Component,
           'date_input' => JSF::Forms::Field::DateInput,
@@ -57,6 +58,7 @@ module JSF
           'static' => JSF::Forms::Field::Static,
           'switch' => JSF::Forms::Field::Switch,
           'text_input' => JSF::Forms::Field::TextInput,
+          'section' => JSF::Forms::Section
         }
 
         if is_string
@@ -68,7 +70,9 @@ module JSF
 
       # TODO remove after 3.2.0 migrate!
       DEPRECATED_PROPERTY_MAP = Proc.new do |value|
-        if value.key?(:$ref)
+        if value.dig(:displayProperties, :useSection)
+          JSF::Forms::Section
+        elsif value.key?(:$ref)
           if value.dig(:displayProperties, :isSelect)
             JSF::Forms::Field::Select
           else
@@ -104,7 +108,6 @@ module JSF
             end
           end
         end
-
       end
 
       # converts and Integer into a string that can be used for
@@ -134,15 +137,11 @@ module JSF
           when 'allOf'
             JSF::Forms::Condition
           when 'properties'
-            if value.dig(:displayProperties, :useSection)
-              JSF::Forms::Section
+            component_name = value.dig(:displayProperties, :component)
+            if component_name
+              COMPONENT_PROPERTY_CLASS_PROC.call(component_name)
             else
-              component_name = value.dig(:displayProperties, :component)
-              if component_name
-                COMPONENT_PROPERTY_CLASS_PROC.call(component_name)
-              else
-                DEPRECATED_PROPERTY_MAP.call(value)
-              end
+              DEPRECATED_PROPERTY_MAP.call(value)
             end
           end
           
@@ -1361,6 +1360,7 @@ module JSF
         # add displayProperties.component to all properties
         self.properties.each do |key, prop|
 
+          # migrate header to markdown
           if prop.dig(:displayProperties).key?('useHeader')
             prop.dig(:displayProperties)&.delete('useHeader')
             level = prop.dig(:displayProperties)&.delete('level')
@@ -1376,8 +1376,10 @@ module JSF
             SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
           end
 
+          # add component to all properties
           component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
           SuperHash::Utils.bury(prop, :displayProperties, :component, component_name) if component_name
+
         end
 
       end

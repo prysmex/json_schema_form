@@ -45,6 +45,7 @@ module JSF
           end
 
           required(:displayProperties).hash do
+            required(:component).value(included_in?: ['section'])
             optional(:hidden).filled(:bool)
             optional(:hideOnCreate).filled(:bool)
             required(:i18n).hash do
