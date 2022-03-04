@@ -1376,6 +1376,10 @@ module JSF
             SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
           end
 
+          if prop.is_a?(JSF::Forms::Field::Markdown)
+            SuperHash::Utils.bury(prop, :displayProperties, :useInfo, true)
+          end
+
           # add component to all properties
           component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
           SuperHash::Utils.bury(prop, :displayProperties, :component, component_name) if component_name
