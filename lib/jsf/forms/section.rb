@@ -57,7 +57,6 @@ module JSF
             end
             required(:pictures).value(:array?).array(:str?)
             required(:sort).filled(:integer)
-            optional(:useSection).value(eql?: true)
             required(:visibility).hash do
               required(:label).filled(:bool)
             end

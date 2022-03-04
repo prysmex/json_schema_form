@@ -38,7 +38,6 @@ module JSF
               end
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
-              required(:useToggle).filled(:bool)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end

@@ -1380,6 +1380,8 @@ module JSF
           prop.dig(:displayProperties)&.delete('icon')
           prop.dig(:displayProperties)&.delete('useSlider')
           prop.dig(:displayProperties)&.delete('isSelect')
+          prop.dig(:displayProperties)&.delete('useToggle')
+          prop.dig(:displayProperties)&.delete('useSection')
           prop.delete('static')
 
           # add component to all properties
