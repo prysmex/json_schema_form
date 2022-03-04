@@ -1367,9 +1367,9 @@ module JSF
             prop.dig(:displayProperties, :i18n, :label).transform_values! do |value|
               if value
                 if level == 1
-                  "# #{value}"
-                else
                   "## #{value}"
+                else
+                  "### #{value}"
                 end
               end
             end
