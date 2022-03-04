@@ -1376,9 +1376,11 @@ module JSF
             SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
           end
 
-          if prop.is_a?(JSF::Forms::Field::Markdown)
-            SuperHash::Utils.bury(prop, :displayProperties, :useInfo, true)
-          end
+          prop.dig(:displayProperties)&.delete('useInfo')
+          prop.dig(:displayProperties)&.delete('icon')
+          prop.dig(:displayProperties)&.delete('useSlider')
+          prop.dig(:displayProperties)&.delete('isSelect')
+          prop.delete('static')
 
           # add component to all properties
           component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)

@@ -25,11 +25,9 @@ module JSF
                   end
                 end
               end
-              optional(:icon).filled(:string)
               required(:kind).maybe(:string)
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
-              optional(:useInfo).filled(:bool)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
