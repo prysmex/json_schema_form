@@ -24,7 +24,7 @@ module JSF
                   end
                 end
               end
-              required(:icon).filled(:string)
+              optional(:icon).filled(:string)
               required(:kind).filled(:string)
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
