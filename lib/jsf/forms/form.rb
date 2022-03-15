@@ -47,7 +47,7 @@ module JSF
         hash = {
           # fields
           'checkbox' => JSF::Forms::Field::Checkbox,
-          'component' => JSF::Forms::Field::Component,
+          'shared' => JSF::Forms::Field::Component,
           'date_input' => JSF::Forms::Field::DateInput,
           'file_input' => JSF::Forms::Field::FileInput,
           'markdown' => JSF::Forms::Field::Markdown,
