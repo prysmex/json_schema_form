@@ -6,7 +6,7 @@ class FormTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build() do
 
       # Add form in definitions
-      add_component_pair(
+      add_shared_pair(
         db_id: 1,
         index: :prepend,
         definition: JSF::Forms::FormBuilder.build() do

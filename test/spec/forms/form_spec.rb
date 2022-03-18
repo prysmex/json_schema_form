@@ -10,12 +10,12 @@ class FormTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build() do
       # definitions
       add_response_set(:response_set_1, example('response_set'))
-      add_component_definition(db_id: 1)
+      add_shared_definition(db_id: 1)
       add_definition('form1', JSF::Forms::FormBuilder.example('form'))
 
       # properties
       append_property(:checkbox, example('checkbox'))
-      append_property(:component, example('component'))
+      append_property(:shared, example('shared'))
       append_property(:date_input, example('date_input'))
       append_property(:file_input, example('file_input'))
       append_property(:markdown, example('markdown'))
@@ -34,7 +34,7 @@ class FormTest < Minitest::Test
     # definitions
     assert_instance_of JSF::Forms::Form, form[:definitions][:form1]
     assert_instance_of JSF::Forms::ResponseSet, form[:definitions][:response_set_1]
-    assert_instance_of JSF::Forms::ComponentRef, form[:definitions][JSF::Forms::Form.component_ref_key(1)]
+    assert_instance_of JSF::Forms::SharedRef, form[:definitions][JSF::Forms::Form.shared_ref_key(1)]
 
     # all field types
     form[:properties].each do |name, field|
@@ -87,10 +87,10 @@ class FormTest < Minitest::Test
     refute_empty form.errors(if: error_proc)
   end
 
-  def test_component_presence_error
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_presence }
+  def test_shared_presence_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :shared_presence }
     form = JSF::Forms::FormBuilder.build do
-      add_component_pair(db_id: 1, index: :prepend)
+      add_shared_pair(db_id: 1, index: :prepend)
     end
 
     # no errors
@@ -145,29 +145,29 @@ class FormTest < Minitest::Test
     assert_empty form.errors(if: error_proc)
   end
 
-  def test_component_in_root_error
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_in_root }
+  def test_shared_in_root_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :shared_in_root }
     form = JSF::Forms::FormBuilder.build() do
       append_property(:switch1, example('switch'))
-      add_component_pair(db_id: 1, index: 0)
+      add_shared_pair(db_id: 1, index: 0)
     end
     
     assert_empty form.errors(if: error_proc)
 
-    form.append_conditional_property(:component_2, JSF::Forms::FormBuilder.example('component'), dependent_on: :switch1, type: :const, value: true)
+    form.append_conditional_property(:shared_2, JSF::Forms::FormBuilder.example('shared'), dependent_on: :switch1, type: :const, value: true)
     refute_empty form.errors(if: error_proc).dig(:allOf, 0, :then, :base)
   end
 
-  def test_component_ref_presence_error
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :component_ref_presence }
+  def test_shared_ref_presence_error
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :shared_ref_presence }
     db_id = 1
 
     form = JSF::Forms::FormBuilder.build() do
-      append_property(:component_1, example('component')).tap{|c| c.db_id=db_id}
+      append_property(:shared_1, example('shared')).tap{|c| c.db_id=db_id}
     end
 
     refute_empty form.errors(if: error_proc)
-    form.add_component_definition(db_id: db_id)
+    form.add_shared_definition(db_id: db_id)
     assert_empty form.errors(if: error_proc)
   end
 
@@ -277,58 +277,58 @@ class FormTest < Minitest::Test
   ###METHODS####
   ##############
 
-  def test_component_definitions
+  def test_shared_definitions
     form = JSF::Forms::FormBuilder.build do
-      add_component_definition(db_id: 1)
+      add_shared_definition(db_id: 1)
       add_definition(:some_key, JSF::Forms::Form.new)
     end
-    assert_equal ["shared_schema_template_1", "some_key"], form.component_definitions.keys
+    assert_equal ["shared_schema_template_1", "some_key"], form.shared_definitions.keys
   end
 
-  def test_add_component_definition
+  def test_add_shared_definition
     form = JSF::Forms::FormBuilder.build do
-      add_component_definition(db_id: 1)
+      add_shared_definition(db_id: 1)
     end
 
-    assert_equal true, form['definitions'].one?{|k,v| v.is_a?(JSF::Forms::ComponentRef) }
+    assert_equal true, form['definitions'].one?{|k,v| v.is_a?(JSF::Forms::SharedRef) }
   end
 
-  def test_get_component_definition
+  def test_get_shared_definition
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_definition(db_id: db_id)
+      add_shared_definition(db_id: db_id)
     end
 
-    assert_instance_of JSF::Forms::ComponentRef, form.get_component_definition(db_id: db_id)
+    assert_instance_of JSF::Forms::SharedRef, form.get_shared_definition(db_id: db_id)
   end
 
-  def test_remove_component_definition
+  def test_remove_shared_definition
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_definition(db_id: db_id)
+      add_shared_definition(db_id: db_id)
     end
 
-    form.remove_component_definition(db_id: db_id)
+    form.remove_shared_definition(db_id: db_id)
 
     assert_empty form['definitions']
   end
 
-  def test_add_component_pair
+  def test_add_shared_pair
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_pair(db_id: db_id, index: :append)
+      add_shared_pair(db_id: db_id, index: :append)
     end
 
-    component_ref = form.get_component_definition(db_id: db_id)
-    assert_instance_of JSF::Forms::ComponentRef, component_ref
-    assert_instance_of JSF::Forms::Field::Component, component_ref&.component
+    shared_ref = form.get_shared_definition(db_id: db_id)
+    assert_instance_of JSF::Forms::SharedRef, shared_ref
+    assert_instance_of JSF::Forms::Field::Shared, shared_ref&.shared
   end
 
-  def test_remove_component_pair
+  def test_remove_shared_pair
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_component_pair(db_id: db_id, index: :append)
-      remove_component_pair(db_id: db_id)
+      add_shared_pair(db_id: db_id, index: :append)
+      remove_shared_pair(db_id: db_id)
     end
 
     assert_empty form['definitions']
@@ -586,7 +586,7 @@ class FormTest < Minitest::Test
   # def test_prepend_conditional_property
   # end
 
-  # def test_is_component_definition?
+  # def test_is_shared_definition?
   # end
 
   def test_each_form

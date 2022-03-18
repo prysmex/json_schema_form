@@ -163,11 +163,11 @@ A `form` is composed of the follow classes:
   - `JSF::Forms::ResponseSet`
     - `JSF::Forms::Response`
   - `JSF::Forms::Field::Checkbox`
-  - `JSF::Forms::Field::Component`
   - `JSF::Forms::Field::DateInput`
   - `JSF::Forms::Field::Markdown`
   - `JSF::Forms::Field::NumberInput`
   - `JSF::Forms::Field::Select`
+  - `JSF::Forms::Field::Shared`
   - `JSF::Forms::Field::Slider`
   - `JSF::Forms::Field::Static`
   - `JSF::Forms::Field::Switch`

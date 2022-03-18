@@ -1,15 +1,15 @@
 require 'test_helper'
 
-class ComponentRefTest < Minitest::Test
+class SharedRefTest < Minitest::Test
 
   ##################
   ###VALIDATIONS####
   ##################
 
   def test_schema_key_validations
-    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::ComponentRef) && key == :schema }
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::SharedRef) && key == :schema }
 
-    errors = JSF::Forms::ComponentRef.new({array_key: [], other_key: 1}).errors(if: error_proc)
+    errors = JSF::Forms::SharedRef.new({array_key: [], other_key: 1}).errors(if: error_proc)
     # unknown keys
     refute_nil errors[:array_key]
     refute_nil errors[:other_key]
@@ -21,6 +21,6 @@ class ComponentRefTest < Minitest::Test
   ###METHODS####
   ##############
 
-  # component
+  # shared
 
 end

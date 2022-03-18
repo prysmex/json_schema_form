@@ -7,7 +7,7 @@ class FormbuilderTest < Minitest::Test
   # tests .errors and .valid_for_locale?
   def test_fixtures
     klasses = {
-      JSF::Forms::ComponentRef => [
+      JSF::Forms::SharedRef => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Form => [],
@@ -22,7 +22,7 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Checkbox => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
-      JSF::Forms::Field::Component => [
+      JSF::Forms::Field::Shared => [
         {errors_args: {unless: ->(i, key){key = :ref_presence} }}
       ],
       JSF::Forms::Field::DateInput => [],
@@ -40,7 +40,7 @@ class FormbuilderTest < Minitest::Test
     }
     
     klasses.each do |klass, traits_array|
-      skip_valid_for_locale = [JSF::Forms::ComponentRef, JSF::Forms::Section].include?(klass)
+      skip_valid_for_locale = [JSF::Forms::SharedRef, JSF::Forms::Section].include?(klass)
 
       if traits_array.empty?
         hash = JSF::Forms::FormBuilder.example_for(klass)

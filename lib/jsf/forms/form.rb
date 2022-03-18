@@ -47,7 +47,7 @@ module JSF
         hash = {
           # fields
           'checkbox' => JSF::Forms::Field::Checkbox,
-          'shared' => JSF::Forms::Field::Component,
+          'shared' => JSF::Forms::Field::Shared,
           'date_input' => JSF::Forms::Field::DateInput,
           'file_input' => JSF::Forms::Field::FileInput,
           'markdown' => JSF::Forms::Field::Markdown,
@@ -76,7 +76,7 @@ module JSF
           if value.dig(:displayProperties, :isSelect)
             JSF::Forms::Field::Select
           else
-            ::JSF::Forms::Field::Component
+            ::JSF::Forms::Field::Shared
           end
         else
           case value[:type]
@@ -111,11 +111,11 @@ module JSF
       end
 
       # converts and Integer into a string that can be used for
-      # JSF::Forms::ComponentRef and JSF::Forms::Form inside 'definitions'
+      # JSF::Forms::SharedRef and JSF::Forms::Form inside 'definitions'
       #
       # @param [Integer] id
       # @return [String]
-      def self.component_ref_key(id)
+      def self.shared_ref_key(id)
         "shared_schema_template_#{id}"
       end
       
@@ -132,14 +132,14 @@ module JSF
             elsif value[:type] == 'object' #replaced schemas
               JSF::Forms::Form
             elsif value.key?(:$ref) # shared definition
-              JSF::Forms::ComponentRef
+              JSF::Forms::SharedRef
             end
           when 'allOf'
             JSF::Forms::Condition
           when 'properties'
-            component_name = value.dig(:displayProperties, :component)
-            if component_name
-              COMPONENT_PROPERTY_CLASS_PROC.call(component_name)
+            component = value.dig(:displayProperties, :component)
+            if component
+              COMPONENT_PROPERTY_CLASS_PROC.call(component)
             else
               DEPRECATED_PROPERTY_MAP.call(value)
             end
@@ -231,11 +231,11 @@ module JSF
       # Build instance's erros hash from the validation_schema. It also validates
       # the following:
       #
-      # - ensure referenced component properties exist
+      # - ensure referenced shared properties exist
       # - ensure property $id key matches with field id
       # - ensure referenced response sets exist
-      # - ensure JSF::Forms::Field::Component only exist in root form
-      # - ensure components have a pair in 'definitions'
+      # - ensure JSF::Forms::Field::Shared only exist in root form
+      # - ensure shareds have a pair in 'definitions'
       # - ensure only allowed fields contain (conditional) fields
       #
       # @param passthru [Hash{Symbol => *}] Options passed
@@ -260,13 +260,13 @@ module JSF
         end
 
         self[:definitions]&.each do |k, v|
-          # ensure referenced component properties exist
-          if run_validation?(passthru, self, :component_presence)
-            if v.is_a?(JSF::Forms::ComponentRef) && v.component.nil?
+          # ensure referenced shared properties exist
+          if run_validation?(passthru, self, :shared_presence)
+            if v.is_a?(JSF::Forms::SharedRef) && v.shared.nil?
               add_error_on_path(
                 errors_hash,
                 ['base'],
-                "missing component field for component reference (#{k})"
+                "missing shared field for shared reference (#{k})"
               )
             end
           end
@@ -296,26 +296,26 @@ module JSF
             end
           end
 
-          # ensure JSF::Forms::Field::Component only exist in root form
-          if run_validation?(passthru, self, :component_in_root)
-            if self.meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Component)
+          # ensure JSF::Forms::Field::Shared only exist in root form
+          if run_validation?(passthru, self, :shared_in_root)
+            if self.meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Shared)
               add_error_on_path(
                 errors_hash,
                 ['base'],
-                "components can only exist in root schema (#{k})"
+                "shareds can only exist in root schema (#{k})"
               )
             end
           end
 
-          # ensure components have a pair in 'definitions'
-          if run_validation?(passthru, self, :component_ref_presence)
-            if field.is_a?(JSF::Forms::Field::Component)
+          # ensure shareds have a pair in 'definitions'
+          if run_validation?(passthru, self, :shared_ref_presence)
+            if field.is_a?(JSF::Forms::Field::Shared)
               # response should be found
-              if field.component_definition.nil?
+              if field.shared_definition.nil?
                 add_error_on_path(
                   errors_hash,
                   ['base'],
-                  "missing component reference for field #{field.component_definition_pointer}"
+                  "missing shared reference for field #{field.shared_definition_pointer}"
                 )
               end
             end
@@ -380,74 +380,74 @@ module JSF
 
       # Util
       #
-      # @see .component_ref_key
-      def component_ref_key(*args)
-        self.class.component_ref_key(*args)
+      # @see .shared_ref_key
+      def shared_ref_key(*args)
+        self.class.shared_ref_key(*args)
       end
     
-      # Gets all component definitions, which may be only the reference
+      # Gets all shared definitions, which may be only the reference
       # or the replaced form
       #
-      # @return [Hash{String => JSF::Forms::Form, JSF::Forms::ComponentRef}]
-      def component_definitions
+      # @return [Hash{String => JSF::Forms::Form, JSF::Forms::SharedRef}]
+      def shared_definitions
         self[:definitions].select do |k,v|
-          v.is_a?(JSF::Forms::ComponentRef) || v.is_a?(JSF::Forms::Form)
+          v.is_a?(JSF::Forms::SharedRef) || v.is_a?(JSF::Forms::Form)
         end
       end
 
-      # Adds a JSF::Forms::ComponentRef to the 'definitions' key
+      # Adds a JSF::Forms::SharedRef to the 'definitions' key
       #
       # @param [Integer] db_id (DB id)
-      # @return [JSF::Forms::ComponentRef]
-      def add_component_definition(db_id:, definition: nil)
+      # @return [JSF::Forms::SharedRef]
+      def add_shared_definition(db_id:, definition: nil)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         
-        definition ||= JSF::Forms::FormBuilder.example('component_ref')
-        definition = self.add_definition(component_ref_key(db_id), definition)
-        definition.db_id = db_id if definition.is_a?(JSF::Forms::ComponentRef)
+        definition ||= JSF::Forms::FormBuilder.example('shared_ref')
+        definition = self.add_definition(shared_ref_key(db_id), definition)
+        definition.db_id = db_id if definition.is_a?(JSF::Forms::SharedRef)
         definition
       end
 
-      # Finds a JSF::Forms::ComponentRef from a db_id
+      # Finds a JSF::Forms::SharedRef from a db_id
       #
       # @param [Integer] db_id
-      # @return [JSF::Forms::ComponentRef, JSF::Forms::Form]
-      def get_component_definition(db_id:)
+      # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
+      def get_shared_definition(db_id:)
         self['definitions'].find do |k,v|
-          k == component_ref_key(db_id)
+          k == shared_ref_key(db_id)
         end&.last
       end
 
-      # Removes a JSF::Forms::ComponentRef or JSF::Forms::Form from the 'definitions' key
+      # Removes a JSF::Forms::SharedRef or JSF::Forms::Form from the 'definitions' key
       #
       # @param [Integer] db_id (DB id)
       # @return [JSF::Forms::Form] mutated self
-      def remove_component_definition(db_id:)
+      def remove_shared_definition(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
-        key = component_ref_key(db_id)
+        key = shared_ref_key(db_id)
 
         self.remove_definition(key)
       end
 
-      # Adds a component. If index is passed, it will also add a JSF::Forms::Field::Component
+      # Adds a shared. If index is passed, it will also add a JSF::Forms::Field::Shared
       # on the properties key
       #
       # @param [Integer] db_id (DB id)
       # @param [Integer] index
-      # @return [JSF::Forms::ComponentRef]
-      def add_component_pair(db_id:, index:, definition: nil, options: {})
+      # @return [JSF::Forms::SharedRef]
+      def add_shared_pair(db_id:, index:, definition: nil, options: {})
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
-        key = component_ref_key(db_id)
+        key = shared_ref_key(db_id)
 
         # add property
-        component = JSF::Forms::FormBuilder.example('component')
+        shared = JSF::Forms::FormBuilder.example('shared')
         prop = case index
         when Integer
-          insert_property_at_index(index, key, component, options)
+          insert_property_at_index(index, key, shared, options)
         when :append
-          append_property(key, component, options)
+          append_property(key, shared, options)
         when :prepend
-          prepend_property(key, component, options)
+          prepend_property(key, shared, options)
         else
           raise ArgumentError.new("invalid index argument #{index}")
         end
@@ -455,17 +455,16 @@ module JSF
         prop.db_id = db_id
 
         # add definition
-        add_component_definition(db_id: db_id, definition: definition)
+        add_shared_definition(db_id: db_id, definition: definition)
       end
 
-      # Removes a component ref. If remove_component is true, it will also remove the matching JSF::Forms::Field::Component
+      # Removes a shared ref.
       #
       # @param [Integer] db_id (DB id)
-      # @param [Boolean] remove_component set to true to also remove related JSF::Forms::Field::Component
       # @return [JSF::Forms::Form] mutated self
-      def remove_component_pair(db_id:)
+      def remove_shared_pair(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
-        key = component_ref_key(db_id)
+        key = shared_ref_key(db_id)
 
         # remove property
         # self.remove_property(key)
@@ -744,7 +743,7 @@ module JSF
       # If returns true if inside the root key 'definitions'
       #
       # @return [Boolean]
-      def is_component_definition?
+      def is_shared_definition?
         self.meta[:path].first == 'definitions'
       end
 
@@ -870,7 +869,7 @@ module JSF
       def each_form_with_document(document, document_path: [], skip_property_proc: nil,  **kwargs, &block)
         empty_document = {}
 
-        # since JSF::Forms::Field::Component and JSF::Forms::Section are already
+        # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
         # handled, we ignore them in the each_form iterator
         each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, *args|
 
@@ -897,10 +896,10 @@ module JSF
                     &block
                   )
               end
-            when JSF::Forms::Field::Component
+            when JSF::Forms::Field::Shared
               value = document[key] || {}
               empty_document[key] = property
-                .component_definition
+                .shared_definition
                 .each_form_with_document(
                   value,
                   document_path: (document_path + [key]),
@@ -1243,10 +1242,10 @@ module JSF
               value&.map do |doc|
                 property.form.i18n_document(doc, locale: locale, missing_locale_msg: missing_locale_msg)
               end
-            # go recursive on component
-            when JSF::Forms::Field::Component
+            # go recursive on shared
+            when JSF::Forms::Field::Shared
               property
-                .component_definition
+                .shared_definition
                 .i18n_document(value, locale: locale, missing_locale_msg: missing_locale_msg)
             else
               value
@@ -1263,7 +1262,7 @@ module JSF
       # 
       # - 'const' key inside the response sets is NOT modified since it does not have to be unique,
       #    JSF::Forms::Condition(s) values are also not migrated for that reason
-      # - does not migrate JSF::Forms::Field::Component, because the property key must not change
+      # - does not migrate JSF::Forms::Field::Shared, because the property key must not change
       #
       # @ToDo consider shared fields
       #
@@ -1286,7 +1285,7 @@ module JSF
           prop_keys.each do |prop_key|
             prop = form['properties'][prop_key]
             next if prop.is_a?(JSF::Forms::Field::Static)
-            next if prop.is_a?(JSF::Forms::Field::Component)
+            next if prop.is_a?(JSF::Forms::Field::Shared)
 
             new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)      
             
@@ -1385,8 +1384,8 @@ module JSF
           prop.delete('static')
 
           # add component to all properties
-          component_name = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
-          SuperHash::Utils.bury(prop, :displayProperties, :component, component_name) if component_name
+          component = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
+          SuperHash::Utils.bury(prop, :displayProperties, :component, component) if component
 
         end
 

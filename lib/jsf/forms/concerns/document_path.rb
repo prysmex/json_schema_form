@@ -42,24 +42,24 @@ module JSF
           schema_path.each_with_index.inject(root_form) do |current_schema, (key, i)|
             next_schema = current_schema[key]
 
-            # if a 'definitions' we must add the key of the 'JSF::Forms::Field::Component'
+            # if a 'definitions' we must add the key of the 'JSF::Forms::Field::Shared'
             # that matches
             if key == 'definitions'
               target_form = next_schema[schema_path[i + 1]]
               
-              component_field = nil
+              shared_field = nil
               root_form.each_form do |form|
                 found_prop = form.properties.find do |key, prop|
-                  next unless prop.is_a?(JSF::Forms::Field::Component)
-                  prop.component_definition == target_form #match the field
+                  next unless prop.is_a?(JSF::Forms::Field::Shared)
+                  prop.shared_definition == target_form #match the field
                 end
                 if found_prop
-                  component_field = found_prop[1]
+                  shared_field = found_prop[1]
                   break
                 end
               end
-              raise StandardError.new("JSF::Forms::Field::Component not found for property: #{self.key_name}") unless component_field
-              document_path.push(component_field.key_name)
+              raise StandardError.new("JSF::Forms::Field::Shared not found for property: #{self.key_name}") unless shared_field
+              document_path.push(shared_field.key_name)
             elsif current_schema.is_a?(JSF::Forms::Section)
               raise StandardError.new("fields nested under a JSF::Forms::Section do not support document_path") # we cannot know array index
             end

@@ -28,8 +28,8 @@ module JSF
       # @return [Hash]
       def example(ex_name, *args, &block)
         path = case ex_name.to_s
-          when 'component_ref'
-            '/component_ref.json'
+          when 'shared_ref'
+            '/shared_ref.json'
           when 'form'
             '/form.json'
           when 'response_set'
@@ -41,8 +41,8 @@ module JSF
           #fields
           when 'checkbox'
             '/field/checkbox.json'
-          when 'component'
-            '/field/component.json'
+          when 'shared'
+            '/field/shared.json'
           when 'date_input'
             '/field/date_input.json'
           when 'file_input'

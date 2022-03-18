@@ -4,7 +4,7 @@ module JSF
     #
     # Represents a placeholder for a form that may be referenced
     #
-    class ComponentRef < BaseHash
+    class SharedRef < BaseHash
 
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
@@ -40,17 +40,17 @@ module JSF
       ###METHODS####
       ##############
 
-      # Finds the component pair inside the 'properties' key
+      # Finds the shared pair inside the 'properties' key
       # 
-      # @note it assumes components are at root schema
+      # @note it assumes shareds are at root schema
       #
-      # @return [NilClass, JSF::Forms::Field::Component]
-      def component
+      # @return [NilClass, JSF::Forms::Field::Shared]
+      def shared
         parent = self.root_parent
         return unless parent
 
         parent[:properties]&.find do |k,v|
-          v.is_a?(JSF::Forms::Field::Component) &&
+          v.is_a?(JSF::Forms::Field::Shared) &&
           self.db_id == v.db_id
         end&.last
       end
@@ -62,7 +62,7 @@ module JSF
         self[:$ref]
       end
 
-      # Update the db id in the component_definition_pointer
+      # Update the db id in the shared_definition_pointer
       #
       # @param [Integer]
       # @return [void]
