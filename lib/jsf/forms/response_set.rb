@@ -50,6 +50,10 @@ module JSF
           required(:type).filled(Types::String.enum('string'))
           optional(:title).maybe(:string)
           required(:isResponseSet).filled(Types::True)
+          optional(:sort).hash do
+            required(:sortBy).value(included_in?: ['alphabetical', 'score'])
+            required(:sortOrder).value(included_in?: ['asc', 'desc'])
+          end
           required(:anyOf).array(:hash)
         end
       end
