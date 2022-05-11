@@ -792,6 +792,36 @@ class FormTest < Minitest::Test
 
   end
 
+  def test_each_sorted_property
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:switch_1, example('switch')) do |f, key|
+        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          end
+        end
+
+        append_conditional_property(:section_2, example('section'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          f.form.instance_eval do
+            append_property(:switch_4, example('switch'))
+          end
+        end
+      end
+
+      append_property(:section_1, example('section')) do |f, key|
+        f.form.instance_eval do
+          append_property(:switch_6, example('switch'))
+        end
+      end
+    end
+
+    document = {'switch_1' => true, 'switch_2' => true, 'section_2'=> [{}, {}], 'section_1' => []}
+    array = []
+    form.each_sorted_property(document) do |property|
+      array.push(property.key_name)
+    end
+    assert_equal array, %w(switch_1 switch_2 switch_3 section_2 switch_4 switch_4 section_1)
+  end
+
   # def test_document_path_for_property
   #   form = JSF::Forms::FormBuilder.build() do
   #     append_property(:switch_1, example('switch')) do |f, key|

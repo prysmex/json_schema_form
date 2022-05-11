@@ -866,14 +866,28 @@ module JSF
       # @yieldparam [Array<String,Integer>] document_path
       #
       # @return [void]
-      def each_form_with_document(document, document_path: [], skip_property_proc: nil,  **kwargs, &block)
+      def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_property_proc: nil, skip_on_condition: false, condition_proc: nil, **kwargs, &block)
         empty_document = {}
 
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
         # handled, we ignore them in the each_form iterator
-        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, *args|
+        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc, *args|
 
-          yield(form, *args, document, empty_document, document_path)
+          # skip unactive trees
+          if skip_on_condition && condition&.evaluate(document, &condition_proc) == false
+            skip_branch_proc.call
+          end
+
+          yield(
+            form,
+            condition,
+            skip_branch_proc,
+            *args,
+            document,
+            empty_document,
+            document_path,
+            section_or_shared
+          )
 
           # handle all properties that have a value that is a hash or an array because the document_path is modified
           form[:properties].each do |key, property|
@@ -892,6 +906,9 @@ module JSF
                     doc,
                     document_path: document_path + [key, i],
                     skip_property_proc: skip_property_proc,
+                    skip_on_condition: skip_on_condition,
+                    section_or_shared: property,
+                    condition_proc: condition_proc,
                     **kwargs,
                     &block
                   )
@@ -904,6 +921,9 @@ module JSF
                   value,
                   document_path: (document_path + [key]),
                   skip_property_proc: skip_property_proc,
+                  skip_on_condition: skip_on_condition,
+                  section_or_shared: property,
+                  condition_proc: condition_proc,
                   **kwargs,
                   &block
                 )
@@ -913,6 +933,43 @@ module JSF
         end
 
         empty_document
+      end
+
+      def each_sorted_property(document, condition_proc: nil, **kwargs)
+        is_create = false
+
+        all_sorted_properties = []
+        each_form_with_document(
+          document,
+          skip_on_condition: true,
+          skip_tree_when_hidden: true,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path, section_or_shared|
+
+          target_property = if condition
+            condition&.condition_property
+          else
+            section_or_shared
+          end
+
+          target_property_index = if target_property
+            all_sorted_properties.find_index{|arr| arr[0] == target_property } + 1
+          else
+            0
+          end
+
+          current_array = form.sorted_properties.each_with_object([]) do |property, array|
+            next unless property.visible(is_create: is_create)
+
+            value = [property, current_doc, document_path]
+            array.push(value)
+          end
+
+          all_sorted_properties.insert(target_property_index, *current_array)
+        end
+
+        all_sorted_properties.each{|arr| yield(*arr) }
       end
 
       # # Recursively calculates the document path for a property
@@ -951,12 +1008,10 @@ module JSF
         new_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
+          skip_on_condition: true,
           is_create: is_create,
           **kwargs
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
-          
-          # skip unactive trees
-          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
           
           form[:properties].each do |key, property|
             next unless property.visible(is_create: is_create)
@@ -989,12 +1044,10 @@ module JSF
         specific_max_score_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
+          skip_on_condition: true,
           is_create: is_create,
           **kwargs
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
-
-          # skip unactive trees
-          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
 
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1045,12 +1098,10 @@ module JSF
         score_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
+          skip_on_condition: true,
           is_create: is_create,
           **kwargs
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
-
-          # skip unactive trees
-          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
 
           # iterate properties and increment score_value if needed
           form[:properties].each do |k, prop|
@@ -1082,12 +1133,10 @@ module JSF
         failed_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
+          skip_on_condition: true,
           is_create: is_create,
           **kwargs
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
-
-          # skip unactive trees
-          skip_branch_proc.call if condition&.evaluate(current_doc, &condition_proc) == false
 
           # iterate properties
           form[:properties].each do |k, prop|

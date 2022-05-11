@@ -145,6 +145,18 @@ module JSF
           end
         end
 
+        # # Finds property that it depends on
+        # #
+        # # @return [Nil, JSF::Forms::Field::*]
+        # def depender
+        #   condition = self
+        #     &.meta&.dig(:parent)
+        #     &.meta&.dig(:parent)
+
+        #   return unless condition.respond_to?(:condition_property)
+        #   condition.condition_property
+        # end
+
       end
       
     end
