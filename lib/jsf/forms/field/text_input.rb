@@ -3,7 +3,7 @@ module JSF
     module Field
       class TextInput < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Stringable
   
         set_strict_type('string')
@@ -40,6 +40,11 @@ module JSF
         ##################
         #####METHODS######
         ##################
+
+        def sample_value
+          string_length = 8
+          rand(36**string_length).to_s(36)
+        end
   
       end
     end

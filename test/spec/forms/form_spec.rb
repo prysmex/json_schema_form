@@ -336,9 +336,6 @@ class FormTest < Minitest::Test
   end
 
   # def test_response_sets
-  #   form = JSF::Forms::FormBuilder.build do
-  #     add_response_set('some_key', )
-  #   end
   # end
 
   # def test_add_response_set
@@ -767,7 +764,7 @@ class FormTest < Minitest::Test
 
     # when the document has values
     count = 0
-    document = {'switch_1' => true, 'switch_2' => true, 'switch_2' => true, 'section_1' => [{'switch_4' => true}, {'switch_4' => false}]}
+    document = {'switch_1' => true, 'switch_2' => true, 'section_1' => [{'switch_4' => true}, {'switch_4' => false}]}
     form.each_form_with_document(document) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
       count += 1
       
@@ -1077,23 +1074,99 @@ class FormTest < Minitest::Test
 
     # test multiple documents for a form with no hidden fields
     form = scored_form_proc.call
-    assert_equal 7.0, form.set_specific_max_scores!({})
-    assert_equal 17.0, form.set_specific_max_scores!({'section_1' => [{}]} )
-    assert_equal 27.0, form.set_specific_max_scores!({'section_1' => [{}, {}]} )
-    assert_equal 17.0, form.set_specific_max_scores!({'switch_1' => true, 'section_1' => [{}]})
-    assert_equal 17.0, form.set_specific_max_scores!({'switch_1' => false, 'slider_sec_1' => 8, 'section_1' => [{}]})
-    assert_equal 17.0, form.set_specific_max_scores!({'select_1' => nil, 'section_1' => [{}]})
-    assert_equal 13.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'section_1' => [{}]})
-    assert_equal 16.0, form.set_specific_max_scores!({'select_1' => 'score_3', 'section_1' => [{}]})
-    assert_equal 17.0, form.set_specific_max_scores!({'select_1' => 'score_6', 'section_1' => [{}] })
-    assert_equal 20.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{}] })
-    assert_equal 20.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}] })
-    assert_equal 22.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}] })
-    assert_equal 32.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}, {'number_input_sec_2' => 1}] })
-    assert_equal 34.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1}] })
-    assert_equal 33.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] })
-    assert_equal 35.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] })
-    assert_equal 35.0, form.set_specific_max_scores!({'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1', 'section_1_1_1' => [{}, {}]}] })
+
+    values = [
+      {
+        doc: {},
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[]},
+        total: 7.0,
+      },
+      {
+        doc: {'section_1' => [{}]} ,
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}]},
+        total: 17.0,
+      },
+      {
+        doc: {'section_1' => [{}, {}]} ,
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}, {"slider_sec_1"=>10}]},
+        total: 27.0,
+      },
+      {
+        doc: {'switch_1' => true, 'section_1' => [{}]},
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}]},
+        total: 17.0,
+      },
+      {
+        doc: {'switch_1' => false, 'slider_sec_1' => 8, 'section_1' => [{}]},
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}]},
+        total: 17.0,
+      },
+      {
+        doc: {'select_1' => nil, 'section_1' => [{}]},
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}]},
+        total: 17.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'section_1' => [{}]},
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10}], "select_1_1"=>2},
+        total: 13.0,
+      },
+      {
+        doc: {'select_1' => 'score_3', 'section_1' => [{}]},
+        hash: {"switch_1"=>1, "select_1"=>3, "section_1"=>[{"slider_sec_1"=>10}], "select_1_1"=>2},
+        total: 16.0,
+      },
+      {
+        doc: {'select_1' => 'score_6', 'section_1' => [{}] },
+        hash: {"switch_1"=>1, "select_1"=>6, "section_1"=>[{"slider_sec_1"=>10}]},
+        total: 17.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 20.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 20.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 22.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 2}, {'number_input_sec_2' => 1}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10}, {"slider_sec_1"=>10, "select_sec_1_1"=>2}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 32.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>2}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 34.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>1, "section_1_1_1"=>[]}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 33.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>2, "switch_1_1_1"=>1}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 35.0,
+      },
+      {
+        doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1', 'section_1_1_1' => [{}, {}]}] },
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>1, "section_1_1_1"=>[{"switch_1_1_1_1"=>1}, {"switch_1_1_1_1"=>1}]}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 35.0,
+      }
+    ]
+
+    values.each do |obj|
+      assert_equal obj[:total], form.set_specific_max_scores!(obj[:doc])
+      assert_equal obj[:doc]['meta']['specific_max_score_hash'], obj[:hash]
+    end
   end
 
   # def test_set_scores!

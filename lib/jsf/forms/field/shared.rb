@@ -3,7 +3,7 @@ module JSF
     module Field
       class Shared < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
     
         REF_REGEX = /\A#\/definitions\/\w+\z/
 

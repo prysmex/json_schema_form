@@ -1,9 +1,9 @@
 require 'test_helper'
-require_relative 'methods/base'
+require_relative 'concerns/base'
 
 class SwitchTest < Minitest::Test
 
-  include BaseMethodsTests
+  include BaseFieldTests
 
   ##################
   ###VALIDATIONS####
@@ -62,6 +62,12 @@ class SwitchTest < Minitest::Test
   def test_scored?
     instance = JSF::Forms::Field::Switch.new
     assert_equal true, instance.scored?
+  end
+
+  def test_sample_value
+    field = JSF::Forms::Field::Switch.new(JSF::Forms::FormBuilder.example('switch'))
+    sample = field.sample_value
+    assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
   end
 
 end

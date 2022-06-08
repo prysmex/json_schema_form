@@ -87,6 +87,7 @@ module JSF
         self.delete(:enableScore)
         self.delete(:failed)
         self.delete(:score)
+        self
       end
 
       # Checks if the response has an assigned score value

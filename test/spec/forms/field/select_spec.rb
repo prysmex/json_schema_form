@@ -1,10 +1,10 @@
 require 'test_helper'
-require_relative 'methods/base'
-require_relative 'methods/response_settable'
+require_relative 'concerns/base'
+require_relative 'concerns/response_settable'
 
 class SelectTest < Minitest::Test
 
-  include BaseMethodsTests
+  include BaseFieldTests
   include ResponseSettableTests
 
   ##################
@@ -100,6 +100,40 @@ class SelectTest < Minitest::Test
     assert_equal true, form[:properties][:select1].value_fails?('option0')
     assert_equal false, form[:properties][:select1].value_fails?('option1')
     assert_equal false, form[:properties][:select1].value_fails?('random')
+  end
+
+  # sample_value
+
+  def test_sample_value
+    form = JSF::Forms::FormBuilder.build do
+      add_response_set(:response_set_1, example('response_set'))
+      add_response_set(:response_set_2, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = "option0"
+          r[:failed] = true
+        end
+      end
+
+      # no response set
+      append_property(:select_1, example('select'))
+      # empty response set
+      append_property(:select_2, example('select')).tap do |field|
+        field.response_set_id = :response_set_1
+      end
+      # with response set
+      append_property(:select_3, example('select')).tap do |field|
+        field.response_set_id = :response_set_2
+      end
+    end
+
+    sample = {
+      'select_1' => form[:properties][:select_1].sample_value,
+      'select_2' => form[:properties][:select_2].sample_value,
+      'select_3' => form[:properties][:select_3].sample_value,
+    }.compact
+
+    form.send_recursive(:legalize!)
+    assert_equal true, JSONSchemer.schema(form.as_json).valid?(sample)
   end
 
 end

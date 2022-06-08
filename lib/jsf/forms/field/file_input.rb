@@ -3,7 +3,7 @@ module JSF
     module Field
       class FileInput < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Arrayable
   
         set_strict_type('array')
@@ -45,6 +45,12 @@ module JSF
         ##################
         #####METHODS######
         ##################
+        
+        def sample_value
+          (0..rand(0..2)).map do
+            "https://picsum.photos/#{rand(10...1000)}"
+          end
+        end
   
       end
     end

@@ -114,6 +114,7 @@ module JSF
 
       def legalize!
         self.delete('isResponseSet')
+        self
       end
 
       # Returns true if the response set has responses with scoring

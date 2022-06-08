@@ -1,7 +1,7 @@
 module JSF
   module Forms
     module Field
-      module Methods
+      module Concerns
 
         #
         # Defines the base methods for any JSF::Forms::Field class
@@ -14,7 +14,7 @@ module JSF
 
             base.include JSF::Core::Schemable
             base.include JSF::Validations::Validatable
-            base.include JSF::Forms::Field::Methods::InstanceMethods
+            base.include JSF::Forms::Field::Concerns::InstanceMethods
             base.include JSF::Forms::Concerns::DisplayProperties
             base.include JSF::Forms::Concerns::DocumentPath
           end
@@ -96,6 +96,7 @@ module JSF
           # @return [void]
           def legalize!
             self.delete(:displayProperties)
+            self
           end
     
         end

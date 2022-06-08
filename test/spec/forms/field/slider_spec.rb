@@ -1,9 +1,9 @@
 require 'test_helper'
-require_relative 'methods/base'
+require_relative 'concerns/base'
 
 class SliderTest < Minitest::Test
 
-  include BaseMethodsTests
+  include BaseFieldTests
 
   # v => 3
   # moves => 3
@@ -160,6 +160,12 @@ class SliderTest < Minitest::Test
 
   def test_scored?
     assert_equal true, JSF::Forms::Field::Slider.new().scored?
+  end
+
+  def test_sample_value
+    field = JSF::Forms::Field::Slider.new(JSF::Forms::FormBuilder.example('slider'))
+    sample = field.sample_value
+    assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
   end
 
 end

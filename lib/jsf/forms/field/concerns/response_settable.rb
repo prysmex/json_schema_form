@@ -1,7 +1,7 @@
 module JSF
   module Forms
     module Field
-      module Methods
+      module Concerns
         module ResponseSettable
   
           # used for validation

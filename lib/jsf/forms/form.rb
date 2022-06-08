@@ -935,7 +935,7 @@ module JSF
         empty_document
       end
 
-      def each_sorted_property(document, condition_proc: nil, **kwargs)
+      def each_sorted_property(document, **kwargs)
         is_create = false
 
         all_sorted_properties = []
@@ -1003,7 +1003,7 @@ module JSF
       # - removes all keys in unactive trees
       #
       # @return [JSF::Forms::Document] mutated document
-      def cleaned_document(document, is_create: false, condition_proc: nil, **kwargs)
+      def cleaned_document(document, is_create: false, **kwargs)
         # iterate recursively through schemas
         new_document = each_form_with_document(
           document,
@@ -1091,7 +1091,7 @@ module JSF
         score_value
       end
 
-      def set_scores!(document, is_create: false, condition_proc: nil, **kwargs)
+      def set_scores!(document, is_create: false, **kwargs)
         score_value = self.score_initial_value
 
         # iterate recursively through schemas
@@ -1126,7 +1126,7 @@ module JSF
         score_value
       end
 
-      def set_failures!(document, is_create: false, condition_proc: nil, **kwargs)
+      def set_failures!(document, is_create: false, **kwargs)
         total_failed = 0
 
         # iterate recursively through schemas
@@ -1383,6 +1383,35 @@ module JSF
 
         dupped_form
       end
+
+      def sample_document(is_create: false, **kwargs)
+        doc = {}
+
+        # since we start with an empty document, all conditions
+        # are evaluated as false. To counter this, first we create
+        # a sample document with +skip_on_condition+ as false and then
+        # we pass it to +cleaned_document+
+        document = each_form_with_document(
+          doc,
+          skip_tree_when_hidden: true,
+          skip_on_condition: false,
+          is_create: is_create
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      
+          # iterate properties and increment score_value if needed
+          form[:properties].each do |k, prop|
+            next unless prop.visible(is_create: is_create)
+            next unless prop.respond_to?(:sample_value)
+
+            # set for field
+            value = prop.sample_value
+            current_empty_doc[k] = value unless value.nil?
+          end
+        end
+
+        # remove fields that should not exist due to conditions
+        cleaned_document(document, is_create: is_create)
+      end
     
       # Mutates the entire Form to a json schema compliant
       #
@@ -1393,6 +1422,7 @@ module JSF
           self.delete('availableLocales')
           self.delete('hasScoring')
         end
+        self
       end
     
       # Allows the definition of migrations to 'upgrade' schemas when the standard changes

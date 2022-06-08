@@ -1,9 +1,9 @@
 require 'test_helper'
-require_relative 'methods/base'
+require_relative 'concerns/base'
 
 class StaticTest < Minitest::Test
 
-  include BaseMethodsTests
+  include BaseFieldTests
 
   ##################
   ###VALIDATIONS####
@@ -18,5 +18,11 @@ class StaticTest < Minitest::Test
   ##############
   ###METHODS####
   ##############
+
+  def test_sample_value
+    field = JSF::Forms::Field::Static.new(JSF::Forms::FormBuilder.example('static'))
+    sample = field.sample_value
+    assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
+  end
 
 end

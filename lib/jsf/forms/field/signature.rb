@@ -3,7 +3,7 @@ module JSF
     module Field
       class Signature < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         # include JSF::Core::Type::Objectable
 
         set_strict_type('object')
@@ -53,6 +53,17 @@ module JSF
         ##################
         #####METHODS######
         ##################
+
+        def sample_value
+          string_length = 8
+          string = rand(36**string_length).to_s(36)
+
+          {
+            'db_identifier' => 2,
+            'name' => string,
+            'signature' => "https://picsum.photos/#{rand(10...500)}",
+          }
+        end
 
       end
     end

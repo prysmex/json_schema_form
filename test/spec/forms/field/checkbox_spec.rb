@@ -1,10 +1,10 @@
 require 'test_helper'
-require_relative 'methods/base'
-require_relative 'methods/response_settable'
+require_relative 'concerns/base'
+require_relative 'concerns/response_settable'
 
 class CheckboxTest < Minitest::Test
   
-  include BaseMethodsTests
+  include BaseFieldTests
   include ResponseSettableTests
 
   ##################
@@ -99,6 +99,40 @@ class CheckboxTest < Minitest::Test
     assert_equal false, form[:properties][:checkbox1].value_fails?(['option1'])
     assert_equal true, form[:properties][:checkbox1].value_fails?(['option0', 'option1'])
     assert_equal false, form[:properties][:checkbox1].value_fails?(['random'])
+  end
+
+  # sample_value
+
+  def test_sample_value
+    form = JSF::Forms::FormBuilder.build do
+      add_response_set(:response_set_1, example('response_set'))
+      add_response_set(:response_set_2, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = "option0"
+          r[:failed] = true
+        end
+      end
+
+      # no response set
+      append_property(:checkbox_1, example('checkbox'))
+      # empty response set
+      append_property(:checkbox_2, example('checkbox')).tap do |field|
+        field.response_set_id = :response_set_1
+      end
+      # response set
+      append_property(:checkbox_3, example('checkbox')).tap do |field|
+        field.response_set_id = :response_set_2
+      end
+    end
+
+    sample = {
+      'checkbox_1' => form[:properties][:checkbox_1].sample_value,
+      'checkbox_2' => form[:properties][:checkbox_2].sample_value,
+      'checkbox_3' => form[:properties][:checkbox_3].sample_value,
+    }.compact
+
+    form.send_recursive(:legalize!)
+    assert_equal true, JSONSchemer.schema(form.as_json).valid?(sample)
   end
   
 end

@@ -3,7 +3,7 @@ module JSF
     module Field
       class Switch < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Booleanable
   
         set_strict_type('boolean')
@@ -102,6 +102,10 @@ module JSF
         # @return [Boolean]
         def scored?
           true
+        end
+
+        def sample_value
+          [true, false].sample
         end
   
       end

@@ -3,9 +3,9 @@ module JSF
     module Field
       class Checkbox < BaseHash
 
-        include JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Arrayable
-        include JSF::Forms::Field::Methods::ResponseSettable
+        include JSF::Forms::Field::Concerns::ResponseSettable
   
         RESPONSE_SET_PATH = [:items, :$ref]
   
@@ -40,9 +40,9 @@ module JSF
             optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if passthru[:is_inspection] || passthru[:is_shared]
             required(:items).hash do
               if skip_ref_presence
-                required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+                required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
               else
-                required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+                required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
               end
             end
             required(:type)
@@ -95,6 +95,17 @@ module JSF
             &.find do |response|
               value.include?(response[:const]) && response[:failed] == true
             end.nil?
+        end
+
+        def sample_value
+          response_set = self.response_set
+          return [] if response_set.nil?
+          response_set[:anyOf].sample(2)
+
+          self.response_set
+            &.dig(:anyOf)
+            &.sample(2)
+            &.map{|o| o&.dig(:const) }
         end
   
       end

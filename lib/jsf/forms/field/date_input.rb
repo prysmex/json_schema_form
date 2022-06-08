@@ -1,9 +1,11 @@
+require 'time'
+
 module JSF
   module Forms
     module Field
       class DateInput < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Stringable
   
         set_strict_type('string')
@@ -40,6 +42,13 @@ module JSF
         ##############
         ###METHODS####
         ##############
+
+        def sample_value
+          half_range_seconds = 60 * 60 * 24 * 365
+          range = (half_range_seconds * -1)...half_range_seconds
+          seconds = rand(range)
+          (Time.now + seconds).iso8601
+        end
   
       end
     end

@@ -49,7 +49,7 @@ module JSF
           required(:if).hash do
             required(:required).value(:array?).array(:str?)
             required(:properties).filled(:hash) do
-              required(prop.to_sym).filled(:hash) do # ToDo this key is always valid if present, can be improve
+              required(prop.to_sym).filled(:hash) do # ToDo this key is always valid if present, can be improved
                 optional(:const)
                 optional(:enum).value(:array, min_size?: 1)# unless field.is_a?(JSF::Forms::Field::NumberInput)
                 optional(:not).filled(:hash) do

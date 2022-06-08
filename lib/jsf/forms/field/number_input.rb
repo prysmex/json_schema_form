@@ -3,7 +3,7 @@ module JSF
     module Field
       class NumberInput < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Numberable
   
         set_strict_type('number')
@@ -39,6 +39,10 @@ module JSF
         ##############
         ###METHODS####
         ##############
+
+        def sample_value
+          rand(-1000...1000)
+        end
   
       end
     end

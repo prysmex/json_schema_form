@@ -3,7 +3,7 @@ module JSF
     module Field
       class Static < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Nullable
   
         set_strict_type('null')
@@ -33,6 +33,10 @@ module JSF
         ##################
         #####METHODS######
         ##################
+
+        def sample_value
+          nil
+        end
   
       end
     end

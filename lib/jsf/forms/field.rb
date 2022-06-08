@@ -1,6 +1,6 @@
-# methods
-require_relative 'field/methods/base'
-require_relative 'field/methods/response_settable'
+# concerns
+require_relative 'field/concerns/base'
+require_relative 'field/concerns/response_settable'
 
 # fields
 require_relative 'field/checkbox'

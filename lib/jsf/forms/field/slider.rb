@@ -3,7 +3,7 @@ module JSF
     module Field
       class Slider < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
+        include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Numberable
         
         MAX_ENUM_SIZE = 25
@@ -156,6 +156,10 @@ module JSF
         # @return [Boolean]
         def scored?
           true
+        end
+
+        def sample_value
+          self[:enum]&.sample
         end
   
       end

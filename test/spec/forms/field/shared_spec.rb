@@ -1,9 +1,9 @@
 require 'test_helper'
-require_relative 'methods/base'
+require_relative 'concerns/base'
 
 class SharedTest < Minitest::Test
 
-  include BaseMethodsTests
+  include BaseFieldTests
 
   ##################
   ###VALIDATIONS####

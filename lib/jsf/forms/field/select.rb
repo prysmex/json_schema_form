@@ -3,8 +3,8 @@ module JSF
     module Field
       class Select < BaseHash
 
-        include ::JSF::Forms::Field::Methods::Base
-        include JSF::Forms::Field::Methods::ResponseSettable
+        include JSF::Forms::Field::Concerns::Base
+        include JSF::Forms::Field::Concerns::ResponseSettable
   
         RESPONSE_SET_PATH = [:$ref]
   
@@ -18,9 +18,9 @@ module JSF
           #TODO find a way to prevent enum from being valid
           Dry::Schema.define(parent: super) do
             if skip_ref_presence
-              required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+              required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             else
-              required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Methods::ResponseSettable::REF_REGEX) }
+              required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['select'])
@@ -77,6 +77,13 @@ module JSF
           response_set[:anyOf]
             .find { |response| response[:const] == value }
             &.[](:failed) || false
+        end
+
+        def sample_value
+          self.response_set
+            &.dig(:anyOf)
+            &.sample
+            &.dig(:const)
         end
   
       end

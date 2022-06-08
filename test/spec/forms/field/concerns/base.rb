@@ -2,19 +2,17 @@ require 'test_helper'
 require_relative 'field_example_helpers'
 
 #
-# Some of the methods added by JSF::Forms::Field::Methods::Base may be overriden on a field class,
+# Some of the methods added by JSF::Forms::Field::Concerns::Base may be overriden on a field class,
 # for example, `valid_for_locale?`. If that is the case, those methods should also be overriden on the
 # specific field specs file
 #
-module BaseMethodsTests
+module BaseFieldTests
 
   include FieldExampleHelpers
 
   ##################
   ###VALIDATIONS####
   ##################
-
-  # valid_for_locale?
 
   # overriden in Static, Switch, Slider
   def test_valid_for_locale
@@ -86,5 +84,8 @@ module BaseMethodsTests
     instance = tested_klass.new(self.tested_klass_example)
     assert_equal false, instance.scored?
   end
+
+  # def test_legalized?
+  # end
 
 end
