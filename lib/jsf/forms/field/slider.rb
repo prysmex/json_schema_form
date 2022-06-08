@@ -50,7 +50,9 @@ module JSF
               end
             end
             required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
-            optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures']) if passthru[:is_inspection] || passthru[:is_shared]
+            if passthru[:is_inspection] || passthru[:is_shared]
+              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+            end
             required(:type)
           end
         end
