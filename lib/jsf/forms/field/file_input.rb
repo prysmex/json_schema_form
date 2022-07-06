@@ -49,9 +49,8 @@ module JSF
         ##################
         
         def sample_value
-          (0..rand(0..2)).map do
-            "https://picsum.photos/#{rand(10...1000)}"
-          end
+          range = (0..rand(0..2))
+          range.map{ "https://picsum.photos/#{rand(10...1000)}" }.uniq
         end
   
       end
