@@ -76,6 +76,23 @@ module BaseFieldTests
     refute_empty prop.errors(if: ->(obj, key) { key == :hide_on_create_and_required })
   end
 
+  def test_verify_default
+    example = self.tested_klass_example
+    prop = tested_klass.new(example)
+
+    return unless prop.key?('type')
+
+    # ensure never matches
+    prop['default'] = case prop['type']
+    when 'array'
+      {}
+    else 
+      []
+    end
+
+    refute_empty prop.errors(if: ->(obj, key) { key == :verify_default })
+  end
+
   ##############
   ###METHODS####
   ##############

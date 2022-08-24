@@ -54,6 +54,18 @@ module JSF
               end
             end
 
+            if (
+              self.key?('default') &&
+              run_validation?(passthru, self, :verify_default) &&
+              !JSONSchemer.schema(self.as_json).valid?(self['default'])
+            )
+              add_error_on_path(
+                errors,
+                ['default'],
+                'invalid value'
+              )
+            end
+
             super.merge(errors)
           end
 
@@ -64,6 +76,7 @@ module JSF
               optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }
               optional(:'$schema').filled(:string)
               optional(:title).maybe(:string)
+              optional(:default)
             end
           end
 
