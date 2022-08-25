@@ -33,6 +33,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
+            optional(:initExpr)
             if passthru[:is_inspection] || passthru[:is_shared]
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
