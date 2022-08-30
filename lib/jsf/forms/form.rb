@@ -435,7 +435,7 @@ module JSF
       # @param [Integer] db_id (DB id)
       # @param [Integer] index
       # @return [JSF::Forms::SharedRef]
-      def add_shared_pair(db_id:, index:, definition: nil, options: {})
+      def add_shared_pair(db_id:, index:, definition: nil, options: {}, &block)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         key = shared_ref_key(db_id)
 
@@ -443,11 +443,11 @@ module JSF
         shared = JSF::Forms::FormBuilder.example('shared')
         prop = case index
         when Integer
-          insert_property_at_index(index, key, shared, options)
+          insert_property_at_index(index, key, shared, options, &block)
         when :append
-          append_property(key, shared, options)
+          append_property(key, shared, options, &block)
         when :prepend
-          prepend_property(key, shared, options)
+          prepend_property(key, shared, options, &block)
         else
           raise ArgumentError.new("invalid index argument #{index}")
         end
