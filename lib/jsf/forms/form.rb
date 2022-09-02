@@ -1398,7 +1398,7 @@ module JSF
           is_create: is_create
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
       
-          # iterate properties and increment score_value if needed
+          # iterate properties
           form[:properties].each do |k, prop|
             next unless prop.visible(is_create: is_create)
             next unless prop.respond_to?(:sample_value)
@@ -1411,6 +1411,32 @@ module JSF
 
         # remove fields that should not exist due to conditions
         cleaned_document(document, is_create: is_create)
+      end
+
+      # @note CAREFUL, ignores all logic so all posible fields will be present
+      #   on the document
+      #
+      # @todo handle sections
+      #
+      # @return [Array<String>]
+      def empty_document_with_all_props
+        doc = {}
+
+        each_form_with_document(
+          doc,
+          skip_tree_when_hidden: false,
+          skip_on_condition: false,
+          is_create: false
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      
+          # iterate properties
+          form[:properties].each do |k, prop|
+            next if prop['type'] == 'null'
+
+            # set for field
+            current_empty_doc[k] = nil
+          end
+        end
       end
     
       # Mutates the entire Form to a json schema compliant
