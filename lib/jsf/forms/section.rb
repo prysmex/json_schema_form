@@ -63,10 +63,10 @@ module JSF
           end
           optional(:maxItems).filled(:integer)
           required(:items).hash do
-            optional(:properties)
-            optional(:allOf)
-            optional(:required)
-            optional(:type)
+            # optional(:properties)
+            # optional(:allOf)
+            # optional(:required)
+            # required(:type).value(included_in?: ['object'])
           end
           required(:type)
         end

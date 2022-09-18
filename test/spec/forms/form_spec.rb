@@ -214,6 +214,7 @@ class FormTest < Minitest::Test
         "required": [],
         "properties": {},
         "allOf": [],
+        "type": "object"
       },
       meta: {
         is_subschema: true
