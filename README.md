@@ -164,6 +164,8 @@ A `form` is composed of the follow classes:
     - `JSF::Forms::Response`
   - `JSF::Forms::Field::Checkbox`
   - `JSF::Forms::Field::DateInput`
+  - `JSF::Forms::Field::FileInput`
+  - `JSF::Forms::Field::Geopoints`
   - `JSF::Forms::Field::Markdown`
   - `JSF::Forms::Field::NumberInput`
   - `JSF::Forms::Field::Select`

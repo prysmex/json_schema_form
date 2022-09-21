@@ -47,6 +47,8 @@ module JSF
             '/field/date_input.json'
           when 'file_input'
             '/field/file_input.json'
+          when 'geo_points'
+            '/field/geo_points.json'
           when 'markdown'
             '/field/markdown.json'
           when 'number_input'

@@ -27,6 +27,7 @@ class FormbuilderTest < Minitest::Test
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::FileInput => [],
+      JSF::Forms::Field::GeoPoints => [],
       JSF::Forms::Field::Markdown => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
