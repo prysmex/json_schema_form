@@ -214,6 +214,7 @@ class FormTest < Minitest::Test
         "required": [],
         "properties": {},
         "allOf": [],
+        "type": "object"
       },
       meta: {
         is_subschema: true
@@ -1303,6 +1304,12 @@ class FormTest < Minitest::Test
   #   end
   #   dup = original.dup_with_new_references(property_id_proc: property_id_proc, response_set_id_proc: response_set_id_proc)
   #   # assert_equal 
+  # end
+
+  # def test_sample_document
+  # end
+
+  # def test_empty_document_with_all_props
   # end
 
   # def test_compile

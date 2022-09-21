@@ -131,7 +131,7 @@ module JSF
       update_attribute 'properties', default: ->(data) { {}.freeze }
       update_attribute 'required', default: ->(data) { [].freeze }
       update_attribute 'allOf', default: ->(data) { [].freeze }
-      update_attribute 'type', default: ->(data) { self.meta[:is_subschema] ? nil : 'object' }
+      update_attribute 'type', default: ->(data) { 'object' }
       update_attribute 'schemaFormVersion', default: ->(data) { self.meta[:is_subschema] ? nil : VERSION }
       update_attribute '$schema', default: ->(data) { self.meta[:is_subschema] ? nil : "http://json-schema.org/draft-07/schema#" }
       attribute? 'availableLocales', default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
@@ -164,6 +164,7 @@ module JSF
           required(:allOf).array(:hash)
           required(:properties).value(:hash)
           required(:required).value(:array?).array(:str?)
+          required(:type).filled(Types::String.enum('object'))
           if !is_subschema
             optional(:'$id').filled(:string)
             required(:'$schema').filled(:string)
@@ -171,13 +172,11 @@ module JSF
             required(:definitions).value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
-            required(:type).filled(Types::String.enum('object'))
             if passthru[:is_inspection]
               required(:hasScoring) { bool? }
             end
           else
             optional(:'$schema').filled(:string)
-            optional(:type).filled(Types::String.enum('object'))
           end
     
         end
@@ -1353,7 +1352,7 @@ module JSF
           is_create: is_create
         ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
       
-          # iterate properties and increment score_value if needed
+          # iterate properties
           form[:properties].each do |k, prop|
             next unless prop.visible(is_create: is_create)
             next unless prop.respond_to?(:sample_value)
@@ -1366,6 +1365,32 @@ module JSF
 
         # remove fields that should not exist due to conditions
         cleaned_document(document, is_create: is_create)
+      end
+
+      # @note CAREFUL, ignores all logic so all posible fields will be present
+      #   on the document
+      #
+      # @todo handle sections
+      #
+      # @return [Array<String>]
+      def empty_document_with_all_props
+        doc = {}
+
+        each_form_with_document(
+          doc,
+          skip_tree_when_hidden: false,
+          skip_on_condition: false,
+          is_create: false
+        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      
+          # iterate properties
+          form[:properties].each do |k, prop|
+            next if prop['type'] == 'null'
+
+            # set for field
+            current_empty_doc[k] = nil
+          end
+        end
       end
     
       # Mutates the entire Form to a json schema compliant
@@ -1385,44 +1410,6 @@ module JSF
       #
       # @return [void]
       def migrate!
-        # add schemaFormVersion
-        if !self.meta[:is_subschema]
-          self[:schemaFormVersion] = VERSION
-        end
-
-        # add displayProperties.component to all properties
-        self.properties.each do |key, prop|
-
-          # migrate header to markdown
-          if prop.dig(:displayProperties).key?('useHeader')
-            prop.dig(:displayProperties)&.delete('useHeader')
-            level = prop.dig(:displayProperties)&.delete('level')
-            prop.dig(:displayProperties, :i18n, :label).transform_values! do |value|
-              if value
-                if level == 1
-                  "## #{value}"
-                else
-                  "### #{value}"
-                end
-              end
-            end
-            SuperHash::Utils.bury(prop, :displayProperties, :kind, nil)
-          end
-
-          prop.dig(:displayProperties)&.delete('useInfo')
-          prop.dig(:displayProperties)&.delete('icon')
-          prop.dig(:displayProperties)&.delete('useSlider')
-          prop.dig(:displayProperties)&.delete('isSelect')
-          prop.dig(:displayProperties)&.delete('useToggle')
-          prop.dig(:displayProperties)&.delete('useSection')
-          prop.delete('static')
-
-          # add component to all properties
-          component = COMPONENT_PROPERTY_CLASS_PROC.call(prop)
-          SuperHash::Utils.bury(prop, :displayProperties, :component, component) if component
-
-        end
-
       end
     
       private
