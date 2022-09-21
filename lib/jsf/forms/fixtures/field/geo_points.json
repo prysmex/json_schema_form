@@ -1,0 +1,25 @@
+{
+  "displayProperties": {
+    "component": "geopoints",
+    // "hidden": false,
+    // "hideOnCreate": false,
+    "i18n": {
+      "label": {
+        "es": "Ubicación",
+        "en": "Location"
+      }
+    },
+    "pictures": [],
+    "sort": 0,
+    "hidden": false
+  },
+  "items": {
+    "properties": {
+      "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+      "lng": { "type": "number", "minimum": -180, "maximum": 180 }
+    },
+    "type": "object"
+  },
+  "title": "geopoints_input",
+  "type": "array"
+}

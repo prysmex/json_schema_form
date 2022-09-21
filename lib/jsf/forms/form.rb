@@ -50,6 +50,7 @@ module JSF
           'shared' => JSF::Forms::Field::Shared,
           'date_input' => JSF::Forms::Field::DateInput,
           'file_input' => JSF::Forms::Field::FileInput,
+          'geopoints' => JSF::Forms::Field::GeoPoints,
           'markdown' => JSF::Forms::Field::Markdown,
           'number_input' => JSF::Forms::Field::NumberInput,
           'select' => JSF::Forms::Field::Select,
@@ -65,48 +66,6 @@ module JSF
           hash[value]
         else
           hash.find{|component, klass| klass == value || value.is_a?(klass) }&.first
-        end
-      end
-
-      # TODO remove after 3.2.0 migrate!
-      DEPRECATED_PROPERTY_MAP = Proc.new do |value|
-        if value.dig(:displayProperties, :useSection)
-          JSF::Forms::Section
-        elsif value.key?(:$ref)
-          if value.dig(:displayProperties, :isSelect)
-            JSF::Forms::Field::Select
-          else
-            ::JSF::Forms::Field::Shared
-          end
-        else
-          case value[:type]
-          when 'string'
-            if value[:format] == 'date-time'
-              JSF::Forms::Field::DateInput
-            else
-              JSF::Forms::Field::TextInput
-            end
-          when 'number'
-            if value&.dig(:displayProperties, :useSlider)
-              JSF::Forms::Field::Slider
-            else
-              JSF::Forms::Field::NumberInput
-            end
-          when 'boolean'
-            JSF::Forms::Field::Switch
-          when 'array'
-            if value.dig(:items, :format) == 'uri'
-              JSF::Forms::Field::FileInput
-            else
-              JSF::Forms::Field::Checkbox
-            end
-          when 'null'
-            if value&.dig(:displayProperties, :useHeader) || value&.dig(:displayProperties, :useInfo)
-              JSF::Forms::Field::Markdown
-            elsif value[:static]
-              JSF::Forms::Field::Static
-            end
-          end
         end
       end
 
@@ -138,11 +97,7 @@ module JSF
             JSF::Forms::Condition
           when 'properties'
             component = value.dig(:displayProperties, :component)
-            if component
-              COMPONENT_PROPERTY_CLASS_PROC.call(component)
-            else
-              DEPRECATED_PROPERTY_MAP.call(value)
-            end
+            COMPONENT_PROPERTY_CLASS_PROC.call(component)
           end
           
         end
