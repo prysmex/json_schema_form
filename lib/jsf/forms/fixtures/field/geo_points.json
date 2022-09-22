@@ -11,7 +11,10 @@
     },
     "pictures": [],
     "sort": 0,
-    "hidden": false
+    "hidden": false,
+    "visibility": {
+      "label": true
+    }
   },
   "items": {
     "properties": {

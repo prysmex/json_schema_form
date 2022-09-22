@@ -27,6 +27,9 @@ module JSF
               end
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
+              required(:visibility).hash do
+                required(:label).filled(:bool)
+              end
             end
             if passthru[:is_inspection] || passthru[:is_shared]
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
@@ -47,6 +50,7 @@ module JSF
               required(:'type').filled(Types::String.enum('object'))
             end
             optional(:maxItems)
+            optional(:minItems)
             required(:type)
           end
         end
