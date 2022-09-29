@@ -26,6 +26,13 @@ module JSF
           ###METHODS####
           ##############
 
+          # get the key of the response set
+          #
+          # @return [String]
+          def response_set_key
+            response_set_id.sub('#/definitions/', '')
+          end
+
           # get the response_set_id, each field class should implement its own `RESPONSE_SET_PATH`
           #
           # @return [String]
