@@ -389,9 +389,8 @@ module JSF
       # @param [Integer] db_id (DB id)
       # @param [Integer] index
       # @return [JSF::Forms::SharedRef]
-      def add_shared_pair(db_id:, index:, definition: nil, options: {}, &block)
+      def add_shared_pair(db_id:, index:, key: shared_ref_key(db_id), definition: nil, options: {}, &block)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
-        key = shared_ref_key(db_id)
 
         # add property
         shared = JSF::Forms::FormBuilder.example('shared')
