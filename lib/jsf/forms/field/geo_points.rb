@@ -61,12 +61,14 @@ module JSF
         ##################
 
         def sample_value
-          [
-            {
+          min = self['minItems'] || 1
+
+          (0...min).each_with_object([]) do |_, acum|
+            acum.push({
               'lat' => rand(-90..90),
               'lng' => rand(-180..180)
-            }
-          ]
+            })
+          end
         end
 
       end

@@ -1337,7 +1337,7 @@ module JSF
         dupped_form
       end
 
-      def sample_document(is_create: false, **kwargs)
+      def sample_document(is_create: false, **kwargs, &block)
         doc = {}
 
         # since we start with an empty document, all conditions
@@ -1358,6 +1358,7 @@ module JSF
 
             # set for field
             value = prop.sample_value
+            value = yield(k, prop, value) if block_given?
             current_empty_doc[k] = value unless value.nil?
           end
         end
