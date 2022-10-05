@@ -35,6 +35,7 @@ module JSF
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:items).hash do
+              required(:required).value(included_in?: [['lat', 'lng']])
               required(:properties).hash do
                 required(:lat).hash do
                   required(:type).value(included_in?: ['number'])
