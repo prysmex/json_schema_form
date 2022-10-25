@@ -37,6 +37,7 @@ module JSF
             required(:items).hash do
               required(:format).filled(Types::String.enum('uri'))
               required(:'type').filled(Types::String.enum('string'))
+              required(:pattern).value(eql?: '^http')
             end
             optional(:maxItems)
             required(:type)

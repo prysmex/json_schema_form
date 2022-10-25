@@ -19,7 +19,8 @@
   },
   "items": {
     "type": "string",
-    "format": "uri"
+    "format": "uri",
+    "pattern": "^http"
   },
   "maxItems": 5,
   "title": "file_input",

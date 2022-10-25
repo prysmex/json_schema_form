@@ -23,7 +23,8 @@
     },
     "signature": {
       "format": "uri",
-      "type": "string"
+      "type": "string",
+      "pattern": "^http"
     },
     "db_identifier": {
       "type": "number"

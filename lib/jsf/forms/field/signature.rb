@@ -41,6 +41,7 @@ module JSF
               required(:signature).hash do
                 required(:type).value(included_in?: ['string'])
                 required(:format).value(included_in?: ['uri'])
+                required(:pattern).value(eql?: '^http')
               end
             end
             required(:additionalProperties).value(eql?: false)

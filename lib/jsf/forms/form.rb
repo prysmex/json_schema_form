@@ -2,7 +2,7 @@ module JSF
   module Forms
     DEFAULT_LOCALE = 'en'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
-    VERSION = '3.2.0'.freeze
+    VERSION = '3.3.0'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -1410,6 +1410,16 @@ module JSF
       #
       # @return [void]
       def migrate!
+        if self['schemaFormVersion'] != VERSION
+          self.properties.each do |k,v|
+            case v
+            when JSF::Forms::Field::FileInput, JSF::Forms::Field::Signature
+              v[:pattern] = '^http'
+            end
+          end
+
+          self['schemaFormVersion'] = VERSION
+        end
       end
     
       private
