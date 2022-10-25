@@ -26,6 +26,17 @@ class ValidatableTest < Minitest::Test
     SampleSchema.include IdValidation
     refute_nil SampleSchema.new({}).errors[:$id]
     assert_nil SampleSchema.new({'$id': 'some_id'}).errors[:$id]
+
+    # with proc
+    refute_nil SampleSchema.new({'$id': 'some_id'}).errors({
+      proc: ->(errors) {
+        add_error_on_path(
+          errors,
+          ['base'],
+          'something custom'
+        )
+      }
+    })['base']
   end
 
   def test_has_subschema_errors

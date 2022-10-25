@@ -24,6 +24,7 @@ module JSF
       # schema.errors(
       #   recursive: true,
       #   if: [(instance, key)->{ false }]
+      #   proc: nil
       # )
       #
       # @param [Proc] if
@@ -34,11 +35,15 @@ module JSF
       def errors(recursive: true, **passthru)
         passthru[:recursive] = recursive # add to passthru
 
-        if recursive
+        errors = if recursive
           subschemas_errors(**passthru)
         else
           ActiveSupport::HashWithIndifferentAccess.new({})
         end
+
+        instance_exec(errors, &passthru[:proc]) if passthru[:proc].is_a? Proc
+
+        errors
       end
       
       private

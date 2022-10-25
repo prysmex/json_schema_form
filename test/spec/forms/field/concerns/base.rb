@@ -50,31 +50,31 @@ module BaseFieldTests
     refute_nil tested_klass.new({'$id': '#/definitions/hello'}).errors[:'$id']
   end
 
-  def test_hidden_and_required
-    example = self.tested_klass_example
-    prop = nil
+  # def test_hidden_and_required
+  #   example = self.tested_klass_example
+  #   prop = nil
 
-    JSF::Forms::FormBuilder.build do
-      prop = append_property(:prop1, example, {required: true}).tap do |field|
-        field.hidden = true
-      end
-    end
+  #   JSF::Forms::FormBuilder.build do
+  #     prop = append_property(:prop1, example, {required: true}).tap do |field|
+  #       field.hidden = true
+  #     end
+  #   end
 
-    refute_empty prop.errors(if: ->(obj, key) { key == :hidden_and_required })
-  end
+  #   refute_empty prop.errors(if: ->(obj, key) { key == :hidden_and_required })
+  # end
 
-  def test_hide_on_create_and_required
-    example = self.tested_klass_example
-    prop = nil
+  # def test_hide_on_create_and_required
+  #   example = self.tested_klass_example
+  #   prop = nil
 
-    JSF::Forms::FormBuilder.build do
-      prop = append_property(:prop1, example, {required: true}).tap do |field|
-        field.hideOnCreate = true
-      end
-    end
+  #   JSF::Forms::FormBuilder.build do
+  #     prop = append_property(:prop1, example, {required: true}).tap do |field|
+  #       field.hideOnCreate = true
+  #     end
+  #   end
 
-    refute_empty prop.errors(if: ->(obj, key) { key == :hide_on_create_and_required })
-  end
+  #   refute_empty prop.errors(if: ->(obj, key) { key == :hide_on_create_and_required })
+  # end
 
   def test_verify_default
     example = self.tested_klass_example
