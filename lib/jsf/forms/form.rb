@@ -1413,12 +1413,14 @@ module JSF
         if self['schemaFormVersion'] != VERSION
           self.properties.each do |k,v|
             case v
-            when JSF::Forms::Field::FileInput, JSF::Forms::Field::Signature
-              v[:pattern] = '^http'
+            when JSF::Forms::Field::FileInput
+              v[:items][:pattern] = '^http'
+            when JSF::Forms::Field::Signature
+              v[:properties][:signature][:pattern] = '^http'
             end
           end
 
-          self['schemaFormVersion'] = VERSION
+          self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
         end
       end
     
