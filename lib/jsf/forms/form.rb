@@ -77,6 +77,15 @@ module JSF
       def self.shared_ref_key(id)
         "shared_schema_template_#{id}"
       end
+
+      # Some keys where migrated with _9999 suffix at some point
+      #
+      # TODO migrate and remove this
+      #
+      # @return [Boolean]
+      def self.match_shared_property_key(property_key, db_id)
+        property_key.sub(/_9999\z/, '') == shared_ref_key(db_id)
+      end
       
       # Defined in a Proc so it can be reused:
       ATTRIBUTE_TRANSFORM = ->(attribute, value, instance, init_options) {
@@ -422,7 +431,7 @@ module JSF
         # remove property
         # self.remove_property(key)
         self[:properties].reject! do |k,v|
-          k == key
+          self.class.match_shared_property_key(k, db_id)
         end
         resort!
 
