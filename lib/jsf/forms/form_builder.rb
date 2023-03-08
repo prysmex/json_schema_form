@@ -65,6 +65,8 @@ module JSF
             '/field/switch.json'
           when 'text_input'
             '/field/text_input.json'
+          when 'time_input'
+            '/field/time_input.json'
           else
             raise StandardError.new("invalid example name: #{ex_name}")
           end

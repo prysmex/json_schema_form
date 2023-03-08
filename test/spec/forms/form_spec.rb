@@ -27,6 +27,7 @@ class FormTest < Minitest::Test
       append_property(:slider, example('slider'))
       append_property(:static, example('static'))
       append_property(:text_input, example('text_input'))
+      append_property(:time_input, example('time_input'))
       append_property(:signature, example('signature'))
 
     end

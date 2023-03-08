@@ -59,6 +59,7 @@ module JSF
           'static' => JSF::Forms::Field::Static,
           'switch' => JSF::Forms::Field::Switch,
           'text_input' => JSF::Forms::Field::TextInput,
+          'time_input' => JSF::Forms::Field::TimeInput,
           'section' => JSF::Forms::Section
         }
 
