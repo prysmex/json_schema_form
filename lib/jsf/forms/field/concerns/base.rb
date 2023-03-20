@@ -98,7 +98,6 @@ module JSF
           #
           # @return [Boolean]
           def scored?
-            # raise NoMethodError.new('this field does not implement scored?')
             false
           end
 

@@ -998,84 +998,120 @@ class FormTest < Minitest::Test
       end
     end
 
+    form = JSF::Forms::FormBuilder.build do
+      add_response_set(:response_set_1, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_0'
+          r[:score] = 0
+          r.set_translation('score 0', 'es')
+        end
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_1'
+          r[:score] = 1
+          r.set_translation('score 1', 'es')
+        end
+      end
+
+      append_property(:select_1, example('select')) do |f, key|
+        f.response_set_id = :response_set_1
+        append_conditional_property(:markdown_1_1, example('markdown'), dependent_on: key, type: :enum, value: ['score_0'])
+      end
+    end
+
+    [
+      {
+        doc: {'select_1' => nil},
+        hash: {"select_1"=>1},
+        total: 1,
+      },
+      {
+        doc: {'select_1' => 'score_1'},
+        hash: {"select_1"=>1},
+        total: 1,
+      },
+      {
+        doc: {'select_1' => 'score_0'},
+        hash: {"select_1"=>1},
+        total: 1,
+      }
+    ].each do |obj|
+      assert_equal obj[:total], form.set_specific_max_scores!(obj[:doc])
+      assert_equal obj[:doc]['meta']['specific_max_score_hash'], obj[:hash]
+    end
+
     ### SCORABLE FIELDS ###
 
-    scored_form_proc = Proc.new do
-      JSF::Forms::FormBuilder.build do
+    form = JSF::Forms::FormBuilder.build do
 
-        add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'nil_score'
-            r[:score] = nil
-          end
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'score_3'
-            r[:score] = 3
-          end
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'score_6'
-            r[:score] = 6
-          end
+      add_response_set(:response_set_1, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'nil_score'
+          r[:score] = nil
         end
-  
-        add_response_set(:response_set_2, example('response_set')).tap do |response_set|
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'nil_score'
-            r[:score] = nil
-          end
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'score_1'
-            r[:score] = 1
-          end
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
-            r[:const] = 'score_2'
-            r[:score] = 2
-          end
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_3'
+          r[:score] = 3
         end
-  
-        append_property(:markdown_1, example('markdown'))
-        append_property(:switch_1, example('switch'))
-  
-        append_property(:select_1, example('select')) do |f, key|
-          f.response_set_id = :response_set_1
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_6'
+          r[:score] = 6
+        end
+      end
 
-          append_conditional_property(:select_1_1, example('select'), dependent_on: key, type: :enum, value: ['nil_score', 'score_3']) do |f, key, subform|
+      add_response_set(:response_set_2, example('response_set')).tap do |response_set|
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'nil_score'
+          r[:score] = nil
+        end
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_1'
+          r[:score] = 1
+        end
+        response_set.add_response(example('response', :is_inspection)).tap do |r|
+          r[:const] = 'score_2'
+          r[:score] = 2
+        end
+      end
+
+      append_property(:markdown_1, example('markdown'))
+      append_property(:switch_1, example('switch'))
+
+      append_property(:select_1, example('select')) do |f, key|
+        f.response_set_id = :response_set_1
+
+        append_conditional_property(:select_1_1, example('select'), dependent_on: key, type: :enum, value: ['nil_score', 'score_3']) do |f, key, subform|
+          f.response_set_id = :response_set_2
+  
+          subform.append_conditional_property(:select_1_1_1, example('select'), dependent_on: key, type: :const, value: 'nil_score') do |f, key, subform|
+            f.response_set_id = :response_set_1
+          end
+  
+          subform.append_conditional_property(:checkbox_1_1_2, example('checkbox'), dependent_on: key, type: :enum, value: ['nil_score', 'score_1']) do |f, key, subform|
             f.response_set_id = :response_set_2
-    
-            subform.append_conditional_property(:select_1_1_1, example('select'), dependent_on: key, type: :const, value: 'nil_score') do |f, key, subform|
-              f.response_set_id = :response_set_1
-            end
-    
-            subform.append_conditional_property(:checkbox_1_1_2, example('checkbox'), dependent_on: key, type: :enum, value: ['nil_score', 'score_1']) do |f, key, subform|
-              f.response_set_id = :response_set_2
-            end
           end
-
         end
 
-        append_property(:section_1, example('section')) do |f, _|
-          f.form.instance_eval do
-            append_property(:slider_sec_1, example('slider'))
-            append_property(:number_input_sec_2, example('number_input')) do |f, key|
-              append_conditional_property(:select_sec_1_1, example('select'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
-                f.response_set_id = :response_set_2
-  
-                subform.append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: 'score_2')
-                subform.append_conditional_property(:section_1_1_1, example('section'), dependent_on: key, type: :const, value: 'score_1') do |f, _|
-                  f.form.instance_eval do
-                    append_property(:switch_1_1_1_1, example('switch'))
-                  end
+      end
+
+      append_property(:section_1, example('section')) do |f, _|
+        f.form.instance_eval do
+          append_property(:slider_sec_1, example('slider'))
+          append_property(:number_input_sec_2, example('number_input')) do |f, key|
+            append_conditional_property(:select_sec_1_1, example('select'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
+              f.response_set_id = :response_set_2
+
+              subform.append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: 'score_2')
+              subform.append_conditional_property(:section_1_1_1, example('section'), dependent_on: key, type: :const, value: 'score_1') do |f, _|
+                f.form.instance_eval do
+                  append_property(:switch_1_1_1_1, example('switch'))
                 end
               end
             end
           end
         end
-
       end
-    end
 
-    # test multiple documents for a form with no hidden fields
-    form = scored_form_proc.call
+    end
 
     values = [
       {
@@ -1150,8 +1186,8 @@ class FormTest < Minitest::Test
       },
       {
         doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_1'}] },
-        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>1, "section_1_1_1"=>[]}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
-        total: 33.0,
+        hash: {"switch_1"=>1, "select_1"=>nil, "section_1"=>[{"slider_sec_1"=>10, "select_sec_1_1"=>2}, {"slider_sec_1"=>10, "select_sec_1_1"=>2, "section_1_1_1"=>[]}], "select_1_1"=>nil, "select_1_1_1"=>6, "checkbox_1_1_2"=>3},
+        total: 34.0,
       },
       {
         doc: {'select_1' => 'nil_score', 'select_1_1' => 'nil_score', 'section_1' => [{'number_input_sec_2' => 1}, {'number_input_sec_2' => 1, 'select_sec_1_1' => 'score_2'}] },

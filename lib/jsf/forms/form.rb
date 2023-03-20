@@ -473,15 +473,24 @@ module JSF
         self[:properties]
       end
     
+      # TODO: deprecate, use reduce_each_form
+      #
       # get own and dynamic properties
       #
       # @return [Hash{String => JSF::Forms::Field::*}]
       def merged_properties(**args)
-        properties = {}
-        each_form(**args) do |form|
-          properties.merge!(form&.properties || {})
+        reduce_each_form({}, **args) do |acum, form|
+          acum.merge!(form&.properties || {})
         end
-        properties
+      end
+
+      # similar to Array.reduce
+      #
+      def reduce_each_form(init_value, **args)
+        each_form(**args) do |form|
+          init_value = yield(init_value, form)
+        end
+        init_value
       end
     
       # gets the property definition inside the properties key
@@ -819,8 +828,6 @@ module JSF
       #   for each value in the document's array. If you want forms to only be yielded once,
       #   use each_form
       #
-      # @param skip_property_proc [Proc] skips a property if it returns true when called
-      #
       # @yieldparam [JSF::Forms::Form] form
       # @yieldparam [JSF::Forms::Condition] condition
       # @yieldparam [Proc] skip_branch_proc
@@ -829,7 +836,7 @@ module JSF
       # @yieldparam [Array<String,Integer>] document_path
       #
       # @return [void]
-      def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_property_proc: nil, skip_on_condition: false, condition_proc: nil, **kwargs, &block)
+      def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_on_condition: false, condition_proc: nil, **kwargs, &block)
         empty_document = {}
 
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
@@ -852,23 +859,23 @@ module JSF
             section_or_shared
           )
 
-          # handle all properties that have a value that is a hash or an array because the document_path is modified
+          # handle all properties that have a value in which the document_path is modified (sections, shared)
           form[:properties].each do |key, property|
             next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: kwargs[:is_create])
-            next if skip_property_proc&.call(key, property)
-            
+
             # go recursive
-            case property
-            when JSF::Forms::Section
-              value = document[key]
+            if !kwargs[:ignore_sections] && property.is_a?(JSF::Forms::Section)
+              if !property.repeatable?
+                document[key] ||= []
+                document[key].push({}) if document[key].empty?
+              end
               empty_document[key] ||= []
-              value&.map&.with_index do |doc, i|
+              document[key]&.map&.with_index do |doc, i|
                 empty_document[key][i] = property
                   .form
                   .each_form_with_document(
                     doc,
                     document_path: document_path + [key, i],
-                    skip_property_proc: skip_property_proc,
                     skip_on_condition: skip_on_condition,
                     section_or_shared: property,
                     condition_proc: condition_proc,
@@ -876,14 +883,13 @@ module JSF
                     &block
                   )
               end
-            when JSF::Forms::Field::Shared
+            elsif !kwargs[:ignore_definitions] && property.is_a?(JSF::Forms::Field::Shared)
               value = document[key] || {}
               empty_document[key] = property
                 .shared_definition
                 .each_form_with_document(
                   value,
                   document_path: (document_path + [key]),
-                  skip_property_proc: skip_property_proc,
                   skip_on_condition: skip_on_condition,
                   section_or_shared: property,
                   condition_proc: condition_proc,
@@ -1015,7 +1021,7 @@ module JSF
           # iterate properties
           form[:properties].each do |k, prop|
             next unless prop.visible(is_create: is_create)
-            next unless JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class)
+            next unless (JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class) && prop.scored?)
 
             value = current_doc.dig(k)
 
@@ -1024,15 +1030,16 @@ module JSF
             else
 
               # check for any visible child field
-              visible_children = prop.dependent_conditions.any? do |cond|
+              visible_scorable_children = prop.dependent_conditions.any? do |cond|
                 next unless cond.evaluate(current_doc, &condition_proc)
 
-                cond.dig(:then, :properties)&.any? do |k,v|
-                  v.visible(is_create: is_create)
-                end
+                cond[:then]&.scored_with_document?(
+                  current_doc,
+                  is_create: is_create
+                ) # TODO: need to pass more arguments?
               end
         
-              if visible_children
+              if visible_scorable_children
                 prop.score_for_value(value)
               else
                 prop.max_score
@@ -1138,6 +1145,19 @@ module JSF
           end
         end
         has_scoring
+      end
+
+      # @return [Boolean]
+      def scored_with_document?(document, is_create: false, **kwargs)
+        each_form_with_document(document) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path, section_or_shared|
+          form[:properties].each do |key, property|
+            next unless property.visible(is_create: is_create)
+            next if property.is_a?(JSF::Forms::Section)
+            
+            return true if property.scored?
+          end
+        end
+        false
       end
 
       # Initial value when scoring a document
