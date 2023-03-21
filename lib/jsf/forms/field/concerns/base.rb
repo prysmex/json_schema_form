@@ -15,6 +15,7 @@ module JSF
             base.include JSF::Core::Schemable
             base.include JSF::Validations::Validatable
             base.include JSF::Forms::Field::Concerns::InstanceMethods
+            base.include JSF::Forms::Field::Concerns::Conditionable
             base.include JSF::Forms::Concerns::DisplayProperties
             base.include JSF::Forms::Concerns::DocumentPath
           end

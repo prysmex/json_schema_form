@@ -1,6 +1,7 @@
 # concerns
 require_relative 'field/concerns/base'
 require_relative 'field/concerns/response_settable'
+require_relative 'field/concerns/conditionable'
 
 # fields
 require_relative 'field/checkbox'

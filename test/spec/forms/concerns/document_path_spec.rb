@@ -10,8 +10,8 @@ class FormTest < Minitest::Test
         db_id: 1,
         index: :prepend,
         definition: JSF::Forms::FormBuilder.build() do
-          append_property(:shared_switch_1, example('switch')) do |f, key|
-            append_conditional_property(:shared_switch_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+          append_property(:shared_switch_1, example('switch')) do
+            append_property(:shared_switch_1_1, example('switch'), type: :const, value: true)
           end
         end
       )
@@ -24,8 +24,8 @@ class FormTest < Minitest::Test
           # nested Section
           append_property(:section_1_3, example('section')) do |f|
             f.form.instance_eval do
-              append_property(:switch_1_1_1, example('switch')) do |f, key|
-                append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: true)
+              append_property(:switch_1_1_1, example('switch')) do
+                append_property(:switch_1_1_1, example('switch'), type: :const, value: true)
               end
             end
           end
@@ -33,9 +33,9 @@ class FormTest < Minitest::Test
       end
 
       # Field
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_1_1, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.append_conditional_property(:switch_1_2, example('switch'), dependent_on: key, type: :const, value: true)
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_1_1, example('switch'), type: :const, value: true) do
+          append_property(:switch_1_2, example('switch'), type: :const, value: true)
         end
       end
 

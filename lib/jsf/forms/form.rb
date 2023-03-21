@@ -667,6 +667,12 @@ module JSF
         }
         self[:allOf].last
       end
+
+      def condition(dependent_on, type, value, &block)
+        condition = get_condition(dependent_on, type, value) || add_condition(dependent_on, type, value)
+        condition[:then].instance_eval(&block) if block_given?
+        condition
+      end
     
       # Adds a dependent property inside a subschema
       #
@@ -682,16 +688,17 @@ module JSF
           raise ArgumentError.new("sort must be an Integer, :prepend or :append, got #{sort_value}")
         end
     
-        condition = get_condition(dependent_on, type, value) || add_condition(dependent_on, type, value)
-        added_property = case sort_value
+        condition = condition(dependent_on, type, value)
+        subform = condition[:then]
+
+        case sort_value
         when :prepend
-          condition[:then].prepend_property(property_id, definition, options, &block)
+          subform.prepend_property(property_id, definition, options, &block)
         when :append
-          condition[:then].append_property(property_id, definition, options, &block)
+          subform.append_property(property_id, definition, options, &block)
         else
-          condition[:then].insert_property_at_index(sort_value, property_id, definition, options, &block)
+          subform.insert_property_at_index(sort_value, property_id, definition, options, &block)
         end
-        added_property
       end
     
       # Appends a dependent property inside a subschema

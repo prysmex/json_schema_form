@@ -81,24 +81,25 @@ class FormbuilderTest < Minitest::Test
         end
       end
     
-      append_property(:select1, example('select'), {required: true}) do |f, key|
+      append_property(:select1, example('select'), required: true) do |f|
         f.response_set_id = :response_set_1
-
+    
         #por separado
-        append_conditional_property :depedendent_select1, example('select'), dependent_on: key, type: :const, value: 'option1'
-        append_conditional_property :depedendent_select2, example('select'), dependent_on: key, type: :enum, value: ['option1']
-
-        #nested
-        append_conditional_property(:depedendent_select3, example('select'), dependent_on: key, type: :const, value: 'option2') do |f, key, subform|
-          f.response_set_id = :response_set_1
-          f.hidden = true
-          subform.prepend_property(:depedendent_select4, example('select'), {required: true}) do |f|
+        append_property :depedendent_select1, example('select'), type: :const, value: 'option1'
+        append_property :depedendent_select2, example('select'), type: :enum, value: ['option1']
+    
+        condition(:const, 'option2') do
+          append_property(:depedendent_select3, example('select')) do |f|
+            f.response_set_id = :response_set_1
+            f.hidden = true
+          end
+          prepend_property(:depedendent_select4, example('select'), required: true) do |f|
             f.response_set_id = :response_set_1
             f.hidden = true
           end
         end
       end
-    
+      
     end
   end
 

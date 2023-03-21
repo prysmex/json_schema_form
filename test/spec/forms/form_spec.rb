@@ -20,9 +20,9 @@ class FormTest < Minitest::Test
       append_property(:file_input, example('file_input'))
       append_property(:markdown, example('markdown'))
       append_property(:number_input, example('number_input'))
-      append_property(:select, example('select')) do |f, key|
+      append_property(:select, example('select')) do |f|
         # conditional properties
-        append_conditional_property(:checkbox2, example('checkbox'), dependent_on: key, type: :const, value: 1)
+        append_property(:checkbox2, example('checkbox'), type: :const, value: 1)
       end
       append_property(:slider, example('slider'))
       append_property(:static, example('static'))
@@ -119,10 +119,10 @@ class FormTest < Minitest::Test
 
     # nested
     form = JSF::Forms::FormBuilder.build() do
-      append_property :switch_1, example('switch') do |f, key|
+      append_property :switch_1, example('switch') do |f|
         f[:$id] = '#/properties/switch_1'
 
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+        append_property(:switch_2, example('switch'), type: :const, value: true) do |f|
           f[:$id] = '#/properties/switch_2'
         end
       end
@@ -177,8 +177,8 @@ class FormTest < Minitest::Test
     error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :conditional_fields }
     form = JSF::Forms::FormBuilder.build() do
       append_property(:text_input1, example('text_input')) # cannot have conditional
-      append_property(:switch1, example('switch')) do |f, key|
-        append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: key, type: :const, value: true
+      append_property(:switch1, example('switch')) do |f|
+        append_property :dependent_text_input1, example('text_input'), type: :const, value: true
       end
     end
 
@@ -191,8 +191,8 @@ class FormTest < Minitest::Test
   def test_conditions_format
     error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Condition) && key == :schema }
     form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch1, example('switch')) do |f, key|
-        append_conditional_property :dependent_text_input1, example('text_input'), dependent_on: key, type: :const, value: true
+      append_property(:switch1, example('switch')) do |f|
+        append_property :dependent_text_input1, example('text_input'), type: :const, value: true
       end
     end
 
@@ -238,8 +238,8 @@ class FormTest < Minitest::Test
 
   def test_not_valid_for_locale_when_conditional_field_is_not_valid
     form = JSF::Forms::FormBuilder.build do
-      append_property :switch1, JSF::Forms::FormBuilder.example('switch') do |f, key|
-        append_conditional_property :dependent_markdown, example('markdown'), dependent_on: key, type: :const, value: true
+      append_property :switch1, JSF::Forms::FormBuilder.example('switch') do |f|
+        append_property :dependent_markdown, example('markdown'), type: :const, value: true
       end
     end
 
@@ -278,6 +278,12 @@ class FormTest < Minitest::Test
   ##############
   ###METHODS####
   ##############
+
+  # def test_example
+  # end
+
+  # def test_shared_ref_key
+  # end
 
   def test_shared_definitions
     form = JSF::Forms::FormBuilder.build do
@@ -350,14 +356,13 @@ class FormTest < Minitest::Test
 
   def test_merged_properties
     form = JSF::Forms::FormBuilder.build do
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-            subform.append_conditional_property(:switch_4, example('switch'), dependent_on: key, type: :const, value: true)
+      append_property(:switch_1, example('switch')) do |f|
+        append_property(:switch_2, example('switch'), type: :const, value: true) do
+          append_property(:switch_3, example('switch'), type: :const, value: true) do
+            append_property(:switch_4, example('switch'), type: :const, value: true)
           end
         end
       end
-
     end
     
     assert_equal ['switch_1', 'switch_2', 'switch_3', 'switch_4'], form.merged_properties.keys
@@ -375,8 +380,8 @@ class FormTest < Minitest::Test
 
   def test_get_merged_property
     form = JSF::Forms::FormBuilder.build do
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true)
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_2, example('switch'), type: :const, value: true)
       end
     end
 
@@ -560,10 +565,10 @@ class FormTest < Minitest::Test
 
     # correct sorting
     form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch_1, example('switch')) do |f, key|
-        insert_conditional_property_at_index(0, :switch_2, example('switch'), dependent_on: key, type: :const, value: true)
-        insert_conditional_property_at_index(0, :switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.insert_conditional_property_at_index(1, :switch_4, example('switch'), dependent_on: key, type: :const, value: true)
+      append_property(:switch_1, example('switch')) do
+        insert_property_at_index(0, :switch_2, example('switch'), type: :const, value: true)
+        insert_property_at_index(0, :switch_3, example('switch'), type: :const, value: true) do
+          insert_property_at_index(1, :switch_4, example('switch'), type: :const, value: true)
         end
       end
     end
@@ -594,15 +599,15 @@ class FormTest < Minitest::Test
 
     # build the form
     form1 = JSF::Forms::FormBuilder.build() do
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_2, example('switch'), type: :const, value: true) do |_f, subform|
           form2 = subform
-          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+          append_property(:switch_3, example('switch'), type: :const, value: true) do |_f, subform|
             form3 = subform
           end
         end
 
-        append_conditional_property(:section_2, example('section'), dependent_on: key, type: :const, value: false) do |f, key, subform|
+        append_property(:section_2, example('section'), type: :const, value: false) do |f, subform|
           form4 = subform
           form5 = f.form
           f.form.instance_eval do
@@ -611,7 +616,7 @@ class FormTest < Minitest::Test
         end
       end
 
-      append_property(:section_1, example('section')) do |f, key|
+      append_property(:section_1, example('section')) do |f|
         form6 = f.form
         f.form.instance_eval do
           append_property(:switch_6, example('switch'))
@@ -740,13 +745,12 @@ class FormTest < Minitest::Test
 
     # build the form
     form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          end
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_2, example('switch'), type: :const, value: true) do
+          append_property(:switch_3, example('switch'), type: :const, value: true)
         end
 
-        append_conditional_property(:section_1, example('section'), dependent_on: key, type: :const, value: false) do |f, key, subform|
+        append_property(:section_1, example('section'), type: :const, value: false) do |f|
           f.form.instance_eval do
             append_property(:switch_4, example('switch'))
           end
@@ -793,20 +797,19 @@ class FormTest < Minitest::Test
 
   def test_each_sorted_property
     form = JSF::Forms::FormBuilder.build() do
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          end
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_2, example('switch'), type: :const, value: true) do
+          append_property(:switch_3, example('switch'), type: :const, value: true)
         end
 
-        append_conditional_property(:section_2, example('section'), dependent_on: key, type: :const, value: true) do |f, key, subform|
+        append_property(:section_2, example('section'), type: :const, value: true) do |f|
           f.form.instance_eval do
             append_property(:switch_4, example('switch'))
           end
         end
       end
 
-      append_property(:section_1, example('section')) do |f, key|
+      append_property(:section_1, example('section')) do |f|
         f.form.instance_eval do
           append_property(:switch_6, example('switch'))
         end
@@ -823,13 +826,12 @@ class FormTest < Minitest::Test
 
   # def test_document_path_for_property
   #   form = JSF::Forms::FormBuilder.build() do
-  #     append_property(:switch_1, example('switch')) do |f, key|
-  #       append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-  #         subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-  #         end
+  #     append_property(:switch_1, example('switch')) do
+  #       append_property(:switch_2, example('switch'), type: :const, value: true) do
+  #         append_property(:switch_3, example('switch'), type: :const, value: true)
   #       end
 
-  #       append_conditional_property(:section_1, example('section'), dependent_on: key, type: :const, value: false) do |f, key, subform|
+  #       append_property(:section_1, example('section'), type: :const, value: false) do |f|
   #         f.form.instance_eval do
   #           append_property(:switch_4, example('switch'))
   #         end
@@ -868,25 +870,24 @@ class FormTest < Minitest::Test
       end
 
       # field with response set
-      append_property(:'select', example('select')) do |f, key|
+      append_property(:'select', example('select')) do |f|
         f.response_set_id = 'bc0214f2-807c-4806-8edf-17d118467825'
       end
 
       # nested conditional
-      append_property(:switch_1, example('switch')) do |f, key|
-        append_conditional_property(:switch_2, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          subform.append_conditional_property(:switch_3, example('switch'), dependent_on: key, type: :const, value: true) do |f, key, subform|
-          end
+      append_property(:switch_1, example('switch')) do
+        append_property(:switch_2, example('switch'), type: :const, value: true) do
+          append_property(:switch_3, example('switch'), type: :const, value: true)
         end
       end
 
       # section
-      append_property(:'section_1', example('section')) do |f, _|
+      append_property(:'section_1', example('section')) do |f|
         f.form.instance_eval do
-          append_property(:'number_input_section', example('number_input')) do |f, key|
-            append_conditional_property(:'sub_section_1', example('section'), dependent_on: key, type: :const, value: 1) do |f, _|
+          append_property(:'number_input_section', example('number_input')) do
+            append_property(:'sub_section_1', example('section'), type: :const, value: 1) do |f|
               f.form.instance_eval do
-                append_property(:'multiselect_section', example('select')) do |f, key|
+                append_property(:'multiselect_section', example('select')) do |f|
                   f.response_set_id = 'bc0214f2-807c-4806-8edf-17d118467825'
                 end
               end
@@ -896,12 +897,12 @@ class FormTest < Minitest::Test
       end
 
       # hidden on create
-      append_property(:'hide_on_create', example('text_input')) do |f, key|
+      append_property(:'hide_on_create', example('text_input')) do |f|
         SuperHash::Utils.bury(f, :displayProperties, :hideOnCreate, true)
       end
 
       # hidden
-      append_property(:'hidden', example('text_input')) do |f, key|
+      append_property(:'hidden', example('text_input')) do |f|
         SuperHash::Utils.bury(f, :displayProperties, :hidden, true)
       end
 
@@ -1012,9 +1013,9 @@ class FormTest < Minitest::Test
         end
       end
 
-      append_property(:select_1, example('select')) do |f, key|
+      append_property(:select_1, example('select')) do |f|
         f.response_set_id = :response_set_1
-        append_conditional_property(:markdown_1_1, example('markdown'), dependent_on: key, type: :enum, value: ['score_0'])
+        append_property(:markdown_1_1, example('markdown'), type: :enum, value: ['score_0'])
       end
     end
 
@@ -1076,32 +1077,32 @@ class FormTest < Minitest::Test
       append_property(:markdown_1, example('markdown'))
       append_property(:switch_1, example('switch'))
 
-      append_property(:select_1, example('select')) do |f, key|
+      append_property(:select_1, example('select')) do |f|
         f.response_set_id = :response_set_1
 
-        append_conditional_property(:select_1_1, example('select'), dependent_on: key, type: :enum, value: ['nil_score', 'score_3']) do |f, key, subform|
+        append_property(:select_1_1, example('select'), type: :enum, value: ['nil_score', 'score_3']) do |f|
           f.response_set_id = :response_set_2
   
-          subform.append_conditional_property(:select_1_1_1, example('select'), dependent_on: key, type: :const, value: 'nil_score') do |f, key, subform|
+          append_property(:select_1_1_1, example('select'), type: :const, value: 'nil_score') do |f|
             f.response_set_id = :response_set_1
           end
   
-          subform.append_conditional_property(:checkbox_1_1_2, example('checkbox'), dependent_on: key, type: :enum, value: ['nil_score', 'score_1']) do |f, key, subform|
+          append_property(:checkbox_1_1_2, example('checkbox'), type: :enum, value: ['nil_score', 'score_1']) do |f|
             f.response_set_id = :response_set_2
           end
         end
 
       end
 
-      append_property(:section_1, example('section')) do |f, _|
+      append_property(:section_1, example('section')) do |f|
         f.form.instance_eval do
           append_property(:slider_sec_1, example('slider'))
-          append_property(:number_input_sec_2, example('number_input')) do |f, key|
-            append_conditional_property(:select_sec_1_1, example('select'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
+          append_property(:number_input_sec_2, example('number_input')) do
+            append_property(:select_sec_1_1, example('select'), type: :const, value: 1) do |f|
               f.response_set_id = :response_set_2
 
-              subform.append_conditional_property(:switch_1_1_1, example('switch'), dependent_on: key, type: :const, value: 'score_2')
-              subform.append_conditional_property(:section_1_1_1, example('section'), dependent_on: key, type: :const, value: 'score_1') do |f, _|
+              append_property(:switch_1_1_1, example('switch'), type: :const, value: 'score_2')
+              append_property(:section_1_1_1, example('section'), type: :const, value: 'score_1') do |f, _|
                 f.form.instance_eval do
                   append_property(:switch_1_1_1_1, example('switch'))
                 end
@@ -1231,9 +1232,10 @@ class FormTest < Minitest::Test
 
     # non root
     complex_non_scorable_form = JSF::Forms::FormBuilder.build do
-      append_property(:number_input_1, example('number_input')) do |f, key|
-        append_conditional_property(:markdown_1_1, example('markdown'), dependent_on: key, type: :const, value: 1) do |f, key, subform|
-          subform.append_property(:section, example('section')) do |f|
+      append_property(:number_input_1, example('number_input')) do |f|
+        condition(:const, 1) do
+          append_property(:markdown_1_1, example('markdown'), type: :const, value: 1)
+          append_property(:section, example('section')) do |f|
             f.form.instance_eval do
               append_property(:switch, example('switch')) #scored
             end
@@ -1269,9 +1271,9 @@ class FormTest < Minitest::Test
         f.response_set_id = :response_set_1
       end
       append_property(:slider, example('slider'))
-      append_property(:switch, example('switch')) do |f, key|
+      append_property(:switch, example('switch')) do |f|
         # conditional field
-        append_conditional_property(:switch_1, example('switch'), dependent_on: key, type: :const, value: true)
+        append_property(:switch_1, example('switch'), type: :const, value: true)
       end
 
       # section

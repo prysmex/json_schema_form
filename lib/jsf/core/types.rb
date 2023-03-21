@@ -43,7 +43,7 @@ module JSF
         # @param definition [Hash] the schema to add
         # @param options[:required] [Boolean] if the property should be required
         # @return [Object] added property
-        def add_property(name, definition, options={})
+        def add_property(name, definition, options={}, &block)
           name = name.to_s
           self[:properties] ||= {}
           StandardError.new("key #{name} already exists") if self[:properties]&.key?(name)
@@ -59,7 +59,8 @@ module JSF
           end
 
           added_property = self[:properties][name]
-          yield(added_property, name.to_s, self) if block_given?
+          added_property.instance_exec(added_property, self, &block) if block_given?
+          # yield(added_property, name.to_s, self) if block_given?
           added_property
         end
   
