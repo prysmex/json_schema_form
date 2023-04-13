@@ -633,15 +633,21 @@ module JSF
       #
       # @param dependent_on [Symbol] name of property the condition depends on
       # @param type [Symbol] type of condition to filter by
-      # @param value [String,Boolean,Integer] Value that makes the condition TRUE
-      # @return [JSF::Schema]
-      def get_condition(dependent_on, type, value)
+      # @param value [*] Value that makes the condition TRUE
+      # @return [Array<JSF::Schema>, NilClass]
+      def get_conditions(dependent_on, type, value=nil)
         cond_path = CONDITION_TYPE_TO_PATH.call(type)
-        self[:allOf]&.find do |condition|
-          if [:enum, :not_enum].include?(type)
-            condition.dig(:if, :properties, dependent_on, *cond_path)&.include?(value)
+
+        self[:allOf]&.select do |condition|
+          prop_schema = condition.dig(:if, :properties, dependent_on)
+          next unless prop_schema
+
+          condition_value = prop_schema.dig(*cond_path)
+
+          if [:enum, :not_enum].include?(type.to_sym)
+            condition_value&.include?(value)
           else
-            condition.dig(:if, :properties, dependent_on, *cond_path) == value
+            condition_value == value
           end
         end
       end
@@ -668,8 +674,8 @@ module JSF
         self[:allOf].last
       end
 
-      def condition(dependent_on, type, value, &block)
-        condition = get_condition(dependent_on, type, value) || add_condition(dependent_on, type, value)
+      def find_or_add_condition(dependent_on, type, value, &block)
+        condition = get_conditions(dependent_on, type, value)&.first || add_condition(dependent_on, type, value)
         condition[:then].instance_eval(&block) if block_given?
         condition
       end
@@ -688,7 +694,7 @@ module JSF
           raise ArgumentError.new("sort must be an Integer, :prepend or :append, got #{sort_value}")
         end
     
-        condition = condition(dependent_on, type, value)
+        condition = find_or_add_condition(dependent_on, type, value)
         subform = condition[:then]
 
         case sort_value

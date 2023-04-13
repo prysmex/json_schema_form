@@ -84,7 +84,7 @@ module JSF
 
       # @return [NilClass, String]
       def condition_property_key
-        self.dig('if', 'properties')&.keys&.first
+        dig('if', 'properties')&.keys&.first
       end
 
       # @return [NilClass, String]
@@ -94,42 +94,38 @@ module JSF
 
       # @return [Boolean]
       def negated
-        !!self.dig('if', 'properties', condition_property_key)&.key?('not')
+        !!dig('if', 'properties', condition_property_key)&.key?('not')
       end
 
-      # @return [nil, 'enum', 'const']
+      # @return [nil, 'enum', 'const', 'not_enum', 'not_const']
       def condition_type
-        if negated
-          self.dig('if', 'properties', condition_property_key, 'not')&.keys&.first
+        hash = dig('if', 'properties', condition_property_key)
+        return unless hash
+
+        if hash.key?('not')
+          "not_#{hash['not'].keys.first}"
         else
-          self.dig('if', 'properties', condition_property_key)&.keys&.first
+          hash.keys.first
         end
       end
 
       # @return [NilClass, String]
       def value
-        if negated
-          self.dig('if', 'properties', condition_property_key, 'not', condition_type)
-        else
-          self.dig('if', 'properties', condition_property_key, condition_type)
-        end
+        path = JSF::Forms::Form::CONDITION_TYPE_TO_PATH.call(condition_type)
+        dig('if', 'properties', condition_property_key, *path)
       end
 
       # Sets a new value for the condition
       #
       # @param [String, Boolean, Number] value
-      # @param [Boolean] negated
       # @param ['const', 'enum']
       #
       # @return [void]
-      def set_value(value, negated: self.negated, condition_type: self.condition_type)
-        self.dig('if', 'properties')&.clear
+      def set_value(value, condition_type: self.condition_type)
+        dig('if', 'properties')&.clear
 
-        path = ['if', 'properties', condition_property_key]
-        path.push('not') if negated
-        path.push(condition_type)
-
-        SuperHash::Utils.bury(self, *path, value)
+        path = JSF::Forms::Form::CONDITION_TYPE_TO_PATH.call(condition_type)
+        SuperHash::Utils.bury(self, 'if', 'properties', condition_property_key, *path, value)
       end
 
       # Takes a document or a part of a document (for nested hashes like JSF::Forms::Section) and

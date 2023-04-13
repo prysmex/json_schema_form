@@ -11,6 +11,19 @@ module JSF
           ###VALIDATIONS####
           ##################
 
+          # since we cannot augment the displayProperties schema, remove 'responseSetFilters' when valid
+          # so it passes validations
+          def validation_schema(passthru)            
+            Dry::Schema.define(parent: super) do
+              before(:key_validator) do |result|
+                hash = result.to_h
+                d_p = hash['displayProperties']
+                d_p.delete('responseSetFilters') if d_p && d_p['responseSetFilters'].is_a?(::Array)
+                hash
+              end
+            end
+          end
+
           # # Consider response set
           # #
           # # @param [] locale

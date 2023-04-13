@@ -42,6 +42,7 @@ module JSF
               end
             end
             optional(:color).maybe(:string)
+            optional(:tags).value(:array?).array(:str?)
           end
           if passthru[:is_inspection]
             required(:enableScore).value(Types::True) #deprecate?

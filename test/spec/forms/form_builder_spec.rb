@@ -8,7 +8,7 @@ class FormbuilderTest < Minitest::Test
   def test_fixtures
     klasses = {
       JSF::Forms::SharedRef => [
-        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
+        {errors_args: {unless: ->(i, key){key == :ref_presence} }}
       ],
       JSF::Forms::Form => [],
       JSF::Forms::ResponseSet => [],
@@ -20,10 +20,10 @@ class FormbuilderTest < Minitest::Test
 
       # fields
       JSF::Forms::Field::Checkbox => [
-        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
+        {errors_args: {unless: ->(i, key){key == :ref_presence} }}
       ],
       JSF::Forms::Field::Shared => [
-        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
+        {errors_args: {unless: ->(i, key){key == :ref_presence} }}
       ],
       JSF::Forms::Field::DateInput => [],
       JSF::Forms::Field::FileInput => [],
@@ -31,7 +31,7 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Markdown => [],
       JSF::Forms::Field::NumberInput => [],
       JSF::Forms::Field::Select => [
-        {errors_args: {unless: ->(i, key){key = :ref_presence} }}
+        {errors_args: {unless: ->(i, key){key == :ref_presence} }}
       ],
       JSF::Forms::Field::Signature => [],
       JSF::Forms::Field::Slider => [],
@@ -88,7 +88,7 @@ class FormbuilderTest < Minitest::Test
         append_property :depedendent_select1, example('select'), type: :const, value: 'option1'
         append_property :depedendent_select2, example('select'), type: :enum, value: ['option1']
     
-        condition(:const, 'option2') do
+        find_or_add_condition(:const, 'option2') do
           append_property(:depedendent_select3, example('select')) do |f|
             f.response_set_id = :response_set_1
             f.hidden = true

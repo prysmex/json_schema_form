@@ -32,6 +32,7 @@ module JSF
                 end
               end
               required(:pictures).value(:array?).array(:str?)
+              optional(:responseSetFilters).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)

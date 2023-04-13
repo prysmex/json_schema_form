@@ -516,7 +516,7 @@ class FormTest < Minitest::Test
     assert_equal 2, form.get_property('switch_3').sort
   end
 
-  def test_get_condition
+  def test_get_conditions
     form = JSF::Forms::FormBuilder.build() do
       append_property(:prop1, example('select'))
       add_condition('prop1', :const, 'const')
@@ -526,16 +526,16 @@ class FormTest < Minitest::Test
     end
 
     # found
-    assert_equal 'const', form.get_condition(:prop1, :const, 'const')&.dig(:if, :properties, :prop1, :const)
-    assert_equal 'not_const', form.get_condition(:prop1, :not_const, 'not_const')&.dig(:if, :properties, :prop1, :not, :const)
-    assert_equal 'enum', form.get_condition(:prop1, :enum, 'enum')&.dig(:if, :properties, :prop1, :enum)&.first
-    assert_equal 'not_enum', form.get_condition(:prop1, :not_enum, 'not_enum')&.dig(:if, :properties, :prop1, :not, :enum)&.first
+    assert_equal 'const', form.get_conditions(:prop1, :const, 'const').first.dig(:if, :properties, :prop1, :const)
+    assert_equal 'not_const', form.get_conditions(:prop1, :not_const, 'not_const').first.dig(:if, :properties, :prop1, :not, :const)
+    assert_equal ['enum'], form.get_conditions(:prop1, :enum, 'enum').first.dig(:if, :properties, :prop1, :enum)
+    assert_equal ['not_enum'], form.get_conditions(:prop1, :not_enum, 'not_enum').first.dig(:if, :properties, :prop1, :not, :enum)
 
     # not found
-    assert_nil form.get_condition(:prop1, :const, 'other_value')
+    assert_nil form.get_conditions(:prop1, :const, 'other_value').first
 
     # invalid key
-    assert_raises(ArgumentError){ form.get_condition(:prop1, :wrong_key, 'other_value') }
+    assert_raises(ArgumentError){ form.get_conditions(:prop1, :wrong_key, 'other_value') }
   end
 
   def test_add_condition
@@ -1233,7 +1233,7 @@ class FormTest < Minitest::Test
     # non root
     complex_non_scorable_form = JSF::Forms::FormBuilder.build do
       append_property(:number_input_1, example('number_input')) do |f|
-        condition(:const, 1) do
+        find_or_add_condition(:const, 1) do
           append_property(:markdown_1_1, example('markdown'), type: :const, value: 1)
           append_property(:section, example('section')) do |f|
             f.form.instance_eval do

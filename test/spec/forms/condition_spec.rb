@@ -69,11 +69,11 @@ class ConditionTest < Minitest::Test
 
     # not const
     instance['if']['properties']['some_prop'] = { not: { const: true } }
-    assert_equal 'const', instance.condition_type
+    assert_equal 'not_const', instance.condition_type
 
     # not enum
     instance['if']['properties']['some_prop'] = { not: { enum: true } }
-    assert_equal 'enum', instance.condition_type
+    assert_equal 'not_enum', instance.condition_type
 
     # const
     instance['if']['properties']['some_prop'] = { const: true }
@@ -123,17 +123,17 @@ class ConditionTest < Minitest::Test
 
     instance.set_value(1)
     assert_equal true, instance.negated
-    assert_equal 'const', instance.condition_type
+    assert_equal 'not_const', instance.condition_type
     assert_equal 1, instance.value
 
     instance.set_value(2, condition_type: 'enum')
-    assert_equal true, instance.negated
+    assert_equal false, instance.negated
     assert_equal 'enum', instance.condition_type
     assert_equal 2, instance.value
     
-    instance.set_value(3, condition_type: 'enum', negated: false)
-    assert_equal false, instance.negated
-    assert_equal 'enum', instance.condition_type
+    instance.set_value(3, condition_type: 'not_enum')
+    assert_equal true, instance.negated
+    assert_equal 'not_enum', instance.condition_type
     assert_equal 3, instance.value
   end
 

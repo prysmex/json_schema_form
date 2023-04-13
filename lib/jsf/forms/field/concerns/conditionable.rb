@@ -15,8 +15,8 @@ module JSF
             meta.dig(:parent).insert_conditional_property_at_index(*args, dependent_on: key_name, **kwargs, &block)
           end
 
-          def condition(*arguments, &block)
-            meta.dig(:parent).condition(key_name, *arguments, &block)
+          def find_or_add_condition(*arguments, &block)
+            meta.dig(:parent).find_or_add_condition(key_name, *arguments, &block)
           end
 
           # delegate
