@@ -126,12 +126,12 @@ class ConditionTest < Minitest::Test
     assert_equal 'not_const', instance.condition_type
     assert_equal 1, instance.value
 
-    instance.set_value(2, condition_type: 'enum')
+    instance.set_value(2, type: 'enum')
     assert_equal false, instance.negated
     assert_equal 'enum', instance.condition_type
     assert_equal 2, instance.value
     
-    instance.set_value(3, condition_type: 'not_enum')
+    instance.set_value(3, type: 'not_enum')
     assert_equal true, instance.negated
     assert_equal 'not_enum', instance.condition_type
     assert_equal 3, instance.value

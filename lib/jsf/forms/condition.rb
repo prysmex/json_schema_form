@@ -115,17 +115,16 @@ module JSF
         dig('if', 'properties', condition_property_key, *path)
       end
 
-      # Sets a new value for the condition
+      # Sets a new value for the condition_property_key
       #
       # @param [String, Boolean, Number] value
       # @param ['const', 'enum']
       #
       # @return [void]
-      def set_value(value, condition_type: self.condition_type)
-        dig('if', 'properties')&.clear
-
-        path = JSF::Forms::Form::CONDITION_TYPE_TO_PATH.call(condition_type)
-        SuperHash::Utils.bury(self, 'if', 'properties', condition_property_key, *path, value)
+      def set_value(value, key: condition_property_key, type: self.condition_type)
+        dig('if', 'properties', key)&.clear
+        path = JSF::Forms::Form::CONDITION_TYPE_TO_PATH.call(type)
+        SuperHash::Utils.bury(self, 'if', 'properties', key, *path, value)
       end
 
       # Takes a document or a part of a document (for nested hashes like JSF::Forms::Section) and
