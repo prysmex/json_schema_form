@@ -633,10 +633,9 @@ class FormTest < Minitest::Test
     assert_empty (forms - [form1, form2, form3, form4, form5, form6])
 
     # test yields
-    # form1.each_form do |current_form, condition, skip_branch_proc, current_level|
+    # form1.each_form do |current_form, condition, current_level|
     #   assert_instance_of JSF::Forms::Form, current_form
     #   assert_equal true, (condition.nil? || condition.is_a?(JSF::Forms::Condition))
-    #   assert_instance_of Proc, skip_branch_proc
     #   assert_instance_of Integer, current_level
     # end
 
@@ -664,10 +663,10 @@ class FormTest < Minitest::Test
     assert_equal 4, forms.size
     assert_empty (forms - [form1, form2, form3, form4])
 
-    # test trees are halted when yielded skip_branch_proc proc is called
+    # test trees are halted when yielded skip_branch is thrown
     forms = []
-    form1.each_form() do |current_form, condition, skip_branch_proc|
-      skip_branch_proc.call if current_form.dig(:properties, :switch_2)
+    form1.each_form() do |current_form|
+      throw(:skip_branch, true) if current_form.dig(:properties, :switch_2)
       forms.push(current_form)
     end
     assert_equal 4, forms.size
@@ -760,7 +759,7 @@ class FormTest < Minitest::Test
 
     # when the document is empty
     count = 0
-    form.each_form_with_document({}) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+    form.each_form_with_document({}) do |form, condition, current_level, current_doc, current_empty_doc, document_path|
       count += 1
       assert_empty current_doc
       assert_empty current_empty_doc
@@ -771,7 +770,7 @@ class FormTest < Minitest::Test
     # when the document has values
     count = 0
     document = {'switch_1' => true, 'switch_2' => true, 'section_1' => [{'switch_4' => true}, {'switch_4' => false}]}
-    form.each_form_with_document(document) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+    form.each_form_with_document(document) do |form, condition, current_level, current_doc, current_empty_doc, document_path|
       count += 1
       
       if (form.properties.keys & ['switch_1', 'switch_2', 'switch_3', 'section_1']).size > 0

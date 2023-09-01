@@ -354,7 +354,7 @@ module JSF
       #
       # @return [Hash{String => JSF::Forms::Form, JSF::Forms::SharedRef}]
       def shared_definitions
-        self[:definitions].select do |k,v|
+        self[:definitions].select do |_k,v|
           v.is_a?(JSF::Forms::SharedRef) || v.is_a?(JSF::Forms::Form)
         end
       end
@@ -377,7 +377,7 @@ module JSF
       # @param [Integer] db_id
       # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
       def get_shared_definition(db_id:)
-        self['definitions'].find do |k,v|
+        self['definitions'].find do |k,_v|
           k == shared_ref_key(db_id)
         end&.last
       end
@@ -431,7 +431,7 @@ module JSF
 
         # remove property
         # self.remove_property(key)
-        self[:properties].reject! do |k,v|
+        self[:properties].reject! do |k,_v|
           self.class.match_shared_property_key(k, db_id)
         end
         resort!
@@ -448,7 +448,7 @@ module JSF
       #
       # @return [Hash{String => JSF::Forms::ResponseSet}]
       def response_sets
-        self[:definitions].select do |k,v|
+        self[:definitions].select do |_k,v|
           v[:isResponseSet]
         end
       end
@@ -745,7 +745,6 @@ module JSF
       #
       # @yieldparam [JSF::Forms::Form] form, the current form
       # @yieldparam [JSF::Forms::Condition] condition, condition the form depends on
-      # @yieldparam [Proc] skip_branch_proc, halts execution in a branch if returns true
       # @yieldparam [Integer] nested level, 0 for root form
       #
       # @return [void]
@@ -776,13 +775,16 @@ module JSF
           # yield only if reached start_level or start_level is nil
           if start_level.nil? || current_level >= start_level
             condition = self.meta[:parent] if self.meta[:parent].is_a?(JSF::Forms::Condition)
-            skip_branch_proc = Proc.new{ return }
-            yield(self, condition, skip_branch_proc, current_level)
+            skip_branch = catch(:skip_branch) do
+              yield(self, condition, current_level)
+              false
+            end
+            return if skip_branch
           end
 
           # iterate properties and call recursive on JSF::Forms::Section
           unless ignore_sections
-            self.properties&.each do |key, prop|
+            self.properties&.each do |_key, prop|
               next unless prop.is_a?(JSF::Forms::Section)
 
               if skip_tree_when_hidden && !prop.visible(is_create: is_create)
@@ -799,7 +801,7 @@ module JSF
 
           # iterate definitions and call recursive on JSF::Forms::Form
           unless ignore_definitions
-            self[:definitions]&.each do |key, prop|
+            self[:definitions]&.each do |_key, prop|
               next unless prop.is_a?(JSF::Forms::Form)
               
               prop&.each_form(
@@ -843,7 +845,6 @@ module JSF
       #
       # @yieldparam [JSF::Forms::Form] form
       # @yieldparam [JSF::Forms::Condition] condition
-      # @yieldparam [Proc] skip_branch_proc
       # @yieldparam [Hash] document, the current document for the yielded JSF::Forms::Form
       # @yieldparam [Hash] empty_document
       # @yieldparam [Array<String,Integer>] document_path
@@ -854,17 +855,16 @@ module JSF
 
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
         # handled, we ignore them in the each_form iterator
-        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, skip_branch_proc, *args|
+        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, *args|
 
           # skip unactive trees
           if skip_on_condition && condition&.evaluate(document, &condition_proc) == false
-            skip_branch_proc.call
+            throw(:skip_branch, true)
           end
 
           yield(
             form,
             condition,
-            skip_branch_proc,
             *args,
             document,
             empty_document,
@@ -927,7 +927,7 @@ module JSF
           skip_tree_when_hidden: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path, section_or_shared|
+        ) do |form, condition, _current_level, current_doc, _current_empty_doc, document_path, section_or_shared|
 
           target_property = if condition
             condition&.condition_property
@@ -966,7 +966,7 @@ module JSF
       #   self.each_form_with_document(
       #     {},
       #     **kwargs
-      #   ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+      #   ) do |form, _condition, _current_level, _current_doc, _current_empty_doc, document_path|
       #     if form.properties.key?(key.to_s)
       #       path = document_path
       #       break
@@ -993,7 +993,7 @@ module JSF
           skip_on_condition: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           
           form[:properties].each do |key, property|
             next unless property.visible(is_create: is_create)
@@ -1029,7 +1029,7 @@ module JSF
           skip_on_condition: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
 
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1084,7 +1084,7 @@ module JSF
           skip_on_condition: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
 
           # iterate properties and increment score_value if needed
           form[:properties].each do |k, prop|
@@ -1119,7 +1119,7 @@ module JSF
           skip_on_condition: true,
           is_create: is_create,
           **kwargs
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
 
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1150,7 +1150,7 @@ module JSF
       def scored?(**args)
         has_scoring = false
         each_form(**args) do |form|
-          form.properties&.each do |key, field|
+          form.properties&.each do |_key, field|
             if field.scored?
               has_scoring = true
               break 
@@ -1162,7 +1162,7 @@ module JSF
 
       # @return [Boolean]
       def scored_with_document?(document, is_create: false, **kwargs)
-        each_form_with_document(document) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path, section_or_shared|
+        each_form_with_document(document) do |form, _condition, _current_level, _current_doc, _current_empty_doc, _document_path, _section_or_shared|
           form[:properties].each do |key, property|
             next unless property.visible(is_create: is_create)
             next if property.is_a?(JSF::Forms::Section)
@@ -1317,13 +1317,9 @@ module JSF
         response_set_id_proc: ->(id){ SecureRandom.uuid }
       )
         migrated_response_sets = {}
+        migrated_props = {}
 
-        serialized_form = self.as_json
-        dupped_form = self.class.new(serialized_form)
-
-        dupped_form.each_form(ignore_definitions: false) do |form, condition, skip_branch_proc|
-
-          migrated_props = {}
+        each_form(ignore_definitions: false) do |form|
         
           # migrate properties
           prop_keys = form['properties'].keys
@@ -1332,52 +1328,32 @@ module JSF
             next if prop.is_a?(JSF::Forms::Field::Static)
             next if prop.is_a?(JSF::Forms::Field::Shared)
 
-            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)      
-            
-            # remove the prop
-            form['properties'].delete(prop_key)
-            
-            # migrate property
-            prop['$id'] = "#/properties/#{new_key}"
-
-            # set new prop
-            form['properties'][new_key] = prop
+            migrated_props[prop_key] ||= property_id_proc.call(prop_key)
         
             # migrate response sets
             if prop.respond_to?(:response_set_id)
               id = prop.response_set_id.sub('#/definitions/', '')
-              new_id = migrated_response_sets[id] ||= response_set_id_proc.call(id)
-              root_form = form.meta[:is_subschema] ? form.root_parent : form
-        
-              # only migrate once
-              if root_form['definitions'].key?(id)
-                resp_set = root_form['definitions'].delete(id)
-                root_form['definitions'][new_id] = resp_set
-              end
-        
-              prop.response_set_id = new_id
+              migrated_response_sets[id] ||= response_set_id_proc.call(id)
             end
 
           end
 
           # migrate conditions
+          # this is not required since all condition_property_keys should be a subset of the form's properties
           form[:allOf].each do |condition|
             prop_key = condition.condition_property_key
-            new_key = migrated_props[prop_key] ||= property_id_proc.call(prop_key)
-        
-            # set property key
-            cond_hash = condition.dig('if', 'properties')
-            cond_hash[new_key] = cond_hash.delete(prop_key)
-
-            # update required to match property key
-            condition['if']['required'] = [new_key]
+            migrated_props[prop_key] ||= property_id_proc.call(prop_key)
           end
-        
-          # migrate required
-          form[:required].map!{|k| migrated_props[k] }
         end
 
-        dupped_form
+        strigified = self.as_json.to_json
+
+        # migrate keys
+        migrated_props.merge(migrated_response_sets).each do |old, key|
+          strigified.gsub!(/\b#{old}\b/, key)
+        end
+
+        self.class.new(JSON.parse(strigified))
       end
 
       def sample_document(is_create: false, **kwargs, &block)
@@ -1392,7 +1368,7 @@ module JSF
           skip_tree_when_hidden: true,
           skip_on_condition: false,
           is_create: is_create
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, _current_doc, current_empty_doc, _document_path|
       
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1424,7 +1400,7 @@ module JSF
           skip_tree_when_hidden: false,
           skip_on_condition: false,
           is_create: false
-        ) do |form, condition, skip_branch_proc, current_level, current_doc, current_empty_doc, document_path|
+        ) do |form, _condition, _current_level, _current_doc, current_empty_doc, _document_path|
       
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1454,7 +1430,7 @@ module JSF
       # @return [void]
       def migrate!
         if self['schemaFormVersion'] != VERSION
-          self.properties.each do |k,v|
+          self.properties.each do |_k,v|
             case v
             when JSF::Forms::Field::FileInput
               v[:items][:pattern] = '^http'
