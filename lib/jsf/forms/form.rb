@@ -817,9 +817,7 @@ module JSF
             self[:allOf]&.each do |condition|
               prop = condition.condition_property
 
-              skip_hidden = skip_tree_when_hidden && !prop.visible(is_create: is_create)
-
-              if skip_hidden
+              if skip_tree_when_hidden && !prop.visible(is_create: is_create)
                 next
               end
     
@@ -917,10 +915,73 @@ module JSF
         empty_document
       end
 
-      def each_sorted_property(document, **kwargs)
+      # @return void
+      def each_sorted_property(**kwargs)
         is_create = false
 
         all_sorted_properties = []
+        offsets = {}
+        find_index = ->(prop) { all_sorted_properties.size - all_sorted_properties.reverse.find_index{|a| a[0] == prop } - 1 }
+
+        each_form(
+          skip_tree_when_hidden: true,
+          ignore_definitions: false,
+          is_create: is_create,
+          **kwargs
+        ) do |form, condition, _current_level|
+
+          current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
+            next unless property.visible(is_create: is_create)
+
+            value = [property]
+            array.push(value)
+          end
+
+          key_names = current_arrays.map {|a| a[0].key_name }
+
+          index = nil
+          if condition
+            offset_key = condition.condition_property_key
+            offset = (offsets[offset_key] ||= [])
+            index = find_index.call(condition.condition_property) + offset.size + 1
+            offsets[offset_key] += key_names
+          elsif (parent = form.meta[:parent])
+            section_or_shared = if parent.class == JSF::Forms::Section
+              parent
+            elsif form&.key_name&.match?(/\Ashared_schema_template_\d+\z/)
+              all_sorted_properties.find do |array|
+                prop = array.first
+                prop.is_a?(JSF::Forms::Field::Shared) && prop.shared_definition == form
+              end.first
+            end
+
+            if section_or_shared
+              index = find_index.call(section_or_shared) + 1
+            end
+          end
+
+          index ||= 0
+
+          all_sorted_properties.insert(index, *current_arrays)
+        end
+
+        all_sorted_properties.each{|arr| yield(*arr) }
+      end
+
+      # @return void
+      def each_sorted_form_with_document(document, **kwargs)
+        is_create = false
+
+        all_sorted_properties = []
+        offsets = {}
+        find_index = ->(prop) { all_sorted_properties.size - all_sorted_properties.reverse.find_index{|a| a[0] == prop } - 1 }
+        increment_section_offsets = ->(path, increment) {
+          path.each do |v|
+            next unless offsets.key?(v)
+            offsets[v] += increment
+          end
+        }
+
         each_form_with_document(
           document,
           skip_on_condition: true,
@@ -929,52 +990,61 @@ module JSF
           **kwargs
         ) do |form, condition, _current_level, current_doc, _current_empty_doc, document_path, section_or_shared|
 
-          target_property = if condition
-            condition&.condition_property
-          else
-            section_or_shared
-          end
-
-          target_property_index = if target_property
-            all_sorted_properties.find_index{|arr| arr[0] == target_property } + 1
-          else
-            0
-          end
-
-          current_array = form.sorted_properties.each_with_object([]) do |property, array|
+          current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
             next unless property.visible(is_create: is_create)
 
             value = [property, current_doc, document_path]
             array.push(value)
           end
 
-          all_sorted_properties.insert(target_property_index, *current_array)
+          key_names = current_arrays.map {|a| a[0].key_name }
+
+          index = nil
+          if condition
+            offset_key = condition.condition_property_key
+            offset = (offsets[offset_key] ||= [])
+            index = find_index.call(condition.condition_property) + offset.size + 1
+            offsets[offset_key] += key_names
+          elsif section_or_shared
+            if section_or_shared.is_a?(JSF::Forms::Section)
+              offset_key = section_or_shared.key_name
+              
+              if offsets.key?(offset_key)
+                # add section entry
+                insert_at = find_index.call(section_or_shared) + offsets[offset_key].size + 1
+                all_sorted_properties.insert(insert_at, all_sorted_properties.find{|a| a[0] == section_or_shared})
+
+                # increment section offsets
+                increment_section_offsets.call(document_path, [offset_key])
+              end
+
+              offsets[offset_key] = []
+              
+              # remove all offsets of inner sections
+              section_or_shared[:items].each_form do |form, condition|
+                if condition
+                  offsets.delete(condition.condition_property_key)
+                end
+                form.properties.each do |k,v|
+                  next unless v.is_a?(JSF::Forms::Section)
+                  offsets.delete(v.key_name)
+                end
+              end
+            end
+
+            index = find_index.call(section_or_shared) + 1
+          end
+
+          index ||= 0
+
+          # increment section offsets
+          increment_section_offsets.call(document_path, key_names)
+
+          all_sorted_properties.insert(index, *current_arrays)
         end
 
         all_sorted_properties.each{|arr| yield(*arr) }
       end
-
-      # # Recursively calculates the document path for a property
-      # #
-      # # @ToDo this has the problem that properties inside a section are ignored
-      # #
-      # # @param [String] key name of the property
-      # # @return [Array<String>]
-      # def document_path_for_property(key, **kwargs)
-      #   path = nil
-
-      #   self.each_form_with_document(
-      #     {},
-      #     **kwargs
-      #   ) do |form, _condition, _current_level, _current_doc, _current_empty_doc, document_path|
-      #     if form.properties.key?(key.to_s)
-      #       path = document_path
-      #       break
-      #     end
-      #   end
-
-      #   path
-      # end
 
       # Builds a new hash considering the following:
       #
@@ -1429,18 +1499,10 @@ module JSF
       #
       # @return [void]
       def migrate!
-        if self['schemaFormVersion'] != VERSION
-          self.properties.each do |_k,v|
-            case v
-            when JSF::Forms::Field::FileInput
-              v[:items][:pattern] = '^http'
-            when JSF::Forms::Field::Signature
-              v[:properties][:signature][:pattern] = '^http'
-            end
-          end
-
-          self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
-        end
+        # if self['schemaFormVersion'] != VERSION
+        #   # migration code goes here
+        #   self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
+        # end
       end
     
       private

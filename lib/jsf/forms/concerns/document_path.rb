@@ -34,10 +34,11 @@ module JSF
         #   }
         #
         # @return [Array<String>]
-        def document_path
+        def document_path(section_indices: nil)
+          section_indices = section_indices.dup if section_indices.is_a?(::Array)
           schema_path = self.meta[:path]
           root_form = self.root_parent
-          document_path = []
+          doc_path = []
 
           schema_path.each_with_index.inject(root_form) do |current_schema, (key, i)|
             next_schema = current_schema[key]
@@ -49,27 +50,33 @@ module JSF
               
               shared_field = nil
               root_form.each_form do |form|
-                found_prop = form.properties.find do |key, prop|
-                  next unless prop.is_a?(JSF::Forms::Field::Shared)
-                  prop.shared_definition == target_form #match the field
-                end
-                if found_prop
-                  shared_field = found_prop[1]
+                form.properties.each do |key, prop|
+                  next unless prop.is_a?(JSF::Forms::Field::Shared) &&
+                              prop.shared_definition == target_form # match the field
+                  
+                  shared_field = prop
                   break
                 end
+                break if shared_field
               end
               raise StandardError.new("JSF::Forms::Field::Shared not found for property: #{self.key_name}") unless shared_field
-              document_path.push(shared_field.key_name)
+              doc_path.push(shared_field.key_name)
             elsif current_schema.is_a?(JSF::Forms::Section)
-              raise StandardError.new("fields nested under a JSF::Forms::Section do not support document_path") # we cannot know array index
+              if section_indices.present?
+                doc_path.push(current_schema.key_name)
+                val = section_indices.is_a?(::Array) ? section_indices.shift : section_indices
+                doc_path.push(val)
+              else
+                raise StandardError.new('fields nested under a JSF::Forms::Section do not support document_path') # we cannot know array index
+              end
             end
 
             next_schema
           end
   
           # add own key name
-          document_path.push(self.key_name)
-          document_path
+          doc_path.push(self.key_name)
+          doc_path
         end
 
       end

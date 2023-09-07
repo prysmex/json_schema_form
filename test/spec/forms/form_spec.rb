@@ -797,13 +797,18 @@ class FormTest < Minitest::Test
   def test_each_sorted_property
     form = JSF::Forms::FormBuilder.build() do
       append_property(:switch_1, example('switch')) do
-        append_property(:switch_2, example('switch'), type: :const, value: true) do
-          append_property(:switch_3, example('switch'), type: :const, value: true)
+        append_property(:number_input_1, example('number_input'), type: :const, value: true) do
+          append_property(:markdown_1, example('markdown'), type: :const, value: 10)
+          append_property(:markdown_2, example('markdown'), type: :enum, value: [10])
+          append_property(:markdown_3, example('markdown'), type: :not_const, value: 10)
         end
+
+        append_property(:number_input_2, example('number_input'), type: :const, value: true)
 
         append_property(:section_2, example('section'), type: :const, value: true) do |f|
           f.form.instance_eval do
             append_property(:switch_4, example('switch'))
+            append_property(:switch_5, example('switch'))
           end
         end
       end
@@ -815,48 +820,46 @@ class FormTest < Minitest::Test
       end
     end
 
-    document = {'switch_1' => true, 'switch_2' => true, 'section_2'=> [{}, {}], 'section_1' => []}
     array = []
-    form.each_sorted_property(document) do |property|
+    form.each_sorted_property do |property|
       array.push(property.key_name)
     end
-    assert_equal array, %w(switch_1 switch_2 switch_3 section_2 switch_4 switch_4 section_1)
+    assert_equal array, %w(switch_1 number_input_1 markdown_1 markdown_2 markdown_3 number_input_2 section_2 switch_4 switch_5 section_1 switch_6)
   end
 
-  # def test_document_path_for_property
-  #   form = JSF::Forms::FormBuilder.build() do
-  #     append_property(:switch_1, example('switch')) do
-  #       append_property(:switch_2, example('switch'), type: :const, value: true) do
-  #         append_property(:switch_3, example('switch'), type: :const, value: true)
-  #       end
+  def test_each_sorted_form_with_document
+    form = JSF::Forms::FormBuilder.build() do
+      append_property(:switch_1, example('switch')) do
+        append_property(:number_input_1, example('number_input'), type: :const, value: true) do
+          append_property(:markdown_1, example('markdown'), type: :const, value: 10)
+          append_property(:markdown_2, example('markdown'), type: :enum, value: [10])
+          append_property(:markdown_3, example('markdown'), type: :not_const, value: 10)
+        end
 
-  #       append_property(:section_1, example('section'), type: :const, value: false) do |f|
-  #         f.form.instance_eval do
-  #           append_property(:switch_4, example('switch'))
-  #         end
-  #       end
-  #     end
-  #   end
+        append_property(:number_input_2, example('number_input'), type: :const, value: true)
 
-  #   # property does not exist
-  #   assert_nil form.document_path_for_property('hello')
+        append_property(:section_2, example('section'), type: :const, value: true) do |f|
+          f.form.instance_eval do
+            append_property(:switch_4, example('switch'))
+            append_property(:switch_5, example('switch'))
+          end
+        end
+      end
 
-  #   # property in root schema
-  #   assert_empty form.document_path_for_property('switch_1')
+      append_property(:section_1, example('section')) do |f|
+        f.form.instance_eval do
+          append_property(:switch_6, example('switch'))
+        end
+      end
+    end
 
-  #   # root conditional property
-  #   assert_empty form.document_path_for_property('switch_2')
-
-  #   # nested conditional property
-  #   assert_empty form.document_path_for_property('switch_3')
-
-  #   # section
-  #   assert_empty form.document_path_for_property('section_1')
-
-  #   # field in section when section document does not contain value
-  #   assert_empty form.document_path_for_property('switch_4')
-
-  # end
+    document = {'switch_1' => true, 'number_input_1' => 10, 'section_2'=> [{}, {}], 'section_1' => []}
+    array = []
+    form.each_sorted_form_with_document(document) do |property|
+      array.push(property.key_name)
+    end
+    assert_equal array, %w(switch_1 number_input_1 markdown_1 markdown_2 number_input_2 section_2 switch_4 switch_5 section_2 switch_4 switch_5 section_1)
+  end
 
   def test_cleaned_document
     form = JSF::Forms::FormBuilder.build do

@@ -62,6 +62,7 @@ module JSF
             end
           end
           optional(:maxItems).filled(:integer)
+          optional(:minItems).filled(:integer)
           required(:items).hash do
             # optional(:properties)
             # optional(:allOf)
