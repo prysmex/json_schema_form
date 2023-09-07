@@ -952,7 +952,7 @@ module JSF
               all_sorted_properties.find do |array|
                 prop = array.first
                 prop.is_a?(JSF::Forms::Field::Shared) && prop.shared_definition == form
-              end.first
+              end&.first
             end
 
             if section_or_shared
