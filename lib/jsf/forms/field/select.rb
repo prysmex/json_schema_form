@@ -26,6 +26,7 @@ module JSF
               required(:component).value(included_in?: ['select'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
+              optional(:hideUntaggedOptions).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -36,6 +37,7 @@ module JSF
               required(:pictures).value(:array?).array(:str?)
               optional(:responseSetFilters).value(:array?).array(:str?)
               required(:sort).filled(:integer)
+              optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end

@@ -24,6 +24,7 @@ module JSF
               required(:component).value(included_in?: ['checkbox'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
+              optional(:hideUntaggedOptions).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -49,6 +50,7 @@ module JSF
               end
             end
             required(:type)
+            optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
             required(:uniqueItems)
           end
         end
