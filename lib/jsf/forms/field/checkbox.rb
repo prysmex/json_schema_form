@@ -35,6 +35,7 @@ module JSF
               required(:pictures).value(:array?).array(:str?)
               optional(:responseSetFilters).value(:array?).array(:str?)
               required(:sort).filled(:integer)
+              optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
@@ -50,7 +51,6 @@ module JSF
               end
             end
             required(:type)
-            optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
             required(:uniqueItems)
           end
         end
