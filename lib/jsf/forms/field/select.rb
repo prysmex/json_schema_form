@@ -5,6 +5,8 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Forms::Field::Concerns::ResponseSettable
+
+        # set_strict_type('string')
   
         RESPONSE_SET_PATH = [:$ref]
   

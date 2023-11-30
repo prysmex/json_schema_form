@@ -28,7 +28,7 @@ class ValidatableTest < Minitest::Test
     assert_nil SampleSchema.new({'$id': 'some_id'}).errors[:$id]
 
     # with proc
-    refute_nil SampleSchema.new({'$id': 'some_id'}).errors({
+    refute_nil SampleSchema.new({'$id': 'some_id'}).errors(
       proc: ->(errors) {
         add_error_on_path(
           errors,
@@ -36,7 +36,7 @@ class ValidatableTest < Minitest::Test
           'something custom'
         )
       }
-    })['base']
+    )['base']
   end
 
   def test_has_subschema_errors

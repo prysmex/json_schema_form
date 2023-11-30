@@ -67,6 +67,7 @@ module JSF
     # @see https://github.com/rails/rails/blob/v6.1.4.1/activesupport/lib/active_support/hash_with_indifferent_access.rb#L254
     #
     def dup
+      # debugger
       new_hash = self.class.new(self.to_hash, self.init_options).tap do |new_hash|
         set_defaults(new_hash)
       end
@@ -84,7 +85,7 @@ module JSF
     #
     # Convert to a regular hash with string keys.
     def to_hash
-      _new_hash = Hash.new
+      _new_hash = ::Hash.new
       # set_defaults(_new_hash)
 
       each do |key, value|
