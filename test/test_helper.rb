@@ -2,7 +2,6 @@ require 'minitest/autorun'
 require 'minitest/spec'
 require 'minitest/reporters'
 require 'json_schema_form'
-# require 'byebug'
 require 'debug'
 
 Minitest::Reporters.use!
