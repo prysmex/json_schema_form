@@ -15,9 +15,9 @@ module JSF
         ###VALIDATIONS####
         ##################
         
-        def validation_schema(passthru)
+        def dry_schema(passthru)
           #TODO find a way to prevent enum from being valid
-          skip_ref_presence = !run_validation?(passthru, self, :ref_presence)
+          skip_ref_presence = !run_validation?(passthru, :ref_presence)
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do

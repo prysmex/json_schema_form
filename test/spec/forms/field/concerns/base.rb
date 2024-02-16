@@ -31,7 +31,7 @@ module BaseFieldTests
     assert_equal false, instance.valid_for_locale?(:random)
   end
 
-  # validation_schema
+  # dry_schema
 
   def test_no_unknown_keys_allowed
     error_proc = ->(obj, key) { obj.is_a?(tested_klass) && key == :schema }

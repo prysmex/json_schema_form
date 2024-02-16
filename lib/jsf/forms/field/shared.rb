@@ -11,8 +11,8 @@ module JSF
         ###VALIDATIONS####
         ##################
     
-        def validation_schema(passthru)
-          skip_ref_presence = !run_validation?(passthru, self, :ref_presence)
+        def dry_schema(passthru)
+          skip_ref_presence = !run_validation?(passthru, :ref_presence)
 
           Dry::Schema.define(parent: super) do
             config.validate_keys = true

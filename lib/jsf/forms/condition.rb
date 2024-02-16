@@ -5,6 +5,7 @@ module JSF
 
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
+      include JSF::Validations::DrySchemaValidatable
       include JSF::Core::Buildable
 
       ATTRIBUTE_TRANSFORM = ->(attribute, value, instance, init_options) {
@@ -33,7 +34,7 @@ module JSF
       ###VALIDATIONS####
       ##################
 
-      def validation_schema(passthru={})
+      def dry_schema(passthru={})
 
         prop = self.condition_property_key || '__key_placeholder__'
 
@@ -68,15 +69,10 @@ module JSF
         end
       end
 
-      # @param passthru [Hash{Symbol => *}]
-      def errors(**passthru)
-        errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
-          passthru,
-          self
-        )
-
-        super.merge(errors)
-      end
+      # # @param passthru [Hash{Symbol => *}]
+      # def errors(**passthru)
+      #   super
+      # end
 
       ##################
       #####METHODS######

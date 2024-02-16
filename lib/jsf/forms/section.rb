@@ -4,6 +4,7 @@ module JSF
 
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
+      include JSF::Validations::DrySchemaValidatable
       include JSF::Core::Type::Arrayable
       include JSF::Core::Buildable
       include JSF::Forms::Concerns::DisplayProperties
@@ -35,8 +36,8 @@ module JSF
       ###VALIDATIONS####
       ##################
 
-      def validation_schema(passthru)
-        Dry::Schema.define(parent: super) do
+      def dry_schema(passthru)
+        Dry::Schema.define(parent: super) do # is calling super needed here?
 
           before(:key_validator) do |result|
             hash = result.to_h

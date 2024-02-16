@@ -12,7 +12,7 @@ module JSF
         ###VALIDATIONS####
         ##################
         
-        def validation_schema(passthru)
+        def dry_schema(passthru)
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['markdown'])

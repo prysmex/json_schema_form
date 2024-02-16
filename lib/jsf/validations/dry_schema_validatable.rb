@@ -1,21 +1,71 @@
 module JSF
   module Validations
 
-    # Module that contains a `validation_schema` powered by 'dry-schema' that can be used to validate a hash
-    # according with basic json-schema specs.
+    # Module that contains a logic powered by 'dry-schema' that can be used to validate a hash
+    # by implementing `dry_schema`
     #
     # requirements:
     #
     # - `JSF::Validations::Validatable`
-
+    
     module DrySchemaValidatable
 
       def self.included(base)
         require 'dry-schema'
       end
 
-      TYPES_TO_PREDICATES = Proc.new do |ctx, types|
+      # @param [Dry::Schema::JSON] dry_schema
+      # @param [Hash] hash_or_schema
+      # @return [Hash]
+      SCHEMA_ERRORS_PROC = Proc.new do |dry_schema, hash_or_schema|
+        dry_schema
+          .(hash_or_schema)
+          .errors
+          .to_h
+          .deep_dup # this is important, otherwise something gets polluted
+      end
+      
+      # Returns a Dry::Schema.JSON that can validate a Hash according to the
+      # JSON Schema spec.
+      #
+      # @note override this method in target class
+      #
+      # @param [Hash] passthru
+      #
+      # @return [Dry::Schema.JSON]
+      def dry_schema(passthru)
+        # raise StandardError.new("Method not implemented in host class. #{self.class.name}")
+      end
 
+      # @param [Hash] passthru
+      # @return [Hash]
+      def dry_schema_errors(passthru
+        return {} unless run_validation?(passthru, :schema)
+
+        SCHEMA_ERRORS_PROC.call(dry_schema(passthru), self)
+      end
+
+      # Returns a hash of errors
+      #
+      # @param passthru [Hash{Symbol => *}]
+      # @return [Hash]
+      def errors(**passthru)
+        errors = dry_schema_errors(passthru)
+        super.merge(errors)
+      end
+
+    end
+
+    # Includes `DrySchemaValidatable` and adds a `dry_schema` that can be used to validate a hash
+    # according with basic json-schema specs.
+    #
+    # requirements:
+    #
+    # - `JSF::Validations::Validatable` `dry_schema`
+    module DrySchemaValidated
+      include DrySchemaValidatable
+
+      TYPES_TO_PREDICATES = Proc.new do |ctx, types|
         map = {
           'boolean' => ['bool?'],
           'object' => ['hash?'],
@@ -42,7 +92,6 @@ module JSF
             acum_predicate | ctx.send(predicate_name)
           end
         end
-      
       end
 
       # Since the dry-schema validations are always done at a 'single' schema (without recursion),
@@ -63,32 +112,13 @@ module JSF
         end
       end
 
-      # @param [Dry::Schema::JSON] validation_schema
-      # @param [Hash] hash_or_schema
-      # @return [Hash]
-      SCHEMA_ERRORS_PROC = Proc.new do |validation_schema, hash_or_schema|
-        validation_schema
-          .(hash_or_schema)
-          .errors
-          .to_h
-          .deep_dup # this is important, otherwise something gets polluted
-      end
-
-      # @param [Hash] passthru
-      # @param [BaseHash#run_validation?] schema
-      # @return [Hash]
-      CONDITIONAL_SCHEMA_ERRORS_PROC = lambda do |passthru, schema|
-        return {} unless schema.send(:run_validation?, passthru, schema, :schema)
-        SCHEMA_ERRORS_PROC.call(schema.validation_schema(passthru), schema)
-      end
-      
       # Returns a Dry::Schema.JSON that can validate a Hash according to the
       # JSON Schema spec.
       #
       # @param [Hash] passthru
       #
       # @return [Dry::Schema.JSON]
-      def validation_schema(passthru)
+      def dry_schema(passthru)
         instance = self
 
         Dry::Schema.JSON do
@@ -174,15 +204,6 @@ module JSF
           end
 
         end
-      end
-
-      # Returns a hash of errors
-      #
-      # @param passthru [Hash{Symbol => *}]
-      # @return [Hash]
-      def errors(**passthru)
-        errors = SCHEMA_ERRORS_PROC.call(validation_schema(passthru), self)
-        super.merge(errors)
       end
 
     end

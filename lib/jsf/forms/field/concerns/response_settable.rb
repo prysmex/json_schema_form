@@ -13,7 +13,7 @@ module JSF
 
           # since we cannot augment the displayProperties schema, remove 'responseSetFilters' when valid
           # so it passes validations
-          def validation_schema(passthru)            
+          def dry_schema(passthru)            
             Dry::Schema.define(parent: super) do
               before(:key_validator) do |result|
                 hash = result.to_h

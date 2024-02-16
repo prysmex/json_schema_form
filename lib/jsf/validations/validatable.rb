@@ -35,15 +35,15 @@ module JSF
       def errors(recursive: true, **passthru)
         passthru[:recursive] = recursive # add to passthru
 
-        errors = if recursive
+        errors_hash = if recursive
           subschemas_errors(**passthru)
         else
           ActiveSupport::HashWithIndifferentAccess.new({})
         end
 
-        instance_exec(errors, &passthru[:proc]) if passthru[:proc].is_a? Proc
+        instance_exec(errors_hash, &passthru[:proc]) if passthru[:proc].is_a? Proc
 
-        errors
+        errors_hash
       end
       
       private
@@ -100,28 +100,27 @@ module JSF
         str
       end
 
-      # passthru utils
+      # # passthru utils
 
-      # Util for safely checking if a key with an array contains an element
-      #
-      # @param [Hash] passthru errors passthru hash
-      # @param [Symbol] passthru hash key
-      # @param [] value
-      # @return [Boolean]
-      def key_contains?(passthru, key, value)
-        !!passthru[key]&.include?(value)
-      end
+      # # Util for safely checking if a key with an array contains an element
+      # #
+      # # @param [Hash] passthru errors passthru hash
+      # # @param [Symbol] passthru hash key
+      # # @param [] value
+      # # @return [Boolean]
+      # def key_contains?(passthru, key, value)
+      #   !!passthru[key]&.include?(value)
+      # end
 
       # Util that determines if a validation should run
       # Use this method inside the +errors+ method when overriding it
       #
       # @param [Hash] passthru errors passthru hash
-      # @param [BaseHash] schema_instance
       # @param [Symbol] validation_key error specific key
       # @retunr [Boolean]
-      def run_validation?(passthru, schema_instance, validation_key)
-        return false if passthru.key?(:if) && !passthru[:if].call(schema_instance, validation_key)
-        return false if passthru[:unless]&.call(schema_instance, validation_key)
+      def run_validation?(passthru, validation_key)
+        return false if passthru.key?(:if) && !passthru[:if].call(self, validation_key)
+        return false if passthru[:unless]&.call(self, validation_key)
         true
       end
 

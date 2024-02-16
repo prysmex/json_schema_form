@@ -131,7 +131,7 @@ In addition to this, you can add validations to your objects by using the `JSF::
 A basic validation example would be this
 
 ```ruby
-class MySchema < BaseHash
+class MySchema < JSF::BaseHash
   include JSF::Core::Schemable
   include JSF::Core::Buildable #required for validations
   include JSF::Validations::Validatable
@@ -145,7 +145,7 @@ class MySchema < BaseHash
 end
 
 schema = MySchema.new(type: 'array', items: [{type: 'string'}])
-schema.errors #=> {:$id=>"id must be present", :items=>{0=>{:$id=>"id must be present"}}}
+schema.errors #=> {"items"=>{0=>{"$id"=>"id must be present"}}, "$id"=>"id must be present"}
 ```
 
 `passthru` is a hash of options that are passed across all child nodes of the tree.
@@ -153,7 +153,7 @@ schema.errors #=> {:$id=>"id must be present", :items=>{0=>{:$id=>"id must be pr
 #### Dry-Schema Validations
 
 By adding the following line to your class, you automatically get default json_schema validations.
-`include JSF::Validations::DrySchemaValidatable`
+`include JSF::Validations::DrySchemaValidated`
 
 ## SchemaForm
 
@@ -194,11 +194,8 @@ A `form` is composed of the follow classes:
 
 ## document
 
-Backing class used by Prysmex for the 'raw data' that is created when a form is filled.
-
-- `JsonSchemaForm::Document::Document` main class for storing 'raw data'
-- `JsonSchemaForm::Document::Extras` used by `Inspection` only
-- `JsonSchemaForm::Document::Meta` used by `Inspection` only
+- `JSF::Forms::Response`
+ToDO
 
 ## Installation
 

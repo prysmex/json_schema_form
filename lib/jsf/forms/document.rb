@@ -11,16 +11,6 @@ module JSF
 
       ROOT_KEYWORDS = ['meta'].freeze
 
-      EXTRAS_TEMPLATE = Proc.new do
-        {
-          pictures: [],
-          notes: nil,
-          report_ids: []
-          # coordinates: {},
-          # timestamp: nil
-        }
-      end
-
       # Filters keywords to return hash that can be validated against JSF::Forms::Form
       #
       # @return [Document] self without ROOT_KEYWORDS

@@ -7,7 +7,7 @@ class ValidatableTest < Minitest::Test
   module IdValidation
     def errors(**passthru)
       errors_hash = super
-      if run_validation?(passthru, self, :id_presence)
+      if run_validation?(passthru, :id_presence)
         errors_hash[:$id] = 'id must be present' if self[:$id].nil?
       end
       errors_hash
@@ -95,15 +95,15 @@ class ValidatableTest < Minitest::Test
     assert_equal 'other_error', hash.dig(*path)[1]
   end
 
-  # key_contains?
-  def test_key_contains?
-    hash = {some_key: ['value']}
-    schema = SampleSchema.new()
+  # # key_contains?
+  # def test_key_contains?
+  #   hash = {some_key: ['value']}
+  #   schema = SampleSchema.new()
 
-    assert_equal true, schema.send(:key_contains?, hash, :some_key, 'value')
-    assert_equal false, schema.send(:key_contains?, hash, :some_key, 'other_value')
-    assert_equal false, schema.send(:key_contains?, hash, :other_key, 'value')
-  end
+  #   assert_equal true, schema.send(:key_contains?, hash, :some_key, 'value')
+  #   assert_equal false, schema.send(:key_contains?, hash, :some_key, 'other_value')
+  #   assert_equal false, schema.send(:key_contains?, hash, :other_key, 'value')
+  # end
 
   # run_validation?
   # def test_run_validation?

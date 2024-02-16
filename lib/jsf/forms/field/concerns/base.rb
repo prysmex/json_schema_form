@@ -10,10 +10,11 @@ module JSF
         module Base
   
           def self.included(base)
-            require 'dry-schema'
+            # require 'dry-schema'
 
             base.include JSF::Core::Schemable
             base.include JSF::Validations::Validatable
+            base.include JSF::Validations::DrySchemaValidatable
             base.include JSF::Forms::Field::Concerns::InstanceMethods
             base.include JSF::Forms::Field::Concerns::Conditionable
             base.include JSF::Forms::Concerns::DisplayProperties
@@ -30,25 +31,22 @@ module JSF
 
           # @param passthru [Hash{Symbol => *}]
           def errors(**passthru)
-            errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
-              passthru,
-              self
-            )
+            errors_hash = super
 
-            # if run_validation?(passthru, self, :hidden_and_required)
+            # if run_validation?(passthru, :hidden_and_required)
             #   if self.hidden? && self.required?
             #     add_error_on_path(
-            #       errors,
+            #       errors_hash,
             #       ['base'],
             #       'cannot be hidden and required'
             #     )
             #   end
             # end
 
-            # if run_validation?(passthru, self, :hide_on_create_and_required)
+            # if run_validation?(passthru, :hide_on_create_and_required)
             #   if self.hideOnCreate? && self.required?
             #     add_error_on_path(
-            #       errors,
+            #       errors_hash,
             #       ['base'],
             #       'cannot be hideOnCreate and required'
             #     )
@@ -57,21 +55,21 @@ module JSF
 
             if (
               self.key?('default') &&
-              run_validation?(passthru, self, :verify_default) &&
+              run_validation?(passthru, :verify_default) &&
               !JSONSchemer.schema(self.as_json).valid?(self['default'])
             )
               add_error_on_path(
-                errors,
+                errors_hash,
                 ['default'],
                 'invalid value'
               )
             end
 
-            super.merge(errors)
+            errors_hash
           end
 
           # @param passthru[Hash{Symbol => *}]
-          def validation_schema(passthru)
+          def dry_schema(passthru)
             Dry::Schema.JSON do
               config.validate_keys = true
               optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }

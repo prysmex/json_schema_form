@@ -8,13 +8,14 @@ module JSF
 
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
+      include JSF::Validations::DrySchemaValidatable
 
       ##################
       ###VALIDATIONS####
       ##################
       
-      def validation_schema(passthru)
-        skip_ref_presence = !run_validation?(passthru, self, :ref_presence)
+      def dry_schema(passthru)
+        skip_ref_presence = !run_validation?(passthru, :ref_presence)
 
         Dry::Schema.JSON do
           config.validate_keys = true
@@ -26,15 +27,10 @@ module JSF
         end
       end
 
-      # @param passthru [Hash{Symbol => *}]
-      def errors(**passthru)
-        errors = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
-          passthru,
-          self
-        )
-
-        super.merge(errors)
-      end
+      # # @param passthru [Hash{Symbol => *}]
+      # def errors(**passthru)
+      #   super
+      # end
 
       ##############
       ###METHODS####

@@ -12,7 +12,7 @@ module JSF
         ###VALIDATIONS####
         ##################
   
-        def validation_schema(passthru)
+        def dry_schema(passthru)
           Dry::Schema.define(parent: super) do
             optional(:default).value(:bool)
             required(:displayProperties).hash do

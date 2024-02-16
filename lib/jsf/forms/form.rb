@@ -23,6 +23,7 @@ module JSF
     
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
+      include JSF::Validations::DrySchemaValidatable
       include JSF::Core::Buildable
       include JSF::Core::Type::Objectable
     
@@ -162,13 +163,13 @@ module JSF
       #
       # @param passthru [Hash] Options passed
       # @return [Dry::Schema::JSON] Schema
-      def validation_schema(passthru)
+      def dry_schema(passthru)
         is_subschema = meta[:is_subschema]
         Dry::Schema.JSON do
           config.validate_keys = true
     
           before(:key_validator) do |result|
-            JSF::Validations::DrySchemaValidatable::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
+            JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
     
           required(:allOf).array(:hash)
@@ -192,7 +193,7 @@ module JSF
         end
       end
       
-      # Build instance's erros hash from the validation_schema. It also validates
+      # Build instance's erros hash from the dry_schema. It also validates
       # the following:
       #
       # - ensure referenced shared properties exist
@@ -205,15 +206,10 @@ module JSF
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Hash{Symbol => *}] Errors
       def errors(**passthru)
-        errors_hash = JSF::Validations::DrySchemaValidatable::CONDITIONAL_SCHEMA_ERRORS_PROC.call(
-          passthru,
-          self
-        )
-
-        children_errors = super
+        errors_hash = super
 
         # validate sorting
-        if run_validation?(passthru, self, :sorting)
+        if run_validation?(passthru, :sorting)
           unless self.verify_sort_order
             add_error_on_path(
               errors_hash,
@@ -225,7 +221,7 @@ module JSF
 
         self[:definitions]&.each do |k, v|
           # ensure referenced shared properties exist
-          if run_validation?(passthru, self, :shared_presence)
+          if run_validation?(passthru, :shared_presence)
             if v.is_a?(JSF::Forms::SharedRef) && v.shared.nil?
               add_error_on_path(
                 errors_hash,
@@ -239,10 +235,10 @@ module JSF
         self[:properties]&.each do |k, field|
 
           # ensure property $id key matches with field id
-          if run_validation?(passthru, self, :match_key)
+          if run_validation?(passthru, :match_key)
             if field['$id'] != "#/properties/#{k}"
               add_error_on_path(
-                children_errors,
+                errors_hash,
                 ['properties', k, '$id'],
                 "'#{field['$id']}' did not match property key '#{k}'"
               )
@@ -250,10 +246,10 @@ module JSF
           end
 
           # ensure referenced response sets exist
-          if run_validation?(passthru, self, :response_set_presence)
+          if run_validation?(passthru, :response_set_presence)
             if field.respond_to?(:response_set) && field.response_set_id && field.response_set.nil?
               add_error_on_path(
-                children_errors,
+                errors_hash,
                 (['properties', k] + field.class::RESPONSE_SET_PATH),
                 "response set #{field.response_set_id} not found"
               )
@@ -261,7 +257,7 @@ module JSF
           end
 
           # ensure JSF::Forms::Field::Shared only exist in root form
-          if run_validation?(passthru, self, :shared_in_root)
+          if run_validation?(passthru, :shared_in_root)
             if self.meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Shared)
               add_error_on_path(
                 errors_hash,
@@ -272,7 +268,7 @@ module JSF
           end
 
           # ensure shareds have a pair in 'definitions'
-          if run_validation?(passthru, self, :shared_ref_presence)
+          if run_validation?(passthru, :shared_ref_presence)
             if field.is_a?(JSF::Forms::Field::Shared)
               # response should be found
               if field.shared_definition.nil?
@@ -288,7 +284,7 @@ module JSF
           # ensure only allowed fields contain (conditional) fields
           if CONDITIONAL_FIELDS.include?(field.class)
           else
-            if run_validation?(passthru, self, :conditional_fields)
+            if run_validation?(passthru, :conditional_fields)
               if field.dependent_conditions.size > 0
                 fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
                 add_error_on_path(
@@ -302,7 +298,7 @@ module JSF
 
         end
 
-        children_errors.merge(errors_hash)
+        errors_hash
       end
 
       # Checks that all properties are valid for locale, if field

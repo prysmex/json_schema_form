@@ -15,7 +15,7 @@ module JSF
         ###VALIDATIONS####
         ##################
   
-        def validation_schema(passthru)
+        def dry_schema(passthru)
           Dry::Schema.define(parent: super) do
   
             before(:key_validator) do |result|
@@ -65,7 +65,7 @@ module JSF
           if self[:enum].is_a?(Array)
 
             # enum precision
-            if run_validation?(passthru, self, :enum_precision)
+            if run_validation?(passthru, :enum_precision)
               precision_errors = self[:enum].select do |value|
                 value != value.round(MAX_PRECISION)
               end
@@ -79,7 +79,7 @@ module JSF
             end
   
             # check that all enums have same interval
-            if run_validation?(passthru, self, :enum_interval)
+            if run_validation?(passthru, :enum_interval)
               if self[:enum].size > 1
                 big_decimal_enum = self[:enum].map{|v| BigDecimal(v.to_s) }
                 diff = (big_decimal_enum[1] - big_decimal_enum[0]).abs
