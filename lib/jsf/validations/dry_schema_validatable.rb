@@ -39,7 +39,7 @@ module JSF
 
       # @param [Hash] passthru
       # @return [Hash]
-      def dry_schema_errors(passthru
+      def dry_schema_errors(passthru)
         return {} unless run_validation?(passthru, :schema)
 
         SCHEMA_ERRORS_PROC.call(dry_schema(passthru), self)

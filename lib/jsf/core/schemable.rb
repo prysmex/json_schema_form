@@ -40,11 +40,13 @@ module JSF
         #
         # @param [String] type
         # @return [void]
-        def set_strict_type(type)
+        def set_strict_type(type_or_types)
+          types = Array(type_or_types)
+
           update_attribute 'type', {
             # required: true,
-            type: Types::String.enum(type),
-            default: ->(data) { type }
+            type: Types::String.enum(*types),
+            default: ->(data) { types.first }
           }
         end
       end

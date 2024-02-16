@@ -38,7 +38,8 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Static => [],
       JSF::Forms::Field::Switch => [],
       JSF::Forms::Field::TextInput => [],
-      JSF::Forms::Field::TimeInput => []
+      JSF::Forms::Field::TimeInput => [],
+      JSF::Forms::Field::Video => []
     }
     
     klasses.each do |klass, traits_array|

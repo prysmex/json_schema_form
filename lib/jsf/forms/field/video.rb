@@ -1,12 +1,12 @@
 module JSF
   module Forms
     module Field
-      class Markdown < BaseHash
+      class Video < BaseHash
 
         include JSF::Forms::Field::Concerns::Base
-        include JSF::Core::Type::Nullable
+        include JSF::Core::Type::Numberable
   
-        set_strict_type(['string', 'null']) # @deprecate null after migration
+        set_strict_type('number')
   
         ##################
         ###VALIDATIONS####
@@ -15,7 +15,7 @@ module JSF
         def dry_schema(passthru)
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['markdown'])
+              required(:component).value(included_in?: ['video'])
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool)
               required(:i18n).hash do
@@ -25,14 +25,14 @@ module JSF
                   end
                 end
               end
-              required(:kind).maybe(:string)
-              required(:pictures).value(:array?).array(:str?)
+              # required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
             end
-            required(:format).filled(Types::String.enum('date-time'))
+            required(:min).value(included_in?: [0])
+            required(:max).value(included_in?: [100])
             required(:type)
           end
         end
@@ -42,10 +42,7 @@ module JSF
         ##############
 
         def sample_value
-          half_range_seconds = 60 * 60 * 24 * 365
-          range = (half_range_seconds * -1)...half_range_seconds
-          seconds = rand(range)
-          (Time.now + seconds).iso8601
+          rand(0..100)
         end
 
         def migrate!

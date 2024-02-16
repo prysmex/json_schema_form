@@ -61,6 +61,7 @@ module JSF
           'switch' => JSF::Forms::Field::Switch,
           'text_input' => JSF::Forms::Field::TextInput,
           'time_input' => JSF::Forms::Field::TimeInput,
+          'video' => JSF::Forms::Field::Video,
           'section' => JSF::Forms::Section
         }
 

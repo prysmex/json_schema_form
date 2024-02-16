@@ -2,23 +2,23 @@
   // "$id": "",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "displayProperties": {
-    "component": "markdown",
+    "component": "video",
     // "hidden": false
     // "hideOnCreate": false,
     "i18n": {
       "label": {
-        "es": "Neutral",
-        "en": "Neutral"
+        "es": "Video",
+        "en": "Video"
       }
     },
-    "kind": "neutral",
-    "pictures": [],
+    // "pictures": [],
     "sort": 0,
     "visibility": {
       "label": true
     }
   },
-  "format": "date-time",
-  "title": "neutral6664",
-  "type": "string"
+  "title": "video123",
+  "max": 100,
+  "min": 0,
+  "type": "number"
 }
