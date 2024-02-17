@@ -594,6 +594,9 @@ class FormTest < Minitest::Test
   # def test_is_shared_definition?
   # end
 
+  # def test_validation_schema
+  # end
+
   def test_each_form
     # create vars to store forms in
     form1, form2 = form3 = form4 = form5 = form6 = nil

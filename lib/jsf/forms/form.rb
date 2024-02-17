@@ -3,6 +3,7 @@ module JSF
     DEFAULT_LOCALE = 'en'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
     VERSION = '3.3.0'.freeze
+    SCHEMA_VERSION = 'http://json-schema.org/draft-07/schema#'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -92,7 +93,7 @@ module JSF
       
       # Defined in a Proc so it can be reused:
       ATTRIBUTE_TRANSFORM = ->(attribute, value, instance, init_options) {
-    
+
         klass = case instance
         when JSF::Forms::Form
     
@@ -117,7 +118,7 @@ module JSF
         # return if a condition is met, otherwise let error be raised
         return klass.new(value, init_options) if klass
 
-        raise StandardError.new("JSF::Forms::Form transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
+        raise StandardError.new("Transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta}), #{instance.class}")
       }
     
       # Utility proc to DRY code, expands a condition type to a path
@@ -145,12 +146,12 @@ module JSF
       update_attribute 'allOf', default: ->(data) { [].freeze }
       update_attribute 'type', default: ->(data) { 'object' }
       update_attribute 'schemaFormVersion', default: ->(data) { self.meta[:is_subschema] ? nil : VERSION }
-      update_attribute '$schema', default: ->(data) { self.meta[:is_subschema] ? nil : "http://json-schema.org/draft-07/schema#" }
+      update_attribute '$schema', default: ->(data) { self.meta[:is_subschema] ? nil : SCHEMA_VERSION }
       attribute? 'availableLocales', default: ->(data) { self.meta[:is_subschema] ? nil : [].freeze }
       
       def initialize(obj={}, options={})
         options = {
-          attributes_transform_proc: JSF::Forms::Form::ATTRIBUTE_TRANSFORM
+          attributes_transform_proc: ATTRIBUTE_TRANSFORM
         }.merge(options)
     
         super(obj, options)
@@ -287,7 +288,7 @@ module JSF
           else
             if run_validation?(passthru, :conditional_fields)
               if field.dependent_conditions.size > 0
-                fields = JSF::Forms::Form::CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
+                fields = CONDITIONAL_FIELDS.map{|klass| klass.name.split('::').last}.join(', ')
                 add_error_on_path(
                   errors_hash,
                   ['base'],
@@ -308,11 +309,11 @@ module JSF
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean] if valid
-      def valid_for_locale?(locale = DEFAULT_LOCALE)
+      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_definitions: false)
         prop = nil
 
         # check properties and their response_sets
-        self.each_form(ignore_sections: true) do |form|
+        each_form(ignore_sections:, ignore_definitions:) do |form|
           prop = form&.properties&.any? do |k,v|
             if v.respond_to?(:response_set)
               !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
@@ -729,6 +730,21 @@ module JSF
         self.meta[:path].first == 'definitions'
       end
 
+      # @return [JSF::Forms::Form]
+      def validation_schema!(**)
+        # remove not visible fields from required
+        each_form(ignore_definitions: false) do |form|
+          form[:required]&.select! do |name|
+            form[:properties][name].visible(**)
+          end
+        end
+
+        # legalize, schema
+        send_recursive(:legalize!)
+
+        self
+      end
+
       # Util that recursively iterates and yields each JSF::Forms::Form along with other relevant
       # params.
       #
@@ -1101,7 +1117,7 @@ module JSF
           # iterate properties
           form[:properties].each do |k, prop|
             next unless prop.visible(is_create: is_create)
-            next unless (JSF::Forms::Form::SCORABLE_FIELDS.include?(prop.class) && prop.scored?)
+            next unless (SCORABLE_FIELDS.include?(prop.class) && prop.scored?)
 
             value = current_doc.dig(k)
 
