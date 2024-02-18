@@ -40,7 +40,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if passthru[:is_inspection] || passthru[:is_shared]
+            if passthru[:extras]
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:items).hash do

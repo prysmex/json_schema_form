@@ -82,9 +82,9 @@ module JSF
       #
       # @param [Symbol] type
       # @return [String]
-      def response_path(type)
-        if type == :is_inspection
-          '/response_inspection.json'
+      def response_path(type = nil)
+        if type
+          "/response/#{type}.json"
         else
           '/response.json'
         end

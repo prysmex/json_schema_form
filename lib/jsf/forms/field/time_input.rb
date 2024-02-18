@@ -33,7 +33,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if passthru[:is_inspection] || passthru[:is_shared]
+            if passthru[:extras]
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:pattern).value(eql?: '^(?:(?:[0-1][0-9])|(?:[2][0-4])):[0-5][0-9](?::[0-5][0-9])?$')

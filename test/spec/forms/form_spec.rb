@@ -252,7 +252,7 @@ class FormTest < Minitest::Test
   def test_not_valid_for_locale_when_response_set_invalid
     form = JSF::Forms::FormBuilder.build do
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :default))
+        response_set.add_response(example('response'))
       end
 
       append_property(:select1, example('select'), {required: true}).tap do |field|
@@ -268,7 +268,7 @@ class FormTest < Minitest::Test
   def test_valid_for_locale_when_invalid_unused_response_set
     form = JSF::Forms::FormBuilder.build do
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :default))
+        response_set.add_response(example('response'))
       end
     end
     assert_equal true, form.valid_for_locale?
@@ -870,7 +870,7 @@ class FormTest < Minitest::Test
 
       # add response sets
       add_response_set(:'bc0214f2-807c-4806-8edf-17d118467825', example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'option_1'
         end
       end
@@ -1007,12 +1007,12 @@ class FormTest < Minitest::Test
 
     form = JSF::Forms::FormBuilder.build do
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_0'
           r[:score] = 0
           r.set_translation('score 0', 'es')
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_1'
           r[:score] = 1
           r.set_translation('score 1', 'es')
@@ -1051,30 +1051,30 @@ class FormTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build do
 
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'nil_score'
           r[:score] = nil
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_3'
           r[:score] = 3
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_6'
           r[:score] = 6
         end
       end
 
       add_response_set(:response_set_2, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'nil_score'
           r[:score] = nil
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_1'
           r[:score] = 1
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'score_2'
           r[:score] = 2
         end
@@ -1256,11 +1256,11 @@ class FormTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build do
 
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'value_1'
           r.set_translation('respuesta 1')
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = 'value_2'
           r.set_translation('respuesta 2')
         end

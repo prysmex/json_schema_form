@@ -45,7 +45,7 @@ module JSF
               end
             end
             required(:additionalProperties).value(eql?: false)
-            if passthru[:is_inspection] || passthru[:is_shared]
+            if passthru[:extras]
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:required).value(:array, min_size?: 0, max_size?: 3).each(:str?)

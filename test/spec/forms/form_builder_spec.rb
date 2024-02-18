@@ -13,8 +13,10 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Form => [],
       JSF::Forms::ResponseSet => [],
       JSF::Forms::Response => [
-        {trait: :default, errors_args: {is_inspection: false}},
-        {trait: :is_inspection, errors_args: {is_inspection: true}}
+        {trait: nil, errors_args: {}},
+        {trait: :scoring, errors_args: {scoring: true}},
+        {trait: :failing, errors_args: {failing: true}},
+        {trait: :scoring_and_failing , errors_args: {scoring: true, failing: true}}
       ],
       JSF::Forms::Section => [],
 
@@ -68,15 +70,15 @@ class FormbuilderTest < Minitest::Test
     JSF::Forms::FormBuilder.build() do
 
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :default)).tap do |r|
+        response_set.add_response(example('response')).tap do |r|
           r[:const] = 'option1'
           r[:score] = 0
         end
-        response_set.add_response(example('response', :default)).tap do |r|
+        response_set.add_response(example('response')).tap do |r|
           r[:const] = 'option2'
           r[:score] = 2
         end
-        response_set.add_response(example('response', :default)).tap do |r|
+        response_set.add_response(example('response')).tap do |r|
           r[:const] = 'option3'
           r[:score] = 5
         end

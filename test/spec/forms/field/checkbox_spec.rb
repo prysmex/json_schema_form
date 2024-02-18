@@ -30,7 +30,7 @@ class CheckboxTest < Minitest::Test
       # response set
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
         [nil, 2, 5, 3].each_with_index do |score, i|
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
+          response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
             r[:const] = "option#{i}"
             r[:score] = score
           end
@@ -55,7 +55,7 @@ class CheckboxTest < Minitest::Test
       # response set
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
         [nil, 3, 5].each_with_index do |score, i|
-          response_set.add_response(example('response', :is_inspection)).tap do |r|
+          response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
             r[:const] = "option#{i}"
             r[:score] = score
           end
@@ -79,11 +79,11 @@ class CheckboxTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build do
       # response set
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = "option0"
           r[:failed] = true
         end
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = "option1"
           r[:failed] = false
         end
@@ -107,7 +107,7 @@ class CheckboxTest < Minitest::Test
     form = JSF::Forms::FormBuilder.build do
       add_response_set(:response_set_1, example('response_set'))
       add_response_set(:response_set_2, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :is_inspection)).tap do |r|
+        response_set.add_response(example('response', :scoring_and_failing)).tap do |r|
           r[:const] = "option0"
           r[:failed] = true
         end

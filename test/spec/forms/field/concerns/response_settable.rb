@@ -45,7 +45,7 @@ module ResponseSettableTests
 
     JSF::Forms::FormBuilder.build() do
       add_response_set(:jsdflkj3, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :default)).tap do |r|
+        response_set.add_response(example('response')).tap do |r|
           r[:const] = 'test'
           r[:displayProperties] = { i18n: { es: "score_1_es" } }
         end
@@ -66,7 +66,7 @@ module ResponseSettableTests
 
     JSF::Forms::FormBuilder.build() do
       add_response_set(:jsdflkj3, example('response_set')).tap do |response_set|
-        response_set.add_response(example('response', :default)).tap do |r|
+        response_set.add_response(example('response')).tap do |r|
           response = r
           r[:const] = 'test'
           r[:displayProperties] = { i18n: { es: "score_1_es" } }

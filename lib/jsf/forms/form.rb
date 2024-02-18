@@ -185,7 +185,7 @@ module JSF
             required(:definitions).value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
-            if passthru[:is_inspection]
+            if passthru[:scoring]
               required(:hasScoring) { bool? }
             end
           else

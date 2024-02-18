@@ -2,24 +2,7 @@ module JSF
   module Forms
 
     #
-    # Represents a 'single' response in a JSF::Forms::ResponseSet.
-    #
-    # @example
-    #   {
-    #     "type": "string",
-    #     "const": "value1",
-    #     "displayProperties": {
-    #       "i18n": {
-    #         "en": "Your translated value",
-    #       }
-    #     }
-    #   }
-    #
-    # If 'is_inspection', it also contains the following keys:
-    #
-    # - enableScore
-    # - score
-    # - failed
+    # Represents a 'single' response in a JSF::Forms::ResponseSet
     #
     class Response < BaseHash
   
@@ -45,9 +28,11 @@ module JSF
             optional(:color).maybe(:string)
             optional(:tags).value(:array?).array(:str?)
           end
-          if passthru[:is_inspection]
+          if passthru[:scoring]
             required(:enableScore).value(Types::True) #deprecate?
             required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
+          end
+          if passthru[:failing]
             required(:failed).value(:bool)
           end
         end

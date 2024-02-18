@@ -1,0 +1,13 @@
+{
+  "const": "score_1",
+  "displayProperties": {
+    "color": null,
+    "i18n": {
+      "en": "score_1_en",
+      "es": "score_1_es"
+    }
+  },
+  "enableScore": true,
+  "score": null,
+  "type": "string"
+}
