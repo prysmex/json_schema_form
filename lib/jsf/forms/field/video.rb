@@ -44,11 +44,6 @@ module JSF
         def sample_value
           rand(0..100)
         end
-
-        def migrate!
-          self['format'] = 'date-time'
-          self['type'] = 'string'
-        end
   
       end
     end
