@@ -168,6 +168,7 @@ module JSF
       def dry_schema(passthru)
         is_subschema = meta[:is_subschema]
         scoring = run_validation?(passthru, :scoring, optional: true)
+        exam = run_validation?(passthru, :exam, optional: true)
 
         Dry::Schema.JSON do
           config.validate_keys = true
@@ -190,6 +191,23 @@ module JSF
             optional(:'title').maybe(:string) #ToDo deprecate?
             if scoring
               required(:hasScoring) { bool? }
+            end
+            if exam
+              required(:displayProperties).hash do
+                required(:component).value(included_in?: ['exam'])
+                required(:passingGrade).maybe(:integer, gt?: 0, lteq?: 100)
+                required(:gradeWeight).maybe(:integer, gt?: 0, lteq?: 100)
+                optional(:maxTakes).maybe(:integer, gt?: 0)
+                # optional(:hidden).filled(:bool)
+                required(:sort).filled(:integer)
+                required(:i18n).hash do
+                  required(:title).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
+                  end
+                end
+              end
             end
           else
             optional(:'$schema').filled(:string)
