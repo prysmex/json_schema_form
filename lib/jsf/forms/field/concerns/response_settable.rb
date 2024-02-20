@@ -13,6 +13,9 @@ module JSF
 
           # since we cannot augment the displayProperties schema, remove 'responseSetFilters' when valid
           # so it passes validations
+          #
+          # @param passthru [Hash{Symbol => *}] Options passed
+          # @return [Dry::Schema::JSON] Schema
           def dry_schema(passthru)            
             Dry::Schema.define(parent: super) do
               before(:key_validator) do |result|

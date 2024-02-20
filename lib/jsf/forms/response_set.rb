@@ -32,7 +32,9 @@ module JSF
       ##################
       ###VALIDATIONS####
       ##################
-      
+
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         Dry::Schema.JSON do
           config.validate_keys = true

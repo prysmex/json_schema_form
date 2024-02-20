@@ -163,12 +163,13 @@ module JSF
       
       # Validation schema used for building own errors hash
       #
-      # @param passthru [Hash] Options passed
+      # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         is_subschema = meta[:is_subschema]
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
+        parent_key = self.key_name
 
         Dry::Schema.JSON do
           config.validate_keys = true
@@ -183,7 +184,6 @@ module JSF
           required(:type).filled(Types::String.enum('object'))
 
           if !is_subschema
-            optional(:'$id').filled(:string)
             required(:'$schema').filled(:string)
             required(:availableLocales).value(:array?).array(:str?)
             required(:definitions).value(:hash)
@@ -193,11 +193,12 @@ module JSF
               required(:hasScoring) { bool? }
             end
             if exam
+              required(:'$id').value(included_in?: [parent_key])
               required(:displayProperties).hash do
                 required(:component).value(included_in?: ['exam'])
-                required(:passingGrade).maybe(:integer, gt?: 0, lteq?: 100)
-                required(:gradeWeight).maybe(:integer, gt?: 0, lteq?: 100)
-                optional(:maxTakes).maybe(:integer, gt?: 0)
+                required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
+                required(:gradeWeight).filled(:integer, gt?: 0, lteq?: 100)
+                optional(:maxTakes).filled(:integer, gt?: 0)
                 # optional(:hidden).filled(:bool)
                 required(:sort).filled(:integer)
                 required(:i18n).hash do
@@ -208,6 +209,8 @@ module JSF
                   end
                 end
               end
+            else
+              optional(:'$id').filled(:string)
             end
           else
             optional(:'$schema').filled(:string)
@@ -329,7 +332,7 @@ module JSF
       # valid for locale
       #
       # @param locale [String,Symbol] locale
-      # @return [Boolean] if valid
+      # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_definitions: false)
         prop = nil
 
@@ -752,9 +755,9 @@ module JSF
       end
 
       # @return [JSF::Forms::Form]
-      def validation_schema!(**)
+      def validation_schema!(ignore_definitions: false, **)
         # remove not visible fields from required
-        each_form(ignore_definitions: false) do |form|
+        each_form(ignore_definitions:) do |form|
           form[:required]&.select! do |name|
             form[:properties][name].visible(**)
           end
@@ -1082,13 +1085,13 @@ module JSF
 
       # Builds a new hash considering the following:
       #
-      # - removes all nil values
-      # - removes all unknown keys
-      # - removes all keys with displayProperties.hidden
-      # - removes all keys with displayProperties.hideOnCreate if record is new
-      # - removes all keys in unactive trees
+      #   - removes all nil values
+      #   - removes all unknown keys
+      #   - removes all keys with displayProperties.hidden
+      #   - removes all keys with displayProperties.hideOnCreate if record is new
+      #   - removes all keys in unactive trees
       #
-      # @return [JSF::Forms::Document] mutated document
+      # @return [JSF::Forms::Document]
       def cleaned_document(document, is_create: false, **kwargs)
         # iterate recursively through schemas
         new_document = each_form_with_document(
@@ -1515,7 +1518,29 @@ module JSF
           end
         end
       end
-    
+
+      # @param document [JSF::Forms::Document]
+      # @return [Hash{String =>*}]
+      def collect_values_from_document(document)
+        data = {}
+
+        return data unless block_given?
+
+        each_form_with_document(
+          document,
+          ignore_definitions: false
+        ) do |form, _condition, _current_level, current_doc, _current_empty_doc, _document_path|
+          form.properties.each do |k, v|
+            next unless yield(v)
+
+            value = current_doc[k]
+            data[k] = value if value
+          end
+        end
+
+        data
+      end
+
       # Mutates the entire Form to a json schema compliant
       #
       # @return [void]
@@ -1525,6 +1550,7 @@ module JSF
           self.delete('availableLocales')
           self.delete('hasScoring')
         end
+        self.delete('displayProperties')
         self
       end
     

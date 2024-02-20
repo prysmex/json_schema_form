@@ -34,6 +34,8 @@ module JSF
       ###VALIDATIONS####
       ##################
 
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru={})
 
         prop = self.condition_property_key || '__key_placeholder__'

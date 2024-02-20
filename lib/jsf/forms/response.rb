@@ -13,7 +13,9 @@ module JSF
       ##################
       ###VALIDATIONS####
       ##################
-      
+
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         scoring = run_validation?(passthru, :scoring, optional: true)
         failing = run_validation?(passthru, :failing, optional: true)

@@ -13,7 +13,9 @@ module JSF
       ##################
       ###VALIDATIONS####
       ##################
-      
+
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         ref_presence = run_validation?(passthru, :ref_presence)
 

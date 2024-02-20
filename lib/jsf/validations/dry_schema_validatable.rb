@@ -30,9 +30,8 @@ module JSF
       #
       # @note override this method in target class
       #
-      # @param [Hash] passthru
-      #
-      # @return [Dry::Schema.JSON]
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         # raise StandardError.new("Method not implemented in host class. #{self.class.name}")
       end

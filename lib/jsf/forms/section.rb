@@ -36,6 +36,8 @@ module JSF
       ###VALIDATIONS####
       ##################
 
+      # @param passthru [Hash{Symbol => *}] Options passed
+      # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
