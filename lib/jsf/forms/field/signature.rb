@@ -13,9 +13,14 @@ module JSF
         ##################
   
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+          extras = run_validation?(passthru, :extras, optional: true)
+
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -45,7 +50,7 @@ module JSF
               end
             end
             required(:additionalProperties).value(eql?: false)
-            if passthru[:extras]
+            if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:required).value(:array, min_size?: 0, max_size?: 3).each(:str?)

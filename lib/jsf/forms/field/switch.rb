@@ -13,12 +13,17 @@ module JSF
         ##################
   
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+          extras = run_validation?(passthru, :extras, optional: true)
+
           Dry::Schema.define(parent: super) do
             optional(:default).value(:bool)
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['switch'])
               optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               required(:i18n).hash do
                 required(:falseLabel).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -42,7 +47,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if passthru[:extras]
+            if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:type)

@@ -117,11 +117,20 @@ module JSF
       #
       # @param [Hash] passthru errors passthru hash
       # @param [Symbol] validation_key error specific key
-      # @retunr [Boolean]
-      def run_validation?(passthru, validation_key)
-        return false if passthru.key?(:if) && !passthru[:if].call(self, validation_key)
-        return false if passthru[:unless]&.call(self, validation_key)
-        true
+      # @param [Boolean]
+      # @return [Boolean]
+      def run_validation?(passthru, validation_key, optional: false)
+        if optional
+          return true if passthru[:optional_if]&.call(self, validation_key) == true
+          return true if passthru[:optional_unless]&.call(self, validation_key) == false
+  
+          return false
+        else
+          return false if passthru[:if]&.call(self, validation_key) == false
+          return false if passthru[:unless]&.call(self, validation_key) == true
+  
+          true
+        end
       end
 
     end

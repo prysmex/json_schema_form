@@ -15,11 +15,16 @@ module JSF
         ##################
         
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+          extras = run_validation?(passthru, :extras, optional: true)
+
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['time_input'])
               optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -33,7 +38,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if passthru[:extras]
+            if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:pattern).value(eql?: '^(?:(?:[0-1][0-9])|(?:[2][0-4])):[0-5][0-9](?::[0-5][0-9])?$')

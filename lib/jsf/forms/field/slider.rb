@@ -16,6 +16,9 @@ module JSF
         ##################
   
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+          extras = run_validation?(passthru, :extras, optional: true)
+
           Dry::Schema.define(parent: super) do
   
             before(:key_validator) do |result|
@@ -28,7 +31,9 @@ module JSF
   
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['slider'])
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
                 # ToDo create two types of sliders and remove this when only numbers
@@ -50,7 +55,7 @@ module JSF
               end
             end
             required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
-            if passthru[:extras]
+            if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
             required(:type)

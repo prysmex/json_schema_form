@@ -15,19 +15,23 @@ module JSF
         ##################
         
         def dry_schema(passthru)
-          skip_ref_presence = !run_validation?(passthru, :ref_presence)
+          ref_presence = run_validation?(passthru, :ref_presence)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+          extras = run_validation?(passthru, :extras, optional: true)
 
           #TODO find a way to prevent enum from being valid
           Dry::Schema.define(parent: super) do
-            if skip_ref_presence
-              required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
-            else
+            if ref_presence
               required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
+            else
+              required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['select'])
               optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               optional(:hideUntaggedOptions).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -44,7 +48,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if passthru[:extras]
+            if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
             end
           end

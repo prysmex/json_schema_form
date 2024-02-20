@@ -15,14 +15,14 @@ module JSF
       ##################
       
       def dry_schema(passthru)
-        skip_ref_presence = !run_validation?(passthru, :ref_presence)
+        ref_presence = run_validation?(passthru, :ref_presence)
 
         Dry::Schema.JSON do
           config.validate_keys = true
-          if skip_ref_presence
-            required(:$ref).maybe{ int? }
-          else
+          if ref_presence
             required(:$ref).filled{ int? }
+          else
+            required(:$ref).maybe{ int? }
           end
         end
       end

@@ -167,6 +167,8 @@ module JSF
       # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
         is_subschema = meta[:is_subschema]
+        scoring = run_validation?(passthru, :scoring, optional: true)
+
         Dry::Schema.JSON do
           config.validate_keys = true
     
@@ -178,6 +180,7 @@ module JSF
           required(:properties).value(:hash)
           required(:required).value(:array?).array(:str?)
           required(:type).filled(Types::String.enum('object'))
+
           if !is_subschema
             optional(:'$id').filled(:string)
             required(:'$schema').filled(:string)
@@ -185,7 +188,7 @@ module JSF
             required(:definitions).value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
-            if passthru[:scoring]
+            if scoring
               required(:hasScoring) { bool? }
             end
           else

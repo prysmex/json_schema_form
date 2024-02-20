@@ -13,11 +13,15 @@ module JSF
         ##################
         
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['markdown'])
               optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|

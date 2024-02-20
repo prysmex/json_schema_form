@@ -14,9 +14,9 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::ResponseSet => [],
       JSF::Forms::Response => [
         {trait: nil, errors_args: {}},
-        {trait: :scoring, errors_args: {scoring: true}},
-        {trait: :failing, errors_args: {failing: true}},
-        {trait: :scoring_and_failing , errors_args: {scoring: true, failing: true}}
+        {trait: :scoring, errors_args: {optional_if: ->(_,k) { k == :scoring }}},
+        {trait: :failing, errors_args: {optional_if: ->(_,k) { k == :failing }}},
+        {trait: :scoring_and_failing , errors_args: {optional_if: ->(_,k) { %i[scoring failing].include?(k) }}},
       ],
       JSF::Forms::Section => [],
 

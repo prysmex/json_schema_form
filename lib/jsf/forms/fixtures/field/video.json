@@ -11,14 +11,14 @@
         "en": "Video"
       }
     },
-    // "pictures": [],
+    "url": "http://localhost:3000/video1",
     "sort": 0,
     "visibility": {
       "label": true
     }
   },
   "title": "video123",
-  "max": 100,
+  // "max": 100,
   "min": 0,
   "type": "number"
 }

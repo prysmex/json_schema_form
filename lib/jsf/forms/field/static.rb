@@ -13,11 +13,15 @@ module JSF
         ##################
   
         def dry_schema(passthru)
+          hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
+
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(included_in?: ['static'])
               optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool)
+              if hide_on_create
+                optional(:hideOnCreate).filled(:bool)
+              end
               required(:sort).filled(:integer)
             end
             required(:type)

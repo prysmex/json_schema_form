@@ -41,13 +41,13 @@ class ResponseTest < Minitest::Test
     # valid_values
     [nil, 0, 0.3, 7].each do |v|
       instance = JSF::Forms::Response.new({ score: v })
-      assert_nil instance.errors(scoring: true)[:score]
+      assert_nil instance.errors(optional_if: ->(_,k) { k == :scoring })[:score]
     end
 
     # invalid_values
     [-1, -1.1].each do |v|
       instance = JSF::Forms::Response.new({ score: v })
-      refute_nil instance.errors(scoring: true)[:score]
+      refute_nil instance.errors(optional_if: ->(_,k) { k == :scoring })[:score]
     end
   end
 

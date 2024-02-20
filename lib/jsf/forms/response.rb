@@ -15,6 +15,9 @@ module JSF
       ##################
       
       def dry_schema(passthru)
+        scoring = run_validation?(passthru, :scoring, optional: true)
+        failing = run_validation?(passthru, :failing, optional: true)
+
         Dry::Schema.JSON do
           config.validate_keys = true
           required(:type).filled(Types::String.enum('string'))
@@ -28,11 +31,11 @@ module JSF
             optional(:color).maybe(:string)
             optional(:tags).value(:array?).array(:str?)
           end
-          if passthru[:scoring]
+          if scoring
             required(:enableScore).value(Types::True) #deprecate?
             required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
           end
-          if passthru[:failing]
+          if failing
             required(:failed).value(:bool)
           end
         end
