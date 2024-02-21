@@ -20,7 +20,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['markdown'])
+              required(:component).value(eql?: 'markdown')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
@@ -60,11 +60,6 @@ module JSF
           range = (half_range_seconds * -1)...half_range_seconds
           seconds = rand(range)
           (Time.now + seconds).iso8601
-        end
-
-        def migrate!
-          self['format'] = 'date-time'
-          self['type'] = 'string'
         end
   
       end

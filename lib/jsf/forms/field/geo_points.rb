@@ -20,7 +20,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['geopoints'])
+              required(:component).value(eql?: 'geopoints')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
@@ -39,20 +39,20 @@ module JSF
               end
             end
             if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
             required(:items).hash do
               required(:required).value(included_in?: [['lat', 'lng']])
               required(:properties).hash do
                 required(:lat).hash do
-                  required(:type).value(included_in?: ['number'])
-                  required(:minimum).value(included_in?: [-90])
-                  required(:maximum).value(included_in?: [90])
+                  required(:type).value(eql?: 'number')
+                  required(:minimum).value(eql?: -90)
+                  required(:maximum).value(eql?: 90)
                 end
                 required(:lng).hash do
-                  required(:type).value(included_in?: ['number'])
-                  required(:minimum).value(included_in?: [-180])
-                  required(:maximum).value(included_in?: [180])
+                  required(:type).value(eql?: 'number')
+                  required(:minimum).value(eql?: -180)
+                  required(:maximum).value(eql?: 180)
                 end
               end
               required(:'type').filled(Types::String.enum('object'))

@@ -29,7 +29,7 @@ module JSF
               required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['select'])
+              required(:component).value(eql?: 'select')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
@@ -51,7 +51,7 @@ module JSF
               end
             end
             if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
           end
         end

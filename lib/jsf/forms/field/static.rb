@@ -19,7 +19,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['static'])
+              required(:component).value(eql?: 'static')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)

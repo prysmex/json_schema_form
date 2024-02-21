@@ -132,12 +132,12 @@ module JSF
 
           optional(:type) do
             (
-              str? & included_in?(['array','boolean','null','number','object','string'])
+              str? & included_in?(%w[array boolean null number object string])
             ) |
             (
               array? & filled? &
               each {
-                str? & included_in?(['array','boolean','null','number','object','string'])
+                str? & included_in?(%w[array boolean null number object string])
               }
             )
           end

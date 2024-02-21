@@ -71,10 +71,12 @@ module JSF
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
           def dry_schema(passthru)
+            # is_subschema = meta[:is_subschema]
+
             Dry::Schema.JSON do
               config.validate_keys = true
               optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }
-              optional(:'$schema').filled(:string)
+              # optional(:'$schema').filled(:string) unless is_subschema
               optional(:title).maybe(:string)
               optional(:default)
             end

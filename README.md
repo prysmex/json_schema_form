@@ -51,7 +51,7 @@ As you can see, every time a subschema is found a new instance is serialized by 
 It is important to note that the transforms are present ONLY on the following keys:
 
 ```ruby
-[:additionalProperties, :contains, :definitions, :dependencies, :else, :if, :items, :not, :properties, :then, :allOf, :anyOf, :oneOf]
+%i[additionalProperties contains definitions dependencies else if items not properties then allOf anyOf oneOf]
 ```
 
 So if you want to add a new schema AFTER instanciation (for example another property in the `properties` key), you must to re-set the whole key

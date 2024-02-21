@@ -20,7 +20,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['video'])
+              required(:component).value(eql?: 'video')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
@@ -46,8 +46,8 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:min).value(included_in?: [0])
-            # required(:max).value(included_in?: [])
+            required(:min).value(eql?: 0)
+            # required(:max).value(eql?: 100)
             required(:type)
           end
         end

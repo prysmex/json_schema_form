@@ -50,7 +50,7 @@ module JSF
           end
 
           required(:displayProperties).hash do
-            required(:component).value(included_in?: ['section'])
+            required(:component).value(eql?: 'section')
             optional(:hidden).filled(:bool)
             if hide_on_create
               optional(:hideOnCreate).filled(:bool)
@@ -74,7 +74,7 @@ module JSF
             # optional(:properties)
             # optional(:allOf)
             # optional(:required)
-            # required(:type).value(included_in?: ['object'])
+            # required(:type).value(eql?: 'object')
           end
           required(:type)
         end

@@ -33,27 +33,27 @@ module JSF
               end
               required(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
-              required(:component).value(included_in?: ['signature'])
+              required(:component).value(eql?: 'signature')
               required(:visibility).hash do
                 required(:label).filled(:bool)
               end
             end
             required(:properties).hash do
               required(:db_identifier).hash do
-                required(:type).value(included_in?: ['number'])
+                required(:type).value(eql?: 'number')
               end
               required(:name).hash do
-                required(:type).value(included_in?: ['string'])
+                required(:type).value(eql?: 'string')
               end
               required(:signature).hash do
-                required(:type).value(included_in?: ['string'])
-                required(:format).value(included_in?: ['uri'])
+                required(:type).value(eql?: 'string')
+                required(:format).value(eql?: 'uri')
                 required(:pattern).value(eql?: '^http')
               end
             end
             required(:additionalProperties).value(eql?: false)
             if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
             required(:required).value(:array, min_size?: 0, max_size?: 3).each(:str?)
             required(:type)

@@ -25,7 +25,7 @@ module JSF
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['checkbox'])
+              required(:component).value(eql?: 'checkbox')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
@@ -47,7 +47,7 @@ module JSF
               end
             end
             if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
             required(:items).hash do
               if ref_presence

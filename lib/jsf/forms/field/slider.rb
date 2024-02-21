@@ -32,7 +32,7 @@ module JSF
             end
   
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['slider'])
+              required(:component).value(eql?: 'slider')
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
               end
@@ -58,7 +58,7 @@ module JSF
             end
             required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
             if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: ['reports', 'notes', 'pictures'])
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
             required(:type)
           end

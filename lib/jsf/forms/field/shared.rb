@@ -25,7 +25,7 @@ module JSF
               required(:$ref).maybe{ str? & format?(REF_REGEX) }
             end
             required(:displayProperties).hash do
-              required(:component).value(included_in?: ['shared'])
+              required(:component).value(eql?: 'shared')
               optional(:hidden).filled(:bool)
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)

@@ -2,8 +2,8 @@ module JSF
   module Forms
     DEFAULT_LOCALE = 'en'.freeze
     AVAILABLE_LOCALES = ['es', 'en'].freeze
-    VERSION = '3.3.0'.freeze
-    SCHEMA_VERSION = 'http://json-schema.org/draft-07/schema#'.freeze
+    VERSION = '3.4.0'.freeze
+    SCHEMA_VERSION = 'https://json-schema.org/draft/2020-12/schema'.freeze
     
     # A `Form` is a 'object' schema that is used to validate a `JSF::Forms::Document`.
     #
@@ -193,9 +193,9 @@ module JSF
               required(:hasScoring) { bool? }
             end
             if exam
-              required(:'$id').value(included_in?: [parent_key])
+              required(:'$id').value(eql?: parent_key)
               required(:displayProperties).hash do
-                required(:component).value(included_in?: ['exam'])
+                required(:component).value(eql?: 'exam')
                 required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
                 required(:gradeWeight).filled(:integer, gt?: 0, lteq?: 100)
                 optional(:maxTakes).filled(:integer, gt?: 0)
@@ -213,7 +213,7 @@ module JSF
               optional(:'$id').filled(:string)
             end
           else
-            optional(:'$schema').filled(:string)
+            # optional(:'$schema').filled(:string)
           end
     
         end
@@ -1559,10 +1559,19 @@ module JSF
       #
       # @return [void]
       def migrate!
-        # if self['schemaFormVersion'] != VERSION
-        #   # migration code goes here
-        #   self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
-        # end
+        return if self['schemaFormVersion'] == VERSION
+
+        # migration code goes here
+        properties.each do |k,v|
+          v.delete('$schema')
+
+          if v.is_a?(JSF::Forms::Field::Markdown)
+            v['format'] = 'date-time'
+            v['type'] = 'string'
+          end
+        end
+
+        self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
       end
     
       private
