@@ -1,3 +1,3 @@
 module JSF
-  VERSION = "0.15.6"
+  VERSION = "0.15.7"
 end

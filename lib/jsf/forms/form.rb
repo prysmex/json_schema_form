@@ -169,7 +169,7 @@ module JSF
         is_subschema = meta[:is_subschema]
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
-        parent_key = self.key_name
+        parent_key = self.key_name if exam
 
         Dry::Schema.JSON do
           config.validate_keys = true
