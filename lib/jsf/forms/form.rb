@@ -1565,16 +1565,25 @@ module JSF
           self.delete('$schema')
         else
           self['$schema'] = SCHEMA_VERSION
-          self['$defs'] = self.delete('definitions')
+          self['$defs'] = self.delete('definitions') if key?('definitions')
         end
 
         # migration code goes here
         properties.each do |k,v|
           v.delete('$schema')
 
-          if v.is_a?(JSF::Forms::Field::Markdown)
+          case v
+          when JSF::Forms::Field::Markdown
             v['format'] = 'date-time'
             v['type'] = 'string'
+          when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox
+            path = v.class::RESPONSE_SET_PATH
+            ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
+            SuperHash::Utils.bury(v, *path, ref) if ref
+          when JSF::Forms::Field::Shared
+            path = [:$ref]
+            ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
+            SuperHash::Utils.bury(v, *path, ref) if ref
           end
         end
 
