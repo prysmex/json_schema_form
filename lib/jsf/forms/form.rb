@@ -1562,7 +1562,7 @@ module JSF
         return if self['schemaFormVersion'] == VERSION
 
         if meta[:is_subschema]
-          v.delete('$schema')
+          self.delete('$schema')
         else
           self['$schema'] = SCHEMA_VERSION
           self['$defs'] = self.delete('definitions')
