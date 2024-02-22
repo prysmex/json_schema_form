@@ -81,7 +81,7 @@ module JSF
         #definition management#
         #######################
 
-        # Adds a definition to the 'definitions' hash
+        # Adds a definition to the '$defs' hash
         #
         # @note if the definition is already present, an error will be raised
         #
@@ -89,25 +89,25 @@ module JSF
         # @param definition [Hash] the schema to add
         # @param options[:required] [Boolean] if the property should be required
         # @return [Object] added property
-        def add_definition(id, definition)
-          self[:definitions] ||= {}
-          StandardError.new("key #{id} already exists") if self[:definitions].key?(id)
+        def add_def(id, definition)
+          self[:$defs] ||= {}
+          StandardError.new("key #{id} already exists") if self[:$defs].key?(id)
 
           # definition = definition.deep_dup
-          self[:definitions].merge!({ id => definition })
-          self[:definitions] = self[:definitions] # trigger transforms
-          added_definition = self[:definitions][id]
+          self[:$defs].merge!({ id => definition })
+          self[:$defs] = self[:$defs] # trigger transforms
+          added_definition = self[:$defs][id]
           yield(added_definition, id.to_s, self) if block_given?
           added_definition
         end
 
-        # Removes a definition from the 'definitions' key
+        # Removes a definition from the '$defs' key
         #
         # @param [String,Symbol] key name of the key to remove
         # @return [Object] mutated self
-        def remove_definition(key)
+        def remove_def(key)
           key = key.to_s
-          self[:definitions].delete(key) if self[:definitions]
+          self[:$defs].delete(key) if self[:$defs]
           self
         end
   

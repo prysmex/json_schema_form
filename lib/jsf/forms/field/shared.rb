@@ -5,7 +5,7 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
     
-        REF_REGEX = /\A#\/definitions\/\w+\z/
+        REF_REGEX = /\A#\/\$defs\/\w+\z/
 
         ##################
         ###VALIDATIONS####
@@ -51,10 +51,10 @@ module JSF
         ##############
   
         # Gets json pointer $ref, should point to its pair (JSF::Forms::SharedRef, JSF::Forms::Form)
-        # inside the form's 'definitions' key
+        # inside the form's '$defs' key
         #
         # @return [String]
-        def shared_definition_pointer
+        def shared_def_pointer
           self.dig(*[:$ref])
         end
 
@@ -62,23 +62,23 @@ module JSF
         #
         # @return [Integer]
         def db_id
-          self.shared_definition_pointer&.match(/\d+\z/)&.to_s&.to_i
+          self.shared_def_pointer&.match(/\d+\z/)&.to_s&.to_i
         end
 
-        # Update the db id in the shared_definition_pointer
+        # Update the db id in the shared_def_pointer
         #
         # @param [Integer]
         # @return [void]
         def db_id=(id)
-          self[:$ref] = "#/definitions/#{JSF::Forms::Form.shared_ref_key(id)}"
+          self[:$ref] = "#/$defs/#{JSF::Forms::Form.shared_ref_key(id)}"
         end
   
         # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
-        def shared_definition
-          path = self.shared_definition_pointer&.sub('#/', '')&.split('/')&.map(&:to_sym)
+        def shared_def
+          path = self.shared_def_pointer&.sub('#/', '')&.split('/')&.map(&:to_sym)
           return if path.nil? || path.empty?
           find_parent do |current, _next|
-            current.key?(:definitions)
+            current.key?(:$defs)
           end&.dig(*path)
         end
     

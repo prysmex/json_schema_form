@@ -7,7 +7,23 @@ module JSF
     # requirements:
     #
     # - `JSF::Validations::Validatable`
-    
+    #
+    # TODO:
+    #
+    # - object:
+    #   - patternProperties
+    #   - additionalProperties
+    #   - unevaluatedProperties
+    #   - propertyNames
+    #   - minProperties
+    #   - maxProperties
+    #
+    # other:
+    #   - dynamicRef
+    #   - dynamicAnchor
+    #   - dependentSchemas
+    #   - dependentRequired
+    #
     module DrySchemaValidatable
 
       def self.included(base)
@@ -143,6 +159,7 @@ module JSF
           end
           required(:type) if instance.size == 0
           optional(:'$id').filled(:string)
+          optional(:'$anchor').filled(:string)
           optional(:'$schema').filled(:string)
           optional(:$title).maybe(:string)
           optional(:description).maybe(:string)
@@ -160,7 +177,7 @@ module JSF
           if instance.types&.include?('object') || instance.types.nil?
             optional(:required).value(:array?).array(:str?)
             optional(:properties).value(:hash)
-            optional(:definitions).value(:hash)
+            optional(:$defs).value(:hash)
           end
 
           if instance.types&.include?('array') || instance.types.nil?

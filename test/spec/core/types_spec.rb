@@ -49,18 +49,18 @@ class TypesTest < Minitest::Test
     assert_equal 0, instance[:properties].size
   end
 
-  # add_definition
-  def test_add_definition
+  # add_def
+  def test_add_def
     instance = JSF::Schema.new()
-    instance.add_definition('prop1', {type: 'string'})
-    assert_instance_of JSF::Schema, instance.dig(:definitions, :prop1)
+    instance.add_def('prop1', {type: 'string'})
+    assert_instance_of JSF::Schema, instance.dig(:$defs, :prop1)
   end
 
-  # remove_definition
-  def test_remove_definition
-    instance = JSF::Schema.new({definitions: {prop1: {}}})
-    instance.remove_definition('prop1')
-    assert_equal 0, instance[:definitions].size
+  # remove_def
+  def test_remove_def
+    instance = JSF::Schema.new({:$defs => {prop1: {}}})
+    instance.remove_def('prop1')
+    assert_equal 0, instance[:$defs].size
   end
 
   # add_required

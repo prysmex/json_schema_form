@@ -60,7 +60,7 @@ module JSF
         self[:$ref]
       end
 
-      # Update the db id in the shared_definition_pointer
+      # Update the db id in the shared_def_pointer
       #
       # @param [Integer]
       # @return [void]

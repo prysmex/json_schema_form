@@ -14,11 +14,11 @@ module JSF
 
       def self.included(base)
 
-        # Set all transforms for Hash keys
+        # Set SuperHash::Hasher transforms for Hash keys
         base.update_attribute 'additionalProperties', transform: ADDITIONAL_PROPERTIES_TRANSFORM
         base.update_attribute 'contains', transform: CONTAINS_TRANSFORM
-        base.update_attribute 'definitions', transform: DEFINITIONS_TRANSFORM
-        base.update_attribute 'dependencies', transform: DEPENDENCIES_TRANSFORM
+        base.update_attribute '$defs', transform: DEFS_TRANSFORM
+        base.update_attribute 'dependentSchemas', transform: DEPENDENT_SCHEMAS_TRANSFORM
         base.update_attribute 'if', transform: IF_TRANSFORM
         base.update_attribute 'else', transform: ELSE_TRANSFORM
         base.update_attribute 'then', transform: THEN_TRANSFORM
@@ -30,6 +30,7 @@ module JSF
         base.update_attribute 'allOf', transform: All_OF_TRANSFORM
         base.update_attribute 'anyOf', transform: ANY_OF_TRANSFORM
         base.update_attribute 'oneOf', transform: ONE_OF_TRANSFORM
+        base.update_attribute 'prefixItems', transform: PREFIX_ITEMS_TRANSFORM
       end
 
       # @param [Hash] init_value
@@ -82,7 +83,6 @@ module JSF
       ##Hash transforms##
       ###################
 
-      # SuperHash::Hasher attribute transform
       ADDITIONAL_PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
@@ -92,7 +92,6 @@ module JSF
         end
       }
 
-      # SuperHash::Hasher attribute transform
       CONTAINS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
@@ -100,8 +99,7 @@ module JSF
         end
       }
 
-      # SuperHash::Hasher attribute transform
-      DEFINITIONS_TRANSFORM = ->(attribute, value, instance) {
+      DEFS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
           value.inject({}) do |acum, (name, definition)|
@@ -109,28 +107,23 @@ module JSF
               attribute, 
               definition,
               instance,
-              [:definitions, name]
+              [:$defs, name]
             )
             acum
           end
         end
       }
 
-      # SuperHash::Hasher attribute transform
-      DEPENDENCIES_TRANSFORM = ->(attribute, value, instance) {
+      DEPENDENT_SCHEMAS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
           value.inject({}) do |acum, (name, definition)|
-            if definition.is_a?(::Hash)
-              acum[name] = instance.class::CORE_TRANSFORM.call(
-                attribute, 
-                definition,
-                instance,
-                [:dependencies, name]
-              )
-            else
-              acum[name] = definition
-            end
+            acum[name] = instance.class::CORE_TRANSFORM.call(
+              attribute, 
+              definition,
+              instance,
+              [:dependentSchemas, name]
+            )
             acum
           end
         end
@@ -140,21 +133,12 @@ module JSF
 
       IF_TRANSFORM = CONTAINS_TRANSFORM
 
-      # SuperHash::Hasher attribute transform
-      ITEMS_TRANSFORM = ->(attribute, value, instance) {
-        case value
-        when ::Array
-          value.map.with_index do |definition, index|
-            instance.class::CORE_TRANSFORM.call(attribute, definition, instance, [attribute, index])
-          end
-        when ::Hash
-          instance.class::CORE_TRANSFORM.call(attribute, value, instance, [attribute])
-        end
-      }
+      THEN_TRANSFORM = CONTAINS_TRANSFORM
 
       NOT_TRANSFORM = CONTAINS_TRANSFORM
 
-      # SuperHash::Hasher attribute transform
+      ITEMS_TRANSFORM = ADDITIONAL_PROPERTIES_TRANSFORM
+
       PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
@@ -170,13 +154,10 @@ module JSF
         end
       }
 
-      THEN_TRANSFORM = CONTAINS_TRANSFORM
-
       ##################
       #Array Transforms#
       ##################
 
-      # SuperHash::Hasher attribute transform
       All_OF_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Array
@@ -190,6 +171,7 @@ module JSF
 
       ONE_OF_TRANSFORM = All_OF_TRANSFORM
 
+      PREFIX_ITEMS_TRANSFORM = All_OF_TRANSFORM
     end
   end
 end

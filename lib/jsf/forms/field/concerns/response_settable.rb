@@ -5,7 +5,7 @@ module JSF
         module ResponseSettable
   
           # used for validation
-          REF_REGEX = /\A#\/definitions\/[a-z0-9\-_]+\z/
+          REF_REGEX = /\A#\/\$defs\/[a-z0-9\-_]+\z/
 
           ##################
           ###VALIDATIONS####
@@ -46,7 +46,7 @@ module JSF
           #
           # @return [String]
           def response_set_key
-            response_set_id.sub('#/definitions/', '')
+            response_set_id.sub('#/$defs/', '')
           end
 
           # get the response_set_id, each field class should implement its own `RESPONSE_SET_PATH`
@@ -61,10 +61,10 @@ module JSF
           # @param id [String] id of the JSF::Forms::ResponseSet
           # @return [String]
           def response_set_id=(id)
-            SuperHash::Utils.bury(self, *self.class::RESPONSE_SET_PATH, "#/definitions/#{id}")
+            SuperHash::Utils.bury(self, *self.class::RESPONSE_SET_PATH, "#/$defs/#{id}")
           end
         
-          # get the field's response set. It looks for it in the first parent with the `definitions` key
+          # get the field's response set. It looks for it in the first parent with the `$defs` key
           #
           # @return [JSF::Forms::ResponseSet]
           def response_set
@@ -72,7 +72,7 @@ module JSF
             return if path.nil? || path.empty?
 
             find_parent do |current, _next|
-              current.key?(:definitions)
+              current.key?(:$defs)
             end&.dig(*path)
           end
 

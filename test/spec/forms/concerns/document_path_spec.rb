@@ -5,7 +5,7 @@ class FormTest < Minitest::Test
   def test_document_path
     form = JSF::Forms::FormBuilder.build() do
 
-      # Add form in definitions
+      # Add form in $defs
       add_shared_pair(
         db_id: 1,
         index: :prepend,
@@ -58,8 +58,8 @@ class FormTest < Minitest::Test
     # section_indices as array
     assert_equal ['section', 1, 'section_1_3', 2, 'switch_1_1_1'], form.dig(:properties, :section, :items, :properties, :section_1_3, :items, :properties, :switch_1_1_1).document_path(section_indices: [1,2])
     
-    assert_equal ['shared_schema_template_1', 'shared_switch_1'], form.dig(:definitions, :shared_schema_template_1, :properties, :shared_switch_1).document_path
-    assert_equal ['shared_schema_template_1', 'shared_switch_1_1'], form.dig(:definitions, :shared_schema_template_1, :allOf,  0, :then, :properties, :shared_switch_1_1).document_path
+    assert_equal ['shared_schema_template_1', 'shared_switch_1'], form.dig(:$defs, :shared_schema_template_1, :properties, :shared_switch_1).document_path
+    assert_equal ['shared_schema_template_1', 'shared_switch_1_1'], form.dig(:$defs, :shared_schema_template_1, :allOf,  0, :then, :properties, :shared_switch_1_1).document_path
   end
 
 end

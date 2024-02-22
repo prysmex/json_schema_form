@@ -9,14 +9,7 @@ module JSF
     #   - path: absolute path to current schema
     #
     module Schemable
-    
-      # OBJECT_KEYS = ['properties', 'required', 'required', 'propertyNames', 'if', 'then', 'else', 'additionalProperties', 'minProperties', 'maxProperties', 'dependencies', 'patternProperties']
-      # STRING_KEYS = ['minLength', 'maxLength', 'pattern', 'format', 'enum', 'const']
-      # NUMBER_KEYS = ['multipleOf', 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum']
-      # BOOLEAN_KEYS = []
-      # ARRAY_KEYS = ['items', 'contains', 'additionalItems', 'minItems', 'maxItems', 'uniqueItems']
-      # NULL_KEYS = []
-    
+
       def self.included(base)
         base.instance_variable_set('@allow_dynamic_attributes', true)
         base.include InstanceMethods
@@ -103,11 +96,11 @@ module JSF
           end
         end
       
-        # Get name of key if nested inside properties or definitions by checking the path
+        # Get name of key if nested inside properties or $defs by checking the path
         # {properties: {some_key: {}}} => 'some_key'
         def key_name
           attribute, key_name = self.meta[:path].last(2)
-          if [:properties, :definitions].include?(attribute&.to_sym)
+          if [:properties, :$defs].include?(attribute&.to_sym)
             key_name
           end
         end

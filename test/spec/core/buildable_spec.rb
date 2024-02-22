@@ -28,23 +28,22 @@ class BuildableTest < Minitest::Test
     assert_equal ['contains'], subschema.meta[:path]
   end
 
-  def test_definitions_transform
-    schema = SampleSchema.new({definitions: {def1: {}}})
-    subschema = schema[:definitions][:def1]
+  def test_defs_transform
+    schema = SampleSchema.new({:$defs => {def1: {}}})
+    subschema = schema[:$defs][:def1]
 
     assert_instance_of SampleSchema, subschema
     assert_equal true, subschema.meta[:is_subschema]
-    assert_equal ['definitions', 'def1'], subschema.meta[:path]
+    assert_equal ['$defs', 'def1'], subschema.meta[:path]
   end
 
-  def test_dependencies_transform_hash
-    schema = SampleSchema.new({dependencies: {dep1: {}, dep2: []}})
-    subschema = schema[:dependencies][:dep1]
+  def test_dependentSchemas_transform
+    schema = SampleSchema.new({dependentSchemas: {dep1: {}}})
+    subschema = schema[:dependentSchemas][:dep1]
 
     assert_instance_of SampleSchema, subschema
     assert_equal true, subschema.meta[:is_subschema]
-    assert_equal ['dependencies', 'dep1'], subschema.meta[:path]
-    assert_instance_of ::Array, schema[:dependencies][:dep2]
+    assert_equal ['dependentSchemas', 'dep1'], subschema.meta[:path]
   end
 
   def test_if_then_else_not_transforms
@@ -58,13 +57,17 @@ class BuildableTest < Minitest::Test
     end
   end
 
-  def test_items_transform_hash
+  def test_items_transform
     schema = SampleSchema.new({items: {}})
     subschema = schema[:items]
 
     assert_instance_of SampleSchema, subschema
     assert_equal true, subschema.meta[:is_subschema]
     assert_equal ['items'], subschema.meta[:path]
+
+    # boolean
+    schema = SampleSchema.new({items: false})
+    assert_equal false, schema[:items]
   end
 
   def test_properties_transform
@@ -91,8 +94,8 @@ class BuildableTest < Minitest::Test
     assert_instance_of SampleSchema, SampleSchema.new({oneOf: [{}]})[:oneOf].first
   end
 
-  def test_items_transform_array
-    assert_instance_of SampleSchema, SampleSchema.new({items: [{}]})[:items].first
+  def test_prefix_items_transform_array
+    assert_instance_of SampleSchema, SampleSchema.new({prefixItems: [{}]})[:prefixItems].first
   end
 
   # custom attributes_transform_proc

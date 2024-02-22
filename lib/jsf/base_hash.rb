@@ -9,8 +9,8 @@ module JSF
   HASH_SUBSCHEMA_KEYS = [
     'additionalProperties',
     'contains',
-    'definitions',
-    'dependencies',
+    '$defs',
+    'dependentSchemas',
     'else',
     'if',
     'items',
@@ -26,8 +26,8 @@ module JSF
   ARRAY_SUBSCHEMA_KEYS = [
     'allOf',
     'anyOf',
-    'items',
-    'oneOf'
+    'oneOf',
+    'prefixItems'
   ].freeze
 
   class BaseHash < ActiveSupport::HashWithIndifferentAccess
@@ -108,12 +108,12 @@ module JSF
           self[:additionalProperties]&.each do |k,v|
             v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
           end
-        elsif key == 'definitions'
-          self[:definitions]&.each do |k,v|
+        elsif key == '$defs'
+          self[:$defs]&.each do |k,v|
             v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
           end
-        elsif key == 'dependencies'
-          self[:dependencies]&.each do |k,v|
+        elsif key == 'dependentSchemas'
+          self[:dependentSchemas]&.each do |k,v|
             next if !v.is_a?(::Hash)
             v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
           end

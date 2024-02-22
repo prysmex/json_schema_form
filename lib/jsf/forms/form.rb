@@ -11,7 +11,7 @@ module JSF
     #
     # It follows the following recursive structure:
     #
-    # - definitions (only in top level)
+    # - $defs (only in top level)
     #   - JSF::Forms::ResponseSet
     #     - JSF::Forms::Response
     #   - JSF::Schema or JSF::Forms::Form
@@ -74,7 +74,7 @@ module JSF
       end
 
       # converts and Integer into a string that can be used for
-      # JSF::Forms::SharedRef and JSF::Forms::Form inside 'definitions'
+      # JSF::Forms::SharedRef and JSF::Forms::Form inside '$defs'
       #
       # @param [Integer] id
       # @return [String]
@@ -98,7 +98,7 @@ module JSF
         when JSF::Forms::Form
     
           case attribute
-          when 'definitions'
+          when '$defs'
             if value[:isResponseSet]
               JSF::Forms::ResponseSet
             elsif value[:type] == 'object' #replaced schemas
@@ -140,7 +140,7 @@ module JSF
         end
       }
     
-      update_attribute 'definitions', default: ->(data) { self.meta[:is_subschema] ? nil : {}.freeze }
+      update_attribute '$defs', default: ->(data) { self.meta[:is_subschema] ? nil : {}.freeze }
       update_attribute 'properties', default: ->(data) { {}.freeze }
       update_attribute 'required', default: ->(data) { [].freeze }
       update_attribute 'allOf', default: ->(data) { [].freeze }
@@ -186,7 +186,7 @@ module JSF
           if !is_subschema
             required(:'$schema').filled(:string)
             required(:availableLocales).value(:array?).array(:str?)
-            required(:definitions).value(:hash)
+            required(:'$defs').value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:'title').maybe(:string) #ToDo deprecate?
             if scoring
@@ -226,7 +226,7 @@ module JSF
       # - ensure property $id key matches with field id
       # - ensure referenced response sets exist
       # - ensure JSF::Forms::Field::Shared only exist in root form
-      # - ensure shareds have a pair in 'definitions'
+      # - ensure shareds have a pair in '$defs'
       # - ensure only allowed fields contain (conditional) fields
       #
       # @param passthru [Hash{Symbol => *}] Options passed
@@ -245,7 +245,7 @@ module JSF
           end
         end
 
-        self[:definitions]&.each do |k, v|
+        self[:$defs]&.each do |k, v|
           # ensure referenced shared properties exist
           if run_validation?(passthru, :shared_presence)
             if v.is_a?(JSF::Forms::SharedRef) && v.shared.nil?
@@ -293,15 +293,15 @@ module JSF
             end
           end
 
-          # ensure shareds have a pair in 'definitions'
+          # ensure shareds have a pair in '$defs'
           if run_validation?(passthru, :shared_ref_presence)
             if field.is_a?(JSF::Forms::Field::Shared)
               # response should be found
-              if field.shared_definition.nil?
+              if field.shared_def.nil?
                 add_error_on_path(
                   errors_hash,
                   ['base'],
-                  "missing shared reference for field #{field.shared_definition_pointer}"
+                  "missing shared reference for field #{field.shared_def_pointer}"
                 )
               end
             end
@@ -333,11 +333,11 @@ module JSF
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean]
-      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_definitions: false)
+      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_defs: false)
         prop = nil
 
         # check properties and their response_sets
-        each_form(ignore_sections:, ignore_definitions:) do |form|
+        each_form(ignore_sections:, ignore_defs:) do |form|
           prop = form&.properties&.any? do |k,v|
             if v.respond_to?(:response_set)
               !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
@@ -371,25 +371,25 @@ module JSF
         self.class.shared_ref_key(*args)
       end
     
-      # Gets all shared definitions, which may be only the reference
+      # Gets all shared $defs, which may be only the reference
       # or the replaced form
       #
       # @return [Hash{String => JSF::Forms::Form, JSF::Forms::SharedRef}]
-      def shared_definitions
-        self[:definitions].select do |_k,v|
+      def shared_defs
+        self[:$defs].select do |_k,v|
           v.is_a?(JSF::Forms::SharedRef) || v.is_a?(JSF::Forms::Form)
         end
       end
 
-      # Adds a JSF::Forms::SharedRef to the 'definitions' key
+      # Adds a JSF::Forms::SharedRef to the '$defs' key
       #
       # @param [Integer] db_id (DB id)
       # @return [JSF::Forms::SharedRef]
-      def add_shared_definition(db_id:, definition: nil)
+      def add_shared_def(db_id:, definition: nil)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         
         definition ||= JSF::Forms::FormBuilder.example('shared_ref')
-        definition = self.add_definition(shared_ref_key(db_id), definition)
+        definition = self.add_def(shared_ref_key(db_id), definition)
         definition.db_id = db_id if definition.is_a?(JSF::Forms::SharedRef)
         definition
       end
@@ -398,21 +398,21 @@ module JSF
       #
       # @param [Integer] db_id
       # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
-      def get_shared_definition(db_id:)
-        self['definitions'].find do |k,_v|
+      def get_shared_def(db_id:)
+        self['$defs'].find do |k,_v|
           k == shared_ref_key(db_id)
         end&.last
       end
 
-      # Removes a JSF::Forms::SharedRef or JSF::Forms::Form from the 'definitions' key
+      # Removes a JSF::Forms::SharedRef or JSF::Forms::Form from the '$defs' key
       #
       # @param [Integer] db_id (DB id)
       # @return [JSF::Forms::Form] mutated self
-      def remove_shared_definition(db_id:)
+      def remove_shared_def(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
         key = shared_ref_key(db_id)
 
-        self.remove_definition(key)
+        self.remove_def(key)
       end
 
       # Adds a shared. If index is passed, it will also add a JSF::Forms::Field::Shared
@@ -440,7 +440,7 @@ module JSF
         prop.db_id = db_id
 
         # add definition
-        add_shared_definition(db_id: db_id, definition: definition)
+        add_shared_def(db_id: db_id, definition: definition)
       end
 
       # Removes a shared ref.
@@ -459,7 +459,7 @@ module JSF
         resort!
 
         # remove definition
-        self.remove_definition(key)
+        self.remove_def(key)
       end
     
       ##############################
@@ -470,7 +470,7 @@ module JSF
       #
       # @return [Hash{String => JSF::Forms::ResponseSet}]
       def response_sets
-        self[:definitions].select do |_k,v|
+        self[:$defs].select do |_k,v|
           v[:isResponseSet]
         end
       end
@@ -481,7 +481,7 @@ module JSF
       # @param [Hash] definition
       # @return [JSF::Forms::ResponseSet]
       def add_response_set(id, definition)
-        self.add_definition(id, definition)
+        self.add_def(id, definition)
       end
     
       ##########################
@@ -747,17 +747,17 @@ module JSF
       #Utilities#
       ###########
 
-      # If returns true if inside the root key 'definitions'
+      # If returns true if inside the root key '$defs'
       #
       # @return [Boolean]
-      def is_shared_definition?
-        self.meta[:path].first == 'definitions'
+      def is_shared_def?
+        self.meta[:path].first == '$defs'
       end
 
       # @return [JSF::Forms::Form]
-      def validation_schema!(ignore_definitions: false, **)
+      def validation_schema!(ignore_defs: false, **)
         # remove not visible fields from required
-        each_form(ignore_definitions:) do |form|
+        each_form(ignore_defs:) do |form|
           form[:required]&.select! do |name|
             form[:properties][name].visible(**)
           end
@@ -773,7 +773,7 @@ module JSF
       # params.
       #
       # @param ignore_all_of [Boolean] if true, does not iterate into forms inside a allOf
-      # @param ignore_definitions [Boolean]
+      # @param ignore_defs [Boolean]
       # @param ignore_sections [Boolean] if true, does not iterate into forms inside a JSF::Forms::Section
       # @param is_create [Boolean] pass true to consider 'hideOnCreate' display property
       # @param levels [Integer] Max depth of allOf nesting to starting from start_level
@@ -788,7 +788,7 @@ module JSF
       def each_form(
           current_level: 0,
           ignore_all_of: false,
-          ignore_definitions: true,
+          ignore_defs: true,
           ignore_sections: false,
           is_create: false,
           levels: nil,
@@ -802,7 +802,7 @@ module JSF
           # create kwargs hash to dry code when calling recursive
           kwargs = {}
           kwargs[:ignore_sections] = ignore_sections
-          kwargs[:ignore_definitions] = ignore_definitions
+          kwargs[:ignore_defs] = ignore_defs
           kwargs[:ignore_all_of] = ignore_all_of
           kwargs[:is_create] = is_create
           kwargs[:levels] = levels
@@ -836,9 +836,9 @@ module JSF
             end
           end
 
-          # iterate definitions and call recursive on JSF::Forms::Form
-          unless ignore_definitions
-            self[:definitions]&.each do |_key, prop|
+          # iterate $defs and call recursive on JSF::Forms::Form
+          unless ignore_defs
+            self[:$defs]&.each do |_key, prop|
               next unless prop.is_a?(JSF::Forms::Form)
               
               prop&.each_form(
@@ -890,7 +890,7 @@ module JSF
 
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
         # handled, we ignore them in the each_form iterator
-        each_form(ignore_sections: true, ignore_definitions: true, **kwargs) do |form, condition, *args|
+        each_form(ignore_sections: true, ignore_defs: true, **kwargs) do |form, condition, *args|
 
           # skip unactive trees
           if skip_on_condition && condition&.evaluate(document, &condition_proc) == false
@@ -931,10 +931,10 @@ module JSF
                     &block
                   )
               end
-            elsif !kwargs[:ignore_definitions] && property.is_a?(JSF::Forms::Field::Shared)
+            elsif !kwargs[:ignore_defs] && property.is_a?(JSF::Forms::Field::Shared)
               value = document[key] || {}
               empty_document[key] = property
-                .shared_definition
+                .shared_def
                 .each_form_with_document(
                   value,
                   document_path: (document_path + [key]),
@@ -962,7 +962,7 @@ module JSF
 
         each_form(
           skip_tree_when_hidden: true,
-          ignore_definitions: false,
+          ignore_defs: false,
           is_create: is_create,
           **kwargs
         ) do |form, condition, _current_level|
@@ -988,7 +988,7 @@ module JSF
             elsif form&.key_name&.match?(/\Ashared_schema_template_\d+\z/)
               all_sorted_properties.find do |array|
                 prop = array.first
-                prop.is_a?(JSF::Forms::Field::Shared) && prop.shared_definition == form
+                prop.is_a?(JSF::Forms::Field::Shared) && prop.shared_def == form
               end&.first
             end
 
@@ -1119,7 +1119,7 @@ module JSF
       # Calculates the maximum attainable score given a document. This
       # considers which paths are active in the form.
       #
-      # @note does not consider forms inside 'definitions' key
+      # @note does not consider forms inside '$defs' key
       #
       # @todo consider Section count
       #
@@ -1397,7 +1397,7 @@ module JSF
             # go recursive on shared
             when JSF::Forms::Field::Shared
               property
-                .shared_definition
+                .shared_def
                 .i18n_document(value, locale: locale, missing_locale_msg: missing_locale_msg)
             else
               value
@@ -1426,7 +1426,7 @@ module JSF
         migrated_response_sets = {}
         migrated_props = {}
 
-        each_form(ignore_definitions: false) do |form|
+        each_form(ignore_defs: false) do |form|
         
           # migrate properties
           prop_keys = form['properties'].keys
@@ -1439,7 +1439,7 @@ module JSF
         
             # migrate response sets
             if prop.respond_to?(:response_set_id)
-              id = prop.response_set_id.sub('#/definitions/', '')
+              id = prop.response_set_id.sub('#/$defs/', '')
               migrated_response_sets[id] ||= response_set_id_proc.call(id)
             end
 
@@ -1528,7 +1528,7 @@ module JSF
 
         each_form_with_document(
           document,
-          ignore_definitions: false
+          ignore_defs: false
         ) do |form, _condition, _current_level, current_doc, _current_empty_doc, _document_path|
           form.properties.each do |k, v|
             next unless yield(v)
@@ -1560,6 +1560,13 @@ module JSF
       # @return [void]
       def migrate!
         return if self['schemaFormVersion'] == VERSION
+
+        if meta[:is_subschema]
+          v.delete('$schema')
+        else
+          self['$schema'] = SCHEMA_VERSION
+          self['$defs'] = self.delete('definitions')
+        end
 
         # migration code goes here
         properties.each do |k,v|

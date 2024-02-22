@@ -10,9 +10,9 @@ module ResponseSettableTests
     example = self.tested_klass_example
     instance = tested_klass.new(example)
 
-    refute_equal '#/definitions/h12jb3k', instance.response_set_id
+    refute_equal '#/$defs/h12jb3k', instance.response_set_id
     instance.response_set_id = 'h12jb3k'
-    assert_equal '#/definitions/h12jb3k', instance.response_set_id
+    assert_equal '#/$defs/h12jb3k', instance.response_set_id
   end
 
   # response_set

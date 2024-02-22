@@ -8,11 +8,11 @@ module JSF
 
         # Returns the path where the data of the field is in a JSF::Forms::Document
         # It supports both properties inside the schema or properties added by a JSF::Forms::Form
-        # inside 'definitions'
+        # inside '$defs'
         #
         # @example
         #   {
-        #     definitions: {
+        #     $defs: {
         #       some_key_2: {
         #         properties: {
         #           migrated_hazards9999: {}
@@ -43,16 +43,16 @@ module JSF
           schema_path.each_with_index.inject(root_form) do |current_schema, (key, i)|
             next_schema = current_schema[key]
 
-            # if a 'definitions' we must add the key of the 'JSF::Forms::Field::Shared'
+            # if a '$defs' we must add the key of the 'JSF::Forms::Field::Shared'
             # that matches
-            if key == 'definitions'
+            if key == '$defs'
               target_form = next_schema[schema_path[i + 1]]
               
               shared_field = nil
               root_form.each_form do |form|
                 form.properties.each do |key, prop|
                   next unless prop.is_a?(JSF::Forms::Field::Shared) &&
-                              prop.shared_definition == target_form # match the field
+                              prop.shared_def == target_form # match the field
                   
                   shared_field = prop
                   break

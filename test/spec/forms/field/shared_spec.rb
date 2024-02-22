@@ -21,8 +21,8 @@ class SharedTest < Minitest::Test
   end
 
   def test_ref_regex
-    assert_nil JSF::Forms::Field::Shared.new({'$ref': '#/definitions/hello'}).errors[:'$ref']
-    refute_nil JSF::Forms::Field::Shared.new({'$ref': '/definitions/hello'}).errors[:'$ref']
+    assert_nil JSF::Forms::Field::Shared.new({'$ref': '#/$defs/hello'}).errors[:'$ref']
+    refute_nil JSF::Forms::Field::Shared.new({'$ref': '/$defs/hello'}).errors[:'$ref']
     refute_nil JSF::Forms::Field::Shared.new({'$ref': '#/properties/hello'}).errors[:'$ref']
   end
 
@@ -30,11 +30,11 @@ class SharedTest < Minitest::Test
   ###METHODS####
   ##############
 
-  # shared_definition_pointer
+  # shared_def_pointer
 
   # db_id
 
   # db_id=
 
-  # shared_definition
+  # shared_def
 end

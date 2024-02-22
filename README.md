@@ -51,7 +51,7 @@ As you can see, every time a subschema is found a new instance is serialized by 
 It is important to note that the transforms are present ONLY on the following keys:
 
 ```ruby
-%i[additionalProperties contains definitions dependencies else if items not properties then allOf anyOf oneOf]
+%i[additionalProperties contains $defs dependentSchemas else if then not items properties allOf anyOf oneOf prefixItems]
 ```
 
 So if you want to add a new schema AFTER instanciation (for example another property in the `properties` key), you must to re-set the whole key
@@ -144,8 +144,8 @@ class MySchema < JSF::BaseHash
 
 end
 
-schema = MySchema.new(type: 'array', items: [{type: 'string'}])
-schema.errors #=> {"items"=>{0=>{"$id"=>"id must be present"}}, "$id"=>"id must be present"}
+schema = MySchema.new(type: 'array', prefixItems: [{type: 'string'}])
+schema.errors #=> {"prefixItems"=>{0=>{"$id"=>"id must be present"}}, "$id"=>"id must be present"}
 ```
 
 `passthru` is a hash of options that are passed across all child nodes of the tree.

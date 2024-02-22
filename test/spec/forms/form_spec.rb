@@ -8,10 +8,10 @@ class FormTest < Minitest::Test
 
   def test_transform
     form = JSF::Forms::FormBuilder.build() do
-      # definitions
+      # $defs
       add_response_set(:response_set_1, example('response_set'))
-      add_shared_definition(db_id: 1)
-      add_definition('form1', JSF::Forms::FormBuilder.example('form'))
+      add_shared_def(db_id: 1)
+      add_def('form1', JSF::Forms::FormBuilder.example('form'))
 
       # properties
       append_property(:checkbox, example('checkbox'))
@@ -33,10 +33,10 @@ class FormTest < Minitest::Test
 
     end
 
-    # definitions
-    assert_instance_of JSF::Forms::Form, form[:definitions][:form1]
-    assert_instance_of JSF::Forms::ResponseSet, form[:definitions][:response_set_1]
-    assert_instance_of JSF::Forms::SharedRef, form[:definitions][JSF::Forms::Form.shared_ref_key(1)]
+    # $defs
+    assert_instance_of JSF::Forms::Form, form[:$defs][:form1]
+    assert_instance_of JSF::Forms::ResponseSet, form[:$defs][:response_set_1]
+    assert_instance_of JSF::Forms::SharedRef, form[:$defs][JSF::Forms::Form.shared_ref_key(1)]
 
     # all field types
     form[:properties].each do |name, field|
@@ -99,7 +99,7 @@ class FormTest < Minitest::Test
     assert_empty form.errors(if: error_proc)
 
     # missmatch id
-    form[:definitions][:shared_schema_template_1].db_id = 2
+    form[:$defs][:shared_schema_template_1].db_id = 2
     refute_empty form.errors(if: error_proc)
 
     # not present
@@ -169,7 +169,7 @@ class FormTest < Minitest::Test
     end
 
     refute_empty form.errors(if: error_proc)
-    form.add_shared_definition(db_id: db_id)
+    form.add_shared_def(db_id: db_id)
     assert_empty form.errors(if: error_proc)
   end
 
@@ -286,40 +286,40 @@ class FormTest < Minitest::Test
   # def test_shared_ref_key
   # end
 
-  def test_shared_definitions
+  def test_shared_defs
     form = JSF::Forms::FormBuilder.build do
-      add_shared_definition(db_id: 1)
-      add_definition(:some_key, JSF::Forms::Form.new)
+      add_shared_def(db_id: 1)
+      add_def(:some_key, JSF::Forms::Form.new)
     end
-    assert_equal ["shared_schema_template_1", "some_key"], form.shared_definitions.keys
+    assert_equal ["shared_schema_template_1", "some_key"], form.shared_defs.keys
   end
 
-  def test_add_shared_definition
+  def test_add_shared_def
     form = JSF::Forms::FormBuilder.build do
-      add_shared_definition(db_id: 1)
+      add_shared_def(db_id: 1)
     end
 
-    assert_equal true, form['definitions'].one?{|k,v| v.is_a?(JSF::Forms::SharedRef) }
+    assert_equal true, form['$defs'].one?{|k,v| v.is_a?(JSF::Forms::SharedRef) }
   end
 
-  def test_get_shared_definition
+  def test_get_shared_def
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_shared_definition(db_id: db_id)
+      add_shared_def(db_id: db_id)
     end
 
-    assert_instance_of JSF::Forms::SharedRef, form.get_shared_definition(db_id: db_id)
+    assert_instance_of JSF::Forms::SharedRef, form.get_shared_def(db_id: db_id)
   end
 
-  def test_remove_shared_definition
+  def test_remove_shared_def
     db_id = 1
     form = JSF::Forms::FormBuilder.build do
-      add_shared_definition(db_id: db_id)
+      add_shared_def(db_id: db_id)
     end
 
-    form.remove_shared_definition(db_id: db_id)
+    form.remove_shared_def(db_id: db_id)
 
-    assert_empty form['definitions']
+    assert_empty form['$defs']
   end
 
   def test_add_shared_pair
@@ -328,7 +328,7 @@ class FormTest < Minitest::Test
       add_shared_pair(db_id: db_id, index: :append)
     end
 
-    shared_ref = form.get_shared_definition(db_id: db_id)
+    shared_ref = form.get_shared_def(db_id: db_id)
     assert_instance_of JSF::Forms::SharedRef, shared_ref
     assert_instance_of JSF::Forms::Field::Shared, shared_ref&.shared
   end
@@ -340,7 +340,7 @@ class FormTest < Minitest::Test
       remove_shared_pair(db_id: db_id)
     end
 
-    assert_empty form['definitions']
+    assert_empty form['$defs']
     assert_empty form['properties']
   end
 
@@ -591,7 +591,7 @@ class FormTest < Minitest::Test
   # def test_prepend_conditional_property
   # end
 
-  # def test_is_shared_definition?
+  # def test_is_shared_def?
   # end
 
   # def test_validation_schema
@@ -643,9 +643,9 @@ class FormTest < Minitest::Test
     #   assert_instance_of Integer, current_level
     # end
 
-    # ignore_definitions
+    # ignore_defs
     forms = []
-    form1.each_form(ignore_definitions: true) do |current_form|
+    form1.each_form(ignore_defs: true) do |current_form|
       forms.push(current_form)
     end
     assert_equal 6, forms.size
