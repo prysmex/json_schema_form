@@ -184,7 +184,7 @@ module JSF
           required(:type).filled(Types::String.enum('object'))
 
           if !is_subschema
-            required(:'$schema').filled(:string)
+            required(:'$schema').value(eql?: SCHEMA_VERSION)
             required(:availableLocales).value(:array?).array(:str?)
             required(:'$defs').value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
@@ -202,7 +202,7 @@ module JSF
                 # optional(:hidden).filled(:bool)
                 required(:sort).filled(:integer)
                 required(:i18n).hash do
-                  required(:title).hash do
+                  required(:label).hash do
                     AVAILABLE_LOCALES.each do |locale|
                       optional(locale.to_sym).maybe(:string)
                     end

@@ -16,7 +16,6 @@ module JSF
         # @return [Dry::Schema::JSON] Schema
         def dry_schema(passthru)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
-          exam = run_validation?(passthru, :exam, optional: true)
 
           Dry::Schema.define(parent: super) do
             required(:displayProperties).hash do
@@ -29,13 +28,6 @@ module JSF
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
                     optional(locale.to_sym).maybe(:string)
-                  end
-                end
-                if exam
-                  required(:title).hash do
-                    AVAILABLE_LOCALES.each do |locale|
-                      optional(locale.to_sym).maybe(:string)
-                    end
                   end
                 end
               end

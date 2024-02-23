@@ -31,13 +31,6 @@ module JSF
                     optional(locale.to_sym).maybe(:string)
                   end
                 end
-                if exam
-                  required(:title).hash do
-                    AVAILABLE_LOCALES.each do |locale|
-                      optional(locale.to_sym).maybe(:string)
-                    end
-                  end
-                end
               end
               required(:url).filled(:string)
               # required(:pictures).value(:array?).array(:str?)
