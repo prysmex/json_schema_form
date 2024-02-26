@@ -30,17 +30,6 @@ module JSF
         require 'dry-schema'
       end
 
-      # @param [Dry::Schema::JSON] dry_schema
-      # @param [Hash] hash_or_schema
-      # @return [Hash]
-      SCHEMA_ERRORS_PROC = Proc.new do |dry_schema, hash_or_schema|
-        dry_schema
-          .(hash_or_schema)
-          .errors
-          .to_h
-          .deep_dup # this is important, otherwise something gets polluted
-      end
-      
       # Returns a Dry::Schema.JSON that can validate a Hash according to the
       # JSON Schema spec.
       #
@@ -57,7 +46,11 @@ module JSF
       def dry_schema_errors(passthru)
         return {} unless run_validation?(passthru, :schema)
 
-        SCHEMA_ERRORS_PROC.call(dry_schema(passthru), self)
+        dry_schema(passthru)
+          .(as_json) # ActiveSupport::HashWithIndifferentAccess.new(to_h.as_json)
+          .errors
+          .to_h
+          .deep_dup # important, otherwise something was getting polluted
       end
 
       # Returns a hash of errors
@@ -90,13 +83,13 @@ module JSF
           'array' => ['array?']
         }
       
-        flat_predicate_names = types&.inject([]) do |acum, type|
+        flat_predicate_names = types&.each_with_object([]) do |type, acum|
           mapped_predicate = map[type]
           case mapped_predicate
           when ::Array
-            acum + mapped_predicate
+            acum.concat(mapped_predicate)
           else
-            acum + [mapped_predicate]
+            acum.push(mapped_predicate)
           end
         end || ['bool?','hash?','str?','float?','int?','nil?','array?']
         
@@ -115,15 +108,12 @@ module JSF
       #
       # @return [Hash]
       WITHOUT_SUBSCHEMAS_PROC = Proc.new do |hash|
-        hash.inject({}) do |acum, (k,v)|
+        hash.each do |k,v|
           if v.is_a?(::Array) && ARRAY_SUBSCHEMA_KEYS.include?(k)
-            acum[k] = []
+            hash[k] = []
           elsif v.is_a?(::Hash) && (HASH_SUBSCHEMA_KEYS.include?(k) ||  JSF::NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS.include?(k))
-            acum[k] = {}
-          else
-            acum[k] = v
+            hash[k] = {}
           end
-          acum
         end
       end
 
@@ -142,7 +132,7 @@ module JSF
 
           # need to clear data because jsonschema always tries to validate
           # for unknown keys inside hashes and arrays
-          before(:key_validator) do |result|
+          before(:key_validator) do |result| # result.to_h (shallow dup)
             WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
 
@@ -158,9 +148,9 @@ module JSF
             )
           end
           required(:type) if instance.size == 0
-          optional(:'$id').filled(:string)
-          optional(:'$anchor').filled(:string)
-          optional(:'$schema').filled(:string)
+          optional(:$id).filled(:string)
+          optional(:$anchor).filled(:string)
+          optional(:$schema).filled(:string)
           optional(:$title).maybe(:string)
           optional(:description).maybe(:string)
           optional(:default)

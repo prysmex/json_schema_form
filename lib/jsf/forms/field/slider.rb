@@ -21,14 +21,14 @@ module JSF
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
 
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
   
-            before(:key_validator) do |result|
-              duplicate = result.to_h.deep_dup
-              duplicate.dig(:displayProperties, :i18n, :enum)&.each do |lang, locales|
-                locales&.clear
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              result.to_h.deep_dup.tap do |h|
+                h.dig('displayProperties', 'i18n', 'enum')&.each do |locale, data|
+                  data&.clear
+                end
               end
-              duplicate
             end
   
             required(:displayProperties).hash do

@@ -102,14 +102,13 @@ module JSF
       DEFS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
-          value.inject({}) do |acum, (name, definition)|
+          value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
               attribute, 
               definition,
               instance,
               [:$defs, name]
             )
-            acum
           end
         end
       }
@@ -117,14 +116,13 @@ module JSF
       DEPENDENT_SCHEMAS_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
-          value.inject({}) do |acum, (name, definition)|
+          value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
               attribute, 
               definition,
               instance,
               [:dependentSchemas, name]
             )
-            acum
           end
         end
       }
@@ -142,14 +140,13 @@ module JSF
       PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
         case value
         when ::Hash
-          value.inject({}) do |acum, (name, definition)|
+          value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
               attribute, 
               definition,
               instance,
               [:properties, name]
             )
-            acum
           end
         end
       }

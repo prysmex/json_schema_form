@@ -39,14 +39,13 @@ module JSF
         Dry::Schema.JSON do
           config.validate_keys = true
   
-          before(:key_validator) do |result|
-            result.to_h.inject({}) do |acum, (k,v)|
-              if v.is_a?(::Array) && k == 'anyOf'
-                acum[k] = []
-              else
-                acum[k] = v
+          before(:key_validator) do |result| # result.to_h (shallow dup)
+            result.to_h.tap do |h|
+              h.each do |k,v|
+                if v.is_a?(::Array) && k == 'anyOf'
+                  h[k] = []
+                end
               end
-              acum
             end
           end
   

@@ -17,7 +17,7 @@ module JSF
           ref_presence = run_validation?(passthru, :ref_presence)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
             config.validate_keys = true
             if ref_presence
               required(:$ref).filled{ str? & format?(REF_REGEX) }

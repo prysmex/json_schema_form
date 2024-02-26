@@ -43,10 +43,10 @@ module JSF
         Dry::Schema.JSON do
           config.validate_keys = true
         
-          before(:key_validator) do |result|
-            hash = result.to_h
-            hash['then'] = {} if hash.key?('then')
-            hash
+          before(:key_validator) do |result| # result.to_h (shallow dup)
+            result.to_h.tap do |h|
+              h['then'] = {} if h.key?('then')
+            end
           end
         
           required(:if).hash do

@@ -41,12 +41,12 @@ module JSF
       def dry_schema(passthru)
         hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-        Dry::Schema.define(parent: super) do # is calling super needed here?
+        Dry::Schema.JSON do
 
-          before(:key_validator) do |result|
-            hash = result.to_h
-            hash['items'] = {} if hash.key?('items')
-            hash
+          before(:key_validator) do |result| # result.to_h (shallow dup)
+            result.to_h.tap do |h|
+              h['items'] = {} if h.key?('items')
+            end
           end
 
           required(:displayProperties).hash do

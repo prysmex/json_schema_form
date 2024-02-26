@@ -22,7 +22,7 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
 
           #TODO find a way to prevent enum from being valid
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
             if ref_presence
               required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             else

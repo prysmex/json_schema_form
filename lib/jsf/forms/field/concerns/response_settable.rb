@@ -17,12 +17,12 @@ module JSF
           # @param passthru [Hash{Symbol => *}] Options passed
           # @return [Dry::Schema::JSON] Schema
           def dry_schema(passthru)            
-            Dry::Schema.define(parent: super) do
-              before(:key_validator) do |result|
-                hash = result.to_h
-                d_p = hash['displayProperties']
-                d_p.delete('responseSetFilters') if d_p && d_p['responseSetFilters'].is_a?(::Array)
-                hash
+            Dry::Schema.JSON(parent: super) do
+              before(:key_validator) do |result| # result.to_h (shallow dup)
+                result.to_h.deep_dup.tap do |h|
+                  d_p = h['displayProperties']
+                  d_p.delete('responseSetFilters') if d_p && d_p['responseSetFilters'].is_a?(::Array)
+                end
               end
             end
           end

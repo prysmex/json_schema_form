@@ -17,7 +17,7 @@ module JSF
         def dry_schema(passthru)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(eql?: 'markdown')
               optional(:hidden).filled(:bool)

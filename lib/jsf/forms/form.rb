@@ -174,7 +174,7 @@ module JSF
         Dry::Schema.JSON do
           config.validate_keys = true
     
-          before(:key_validator) do |result|
+          before(:key_validator) do |result| # result.to_h (shallow dup)
             JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
           end
     
@@ -184,16 +184,16 @@ module JSF
           required(:type).filled(Types::String.enum('object'))
 
           if !is_subschema
-            required(:'$schema').value(eql?: SCHEMA_VERSION)
+            required(:$schema).value(eql?: SCHEMA_VERSION)
             required(:availableLocales).value(:array?).array(:str?)
-            required(:'$defs').value(:hash)
+            required(:$defs).value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
-            optional(:'title').maybe(:string) #ToDo deprecate?
+            optional(:title).maybe(:string) #ToDo deprecate?
             if scoring
               required(:hasScoring) { bool? }
             end
             if exam
-              required(:'$id').value(eql?: parent_key)
+              required(:$id).value(eql?: parent_key)
               required(:displayProperties).hash do
                 required(:component).value(eql?: 'exam')
                 required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
@@ -210,10 +210,10 @@ module JSF
                 end
               end
             else
-              optional(:'$id').filled(:string)
+              optional(:$id).filled(:string)
             end
           else
-            # optional(:'$schema').filled(:string)
+            # optional(:$schema).filled(:string)
           end
     
         end

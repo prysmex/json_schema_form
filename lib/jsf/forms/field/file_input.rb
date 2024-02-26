@@ -18,7 +18,7 @@ module JSF
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
 
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(eql?: 'file_input')
               optional(:hidden).filled(:bool)
@@ -43,7 +43,7 @@ module JSF
             end
             required(:items).hash do
               required(:format).filled(Types::String.enum('uri'))
-              required(:'type').filled(Types::String.enum('string'))
+              required(:type).filled(Types::String.enum('string'))
               required(:pattern).value(eql?: '^http')
             end
             optional(:maxItems)

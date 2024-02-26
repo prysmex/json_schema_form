@@ -18,7 +18,7 @@ module JSF
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           exam = run_validation?(passthru, :exam, optional: true)
 
-          Dry::Schema.define(parent: super) do
+          Dry::Schema.JSON(parent: super) do
             required(:displayProperties).hash do
               required(:component).value(eql?: 'video')
               optional(:hidden).filled(:bool)
