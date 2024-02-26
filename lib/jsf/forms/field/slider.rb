@@ -26,7 +26,7 @@ module JSF
             before(:key_validator) do |result| # result.to_h (shallow dup)
               result.to_h.deep_dup.tap do |h|
                 h.dig('displayProperties', 'i18n', 'enum')&.each do |locale, data|
-                  data&.clear
+                  data&.clear if data.respond_to?(:clear)
                 end
               end
             end

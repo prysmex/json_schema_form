@@ -1,6 +1,7 @@
 {
   // "$id": "",
   "displayProperties": {
+    // "audience": [],
     "component": "signature",
     // "hidden": false,
     // "hideOnCreate": false,

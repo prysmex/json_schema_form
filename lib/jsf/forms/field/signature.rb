@@ -20,6 +20,11 @@ module JSF
 
           Dry::Schema.JSON(parent: super) do
             required(:displayProperties).hash do
+              optional(:audience).array(:hash) do
+                required(:field)
+                required(:values)
+                required(:type)
+              end
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
               end
