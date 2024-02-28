@@ -12,6 +12,21 @@ module JSF
         ###VALIDATIONS####
         ##################
 
+        # @param passthru [Hash{Symbol => *}]
+        def errors(**passthru)
+          errors_hash = super
+
+          if (required? && !self[:required].present?) || (!required? && self[:required].present?)
+            add_error_on_path(
+              errors_hash,
+              ['required'],
+              'must match parent required'
+            )
+          end
+
+          errors_hash
+        end
+
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
         def dry_schema(passthru)
