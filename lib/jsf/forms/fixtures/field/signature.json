@@ -18,6 +18,12 @@
     }
   },
   "properties": {
+    "by_id": {
+      "type": "number"
+    },
+    "db_identifier": {
+      "type": "number"
+    },
     "name": {
       "type": "string"
     },
@@ -25,9 +31,6 @@
       "format": "uri",
       "type": "string",
       "pattern": "^http"
-    },
-    "db_identifier": {
-      "type": "number"
     }
   },
   "additionalProperties": false,

@@ -44,6 +44,9 @@ module JSF
               end
             end
             required(:properties).hash do
+              required(:by_id).hash do
+                required(:type).value(eql?: 'number')
+              end
               required(:db_identifier).hash do
                 required(:type).value(eql?: 'number')
               end
@@ -60,7 +63,7 @@ module JSF
             if extras
               optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
             end
-            required(:required).value(:array, min_size?: 0, max_size?: 3).each(:str?)
+            required(:required).value(:array, min_size?: 0, max_size?: 4).each(included_in?: %w[by_id db_identifier name signature])
             required(:type)
           end
         end

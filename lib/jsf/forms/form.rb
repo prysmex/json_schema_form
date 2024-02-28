@@ -1608,6 +1608,10 @@ module JSF
             path = v.class::RESPONSE_SET_PATH
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
             SuperHash::Utils.bury(v, *path, ref) if ref
+          when JSF::Forms::Field::Signature
+            v['properties']['by_id'] = {
+              type: 'number'
+            }
           when JSF::Forms::Field::Shared
             path = [:$ref]
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')

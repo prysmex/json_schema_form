@@ -9,7 +9,7 @@ module JSF
     class Document < BaseHash
       instance_variable_set('@allow_dynamic_attributes', true)
 
-      ROOT_KEYWORDS = ['meta'].freeze
+      ROOT_KEYWORDS = %w[meta].freeze
 
       # Filters keywords to return hash that can be validated against JSF::Forms::Form
       #
