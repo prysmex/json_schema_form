@@ -1541,34 +1541,21 @@ module JSF
         data
       end
 
-      def handle_signatures(document, is_create:, callback: nil, **)
-        names_to_set = {}
-        audiences = {}
-      
+      # @return [void]
+      def handle_document_changes(new_document, previous_document, is_create:, callback: nil, **)
         each_form_with_document(
-          document,
+          new_document,
           is_create:,
           **
         ) do |form, _condition, _current_level, current_doc, _current_empty_doc, document_path|
           form[:properties].each do |key, property|
-            next unless property.is_a?(JSF::Forms::Field::Signature) && property.visible(is_create:)
-            callback&.call(document_path, key, current_doc)
+            val = current_doc[key]
+            next unless val && previous_document&.dig(*document_path, key) != val
+            next unless property.visible(is_create:) # always?
 
-            next unless (id = current_doc.dig(key, 'db_identifier'))
-    
-            prop_path = document_path + [key]
-    
-            # names_to_set
-            names_to_set[prop_path] = id
-    
-            next unless (audience = property.dig('displayProperties', 'audience')).present?
-    
-            # audiences
-            audiences[audience] = prop_path
+            yield(form, key, property, current_doc, document_path)
           end
         end
-
-        yield names_to_set, audiences
       end
 
       # Mutates the entire Form to a json schema compliant

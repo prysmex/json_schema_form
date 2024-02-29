@@ -1363,7 +1363,7 @@ class FormTest < Minitest::Test
   # def test_migrate
   # end
 
-  # def test_handle_signatures
+  # def test_handle_document_changes
   # end
 
 end
