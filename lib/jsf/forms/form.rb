@@ -1541,7 +1541,7 @@ module JSF
         data
       end
 
-      def handle_signatures(document, is_create:, **)
+      def handle_signatures(document, is_create:, callback: nil, **)
         names_to_set = {}
         audiences = {}
       
@@ -1552,6 +1552,8 @@ module JSF
         ) do |form, _condition, _current_level, current_doc, _current_empty_doc, document_path|
           form[:properties].each do |key, property|
             next unless property.is_a?(JSF::Forms::Field::Signature) && property.visible(is_create:)
+            callback&.call(document_path, key, current_doc)
+
             next unless (id = current_doc.dig(key, 'db_identifier'))
     
             prop_path = document_path + [key]

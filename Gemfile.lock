@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    json_schema_form (0.15.18)
+    json_schema_form (0.15.19)
       activesupport (~> 6)
       dry-schema (~> 1.13)
       json_schemer (= 2.1.1)
