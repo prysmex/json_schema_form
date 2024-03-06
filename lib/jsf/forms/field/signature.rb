@@ -34,11 +34,22 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
 
           Dry::Schema.JSON(parent: super) do
+
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              result.to_h.deep_dup.tap do |h|
+                if (audience = h&.dig('displayProperties', 'audience'))
+                  audience.each do |v|
+                    v['values'] = [] if v['values'].is_a?(::Array)
+                  end
+                end
+              end
+            end
+
             required(:displayProperties).hash do
               optional(:audience).array(:hash) do
                 required(:field)
                 required(:values)
-                required(:type)
+                optional(:type)
               end
               if hide_on_create
                 optional(:hideOnCreate).filled(:bool)
