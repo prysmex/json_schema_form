@@ -73,6 +73,9 @@ module JSF
           optional(:minItems).filled(:integer)
           required(:items).hash
           required(:type)
+          optional(:$id).filled(:string)
+          optional(:title).maybe(:string)
+          # optional(:default)
         end
       end
 
