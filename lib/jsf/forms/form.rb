@@ -27,6 +27,7 @@ module JSF
       include JSF::Validations::DrySchemaValidatable
       include JSF::Core::Buildable
       include JSF::Core::Type::Objectable
+      include JSF::Forms::Concerns::DisplayProperties
     
       set_strict_type('object')
 
@@ -169,7 +170,6 @@ module JSF
         is_subschema = meta[:is_subschema]
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
-        parent_key = self.key_name if exam
 
         Dry::Schema.JSON do
           config.validate_keys = true
@@ -233,6 +233,16 @@ module JSF
       # @return [Hash{Symbol => *}] Errors
       def errors(**passthru)
         errors_hash = super
+
+        if run_validation?(passthru, :subschema_properties) &&
+           meta[:is_subschema] &&
+           properties.none?{|_k, v| v.visible(is_create: false) }
+          add_error_on_path(
+            errors_hash,
+            ['properties'],
+            'at least 1 property must exist'
+          )
+        end
 
         # validate sorting
         if run_validation?(passthru, :sorting)
@@ -331,25 +341,30 @@ module JSF
       # respond to 'response_set', also check that response set is
       # valid for locale
       #
+      # If no properties are present, returns false unless subschema
+      #
       # @param locale [String,Symbol] locale
       # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_defs: false)
-        prop = nil
+        return false if dig('displayProperties', 'component') == 'exam' && i18n_label(locale).to_s.empty?
+
+        # require at least 1 property for root schemas
+        any_property = meta[:is_subschema]
 
         # check properties and their response_sets
         each_form(ignore_sections:, ignore_defs:) do |form|
-          prop = form&.properties&.any? do |k,v|
+          return false if form.properties.any? do |k,v|
+            any_property = true
+
             if v.respond_to?(:response_set)
               !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
             else
               !v.valid_for_locale?(locale)
             end
           end
-    
-          break prop if prop
         end
 
-        !prop
+        any_property
       end
     
       ##############

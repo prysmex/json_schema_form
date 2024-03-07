@@ -18,7 +18,9 @@ class FormbuilderTest < Minitest::Test
         {trait: :failing, errors_args: {optional_if: ->(_,k) { k == :failing }}},
         {trait: :scoring_and_failing , errors_args: {optional_if: ->(_,k) { %i[scoring failing].include?(k) }}},
       ],
-      JSF::Forms::Section => [],
+      JSF::Forms::Section => [
+        {trait: nil, errors_args: { unless: ->(_, k) { k == :subschema_properties } }},
+      ],
 
       # fields
       JSF::Forms::Field::Checkbox => [
@@ -45,18 +47,18 @@ class FormbuilderTest < Minitest::Test
     }
     
     klasses.each do |klass, traits_array|
-      skip_valid_for_locale = [JSF::Forms::SharedRef, JSF::Forms::Section].include?(klass)
+      assert_value = ![JSF::Forms::Form].include?(klass) # expected to be false
 
       if traits_array.empty?
         hash = JSF::Forms::FormBuilder.example_for(klass)
         instance = klass.new(hash)
-        assert_equal true, instance.valid_for_locale? unless skip_valid_for_locale
+        assert_equal assert_value, instance.valid_for_locale?
         assert_empty instance.errors
       else
         traits_array.each do |obj|
           hash = JSF::Forms::FormBuilder.example_for(klass, obj[:trait])
           instance = klass.new(hash)
-          assert_equal true, instance.valid_for_locale? unless skip_valid_for_locale
+          assert_equal assert_value, instance.valid_for_locale?
           assert_empty instance.errors(**obj[:errors_args])
         end
       end

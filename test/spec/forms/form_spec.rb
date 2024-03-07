@@ -62,6 +62,21 @@ class FormTest < Minitest::Test
 
   # errors
 
+  def test_subschema_properties_validation
+    error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :subschema_properties }
+
+    form = JSF::Forms::Form.new
+    assert_empty form.errors(if: error_proc)
+
+    form.meta[:is_subschema] = true
+    refute_empty form.errors(if: error_proc)
+
+    form = JSF::Forms::FormBuilder.build(form) do
+      append_property(:switch_1, example('switch'))
+    end
+    assert_empty form.errors(if: error_proc)
+  end
+
   def test_schema_key_validations
     error_proc = ->(obj, key) { obj.is_a?(JSF::Forms::Form) && key == :schema }
 
@@ -211,18 +226,8 @@ class FormTest < Minitest::Test
   end
 
   def test_valid_subschema_form
-    form = JSF::Forms::Form.new(
-      {
-        "required": [],
-        "properties": {},
-        "allOf": [],
-        "type": "object"
-      },
-      meta: {
-        is_subschema: true
-      }
-    )
-    assert_empty form.errors
+    form = JSF::Forms::Form.new({}, meta: { is_subschema: true })
+    assert_empty form.errors(unless: ->(_, k) { k == :subschema_properties })
   end
 
   # valid_for_locale?
@@ -270,6 +275,7 @@ class FormTest < Minitest::Test
       add_response_set(:response_set_1, example('response_set')).tap do |response_set|
         response_set.add_response(example('response'))
       end
+      append_property :dependent_markdown, example('markdown')
     end
     assert_equal true, form.valid_for_locale?
     form.response_sets[:response_set_1][:anyOf].each{|r| r.set_translation(nil) }

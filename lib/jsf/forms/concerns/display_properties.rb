@@ -15,7 +15,7 @@ module JSF
         #
         # @return [Boolean] true when hidden
         def hidden?
-          !!self.dig(:displayProperties, :hidden)
+          !!dig(:displayProperties, :hidden)
         end
 
         # Set hidden
@@ -30,7 +30,7 @@ module JSF
         #
         # @return [Boolean] value
         def hideOnCreate?
-          !!self.dig(:displayProperties, :hideOnCreate)
+          !!dig(:displayProperties, :hideOnCreate)
         end
 
         # Set hidden
@@ -45,7 +45,7 @@ module JSF
         #
         # @return [<Type>] <description>
         def sort
-          self.dig(:displayProperties, :sort)
+          dig(:displayProperties, :sort)
         end
 
         # Set sort
@@ -60,7 +60,7 @@ module JSF
         # @param [String,Symbol] locale
         # @return [String]
         def i18n_label(locale = DEFAULT_LOCALE)
-          self.dig(:displayProperties, :i18n, :label, locale)
+          dig(:displayProperties, :i18n, :label, locale)
         end
   
         # Set the i18n label
@@ -75,6 +75,11 @@ module JSF
         # @return [Boolean]
         def visible(is_create:)
           !self.hidden? && !(is_create && self.hideOnCreate?)
+        end
+
+        # @return [String]
+        def component
+          dig(:displayProperties, :component)
         end
 
       end

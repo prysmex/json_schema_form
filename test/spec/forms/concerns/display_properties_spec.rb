@@ -46,4 +46,12 @@ class DisplayPropertiesTest < Minitest::Test
     assert_equal '__some_label__', instance.i18n_label
   end
 
+  def test_component
+    SampleSchema.include(JSF::Forms::Concerns::DisplayProperties)
+    instance = SampleSchema.new
+
+    SuperHash::Utils.bury(instance, :displayProperties, :component, 'test')
+    assert_equal 'test', instance.component
+  end
+
 end

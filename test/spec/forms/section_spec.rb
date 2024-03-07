@@ -33,13 +33,13 @@ class SectionTest < Minitest::Test
     instance[:items] = {}
     assert_equal true, instance.valid_for_locale?
 
-    # valid form
+    # valid property
     JSF::Forms::FormBuilder.build(instance[:items]) do
       append_property(:switch_1, example('switch'))
     end
     assert_equal true, instance.valid_for_locale?
 
-    # invalid form
+    # invalid property
     instance[:items].get_property('switch_1').set_label_for_locale(nil)
     assert_equal false, instance.valid_for_locale?
 

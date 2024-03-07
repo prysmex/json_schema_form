@@ -128,6 +128,7 @@ module JSF
         else
           return false if passthru[:if]&.call(self, validation_key) == false
           return false if passthru[:unless]&.call(self, validation_key) == true
+          # todo except, only
   
           true
         end

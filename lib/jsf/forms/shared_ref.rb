@@ -68,6 +68,11 @@ module JSF
         self[:$ref] = id
       end
 
+      # @return [Boolean]
+      def valid_for_locale?(locale=nil)
+        true
+      end
+
     end
 
   end
