@@ -1,6 +1,7 @@
 {
   "const": "no_score_1",
   "displayProperties": {
+    // "color": null,
     "i18n": {
       "en": "no_score_1_en",
       "es": "no_score_1_es"

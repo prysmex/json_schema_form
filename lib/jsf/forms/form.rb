@@ -193,7 +193,7 @@ module JSF
               required(:hasScoring) { bool? }
             end
             if exam
-              required(:$id).value(:str?)
+              required(:$id).filled{ str? & format?(/^((?!#).)*$/) } # does not contain '#'
               required(:displayProperties).hash do
                 required(:component).value(eql?: 'exam')
                 required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)

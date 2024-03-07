@@ -42,6 +42,7 @@ module JSF
         hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
         Dry::Schema.JSON do
+          config.validate_keys = true
 
           before(:key_validator) do |result| # result.to_h (shallow dup)
             result.to_h.tap do |h|
@@ -70,12 +71,7 @@ module JSF
           end
           optional(:maxItems).filled(:integer)
           optional(:minItems).filled(:integer)
-          required(:items).hash do
-            # optional(:properties)
-            # optional(:allOf)
-            # optional(:required)
-            # required(:type).value(eql?: 'object')
-          end
+          required(:items).hash
           required(:type)
         end
       end
