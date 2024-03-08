@@ -272,7 +272,7 @@ module JSF
 
           # ensure property $id key matches with field id
           if run_validation?(passthru, :match_key)
-            if field['$id'] != "#/properties/#{k}"
+            if field['$id'] && field['$id'] != "#/properties/#{k}"
               add_error_on_path(
                 errors_hash,
                 ['properties', k, '$id'],
