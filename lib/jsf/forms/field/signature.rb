@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -7,10 +9,10 @@ module JSF
         # include JSF::Core::Type::Objectable
 
         set_strict_type('object')
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}]
         def errors(**passthru)
@@ -34,7 +36,6 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
 
           Dry::Schema.JSON(parent: super) do
-
             before(:key_validator) do |result| # result.to_h (shallow dup)
               result.to_h.deep_dup.tap do |h|
                 if (audience = h&.dig('displayProperties', 'audience'))
@@ -51,9 +52,7 @@ module JSF
                 required(:values)
                 optional(:type)
               end
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -86,17 +85,15 @@ module JSF
               end
             end
             required(:additionalProperties).value(eql?: false)
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:required).value(:array, min_size?: 0, max_size?: 4).each(included_in?: %w[by_id db_identifier name signature])
             required(:type)
           end
         end
 
-        ##################
-        #####METHODS######
-        ##################
+        ###########
+        # METHODS #
+        ###########
 
         def sample_value
           string_length = 8
@@ -105,7 +102,7 @@ module JSF
           {
             'db_identifier' => 2,
             'name' => string,
-            'signature' => "https://picsum.photos/#{rand(10...500)}",
+            'signature' => "https://picsum.photos/#{rand(10...500)}"
           }
         end
 

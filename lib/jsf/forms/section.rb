@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     class Section < BaseHash
@@ -24,17 +26,17 @@ module JSF
         raise StandardError.new("JSF::Forms::Section transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
 
-      def initialize(obj={}, options={})
+      def initialize(obj = {}, options = {})
         options = {
           attributes_transform_proc: JSF::Forms::Section::ATTRIBUTE_TRANSFORM
         }.merge(options)
-    
+
         super(obj, options)
       end
 
-      ##################
-      ###VALIDATIONS####
-      ##################
+      ###############
+      # VALIDATIONS #
+      ###############
 
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
@@ -53,9 +55,7 @@ module JSF
           required(:displayProperties).hash do
             required(:component).value(eql?: 'section')
             optional(:hidden).filled(:bool)
-            if hide_on_create
-              optional(:hideOnCreate).filled(:bool)
-            end
+            optional(:hideOnCreate).filled(:bool) if hide_on_create
             required(:i18n).hash do
               required(:label).hash do
                 AVAILABLE_LOCALES.each do |locale|
@@ -87,9 +87,9 @@ module JSF
           )
       end
 
-      ##############
-      ###METHODS####
-      ##############
+      ###########
+      # METHODS #
+      ###########
 
       def form
         self[:items]

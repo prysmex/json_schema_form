@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Validations
 
@@ -26,7 +28,7 @@ module JSF
     #
     module DrySchemaValidatable
 
-      def self.included(base)
+      def self.included(_base)
         require 'dry-schema'
       end
 
@@ -73,7 +75,7 @@ module JSF
     module DrySchemaValidated
       include DrySchemaValidatable
 
-      TYPES_TO_PREDICATES = Proc.new do |ctx, types|
+      TYPES_TO_PREDICATES = proc do |ctx, types|
         map = {
           'boolean' => ['bool?'],
           'object' => ['hash?'],
@@ -82,7 +84,7 @@ module JSF
           'null' => ['nil?'],
           'array' => ['array?']
         }
-      
+
         flat_predicate_names = types&.each_with_object([]) do |type, acum|
           mapped_predicate = map[type]
           case mapped_predicate
@@ -91,8 +93,8 @@ module JSF
           else
             acum.push(mapped_predicate)
           end
-        end || ['bool?','hash?','str?','float?','int?','nil?','array?']
-        
+        end || %w[bool? hash? str? float? int? nil? array?]
+
         flat_predicate_names&.each_with_index&.inject(nil) do |acum_predicate, (predicate_name, i)|
           if i == 0
             ctx.send(predicate_name)
@@ -107,11 +109,11 @@ module JSF
       # for unknown keys inside hashes and arrays
       #
       # @return [Hash]
-      WITHOUT_SUBSCHEMAS_PROC = Proc.new do |hash|
-        hash.each do |k,v|
+      WITHOUT_SUBSCHEMAS_PROC = proc do |hash|
+        hash.each do |k, v|
           if v.is_a?(::Array) && ARRAY_SUBSCHEMA_KEYS.include?(k)
             hash[k] = []
-          elsif v.is_a?(::Hash) && (HASH_SUBSCHEMA_KEYS.include?(k) ||  JSF::NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS.include?(k))
+          elsif v.is_a?(::Hash) && (HASH_SUBSCHEMA_KEYS.include?(k) || JSF::NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS.include?(k))
             hash[k] = {}
           end
         end
@@ -123,11 +125,10 @@ module JSF
       # @param [Hash] passthru
       #
       # @return [Dry::Schema.JSON]
-      def dry_schema(passthru)
+      def dry_schema(_passthru)
         instance = self
 
         Dry::Schema.JSON do
-
           config.validate_keys = true
 
           # need to clear data because jsonschema always tries to validate
@@ -161,8 +162,8 @@ module JSF
           optional(:allOf).array(:hash)
           optional(:anyOf).array(:hash)
           optional(:oneOf).array(:hash)
-          optional(:not)#.value(:hash)
-          optional(:$ref)#.value(:string)
+          optional(:not) # .value(:hash)
+          optional(:$ref) # .value(:string)
 
           if instance.types&.include?('object') || instance.types.nil?
             optional(:required).value(:array?).array(:str?)
@@ -171,8 +172,8 @@ module JSF
           end
 
           if instance.types&.include?('array') || instance.types.nil?
-            optional(:items)# todo value type
-            optional(:contains)# todo value type
+            optional(:items) # TODO: value type
+            optional(:contains) # TODO: value type
             optional(:additionalItems) { bool? | hash? }
             optional(:minItems).filled(:integer)
             optional(:maxItems).filled(:integer)
@@ -193,13 +194,13 @@ module JSF
             optional(:exclusiveMinimum).filled(:integer)
             optional(:exclusiveMaximum).filled(:integer)
           end
-          
+
           if instance.types
-            optional(:const){
+            optional(:const) {
               instance.class::TYPES_TO_PREDICATES.call(self, instance.types)
             }
-            optional(:enum){
-              array? & 
+            optional(:enum) {
+              array? &
               each {
                 instance.class::TYPES_TO_PREDICATES.call(self, instance.types)
               }
@@ -208,7 +209,6 @@ module JSF
             optional(:const)
             optional(:enum).value(:array?)
           end
-
         end
       end
 

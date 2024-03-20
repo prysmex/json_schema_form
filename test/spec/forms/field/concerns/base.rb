@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require_relative 'field_example_helpers'
 
@@ -10,22 +12,25 @@ module BaseFieldTests
 
   include FieldExampleHelpers
 
-  ##################
-  ###VALIDATIONS####
-  ##################
+  ###############
+  # VALIDATIONS #
+  ###############
 
   # overriden in Static, Switch, Slider
   def test_valid_for_locale
-    example = self.tested_klass_example
+    example = tested_klass_example
     instance = tested_klass.new(example)
 
     instance.set_label_for_locale('opciones')
+
     assert_equal true, instance.valid_for_locale?
 
     instance.set_label_for_locale('')
+
     assert_equal false, instance.valid_for_locale?
 
     instance.set_label_for_locale(nil)
+
     assert_equal false, instance.valid_for_locale?
 
     assert_equal false, instance.valid_for_locale?(:random)
@@ -45,9 +50,9 @@ module BaseFieldTests
   end
 
   def test_id_regex
-    assert_nil tested_klass.new({'$id': '#/properties/hello_10-wow'}).errors[:'$id']
-    refute_nil tested_klass.new({'$id': '/$defs/hello'}).errors[:'$id']
-    refute_nil tested_klass.new({'$id': '#/$defs/hello'}).errors[:'$id']
+    assert_nil tested_klass.new({'$id': '#/properties/hello_10-wow'}).errors[:$id]
+    refute_nil tested_klass.new({'$id': '/$defs/hello'}).errors[:$id]
+    refute_nil tested_klass.new({'$id': '#/$defs/hello'}).errors[:$id]
   end
 
   # def test_hidden_and_required
@@ -77,7 +82,7 @@ module BaseFieldTests
   # end
 
   def test_verify_default
-    example = self.tested_klass_example
+    example = tested_klass_example
     prop = tested_klass.new(example)
 
     return unless prop.key?('type')
@@ -86,19 +91,20 @@ module BaseFieldTests
     prop['default'] = case prop['type']
     when 'array'
       {}
-    else 
+    else
       []
     end
 
-    refute_empty prop.errors(if: ->(obj, key) { key == :verify_default })
+    refute_empty prop.errors(if: ->(_obj, key) { key == :verify_default })
   end
 
-  ##############
-  ###METHODS####
-  ##############
+  ###########
+  # METHODS #
+  ###########
 
   def test_scored?
-    instance = tested_klass.new(self.tested_klass_example)
+    instance = tested_klass.new(tested_klass_example)
+
     assert_equal false, instance.scored?
   end
 

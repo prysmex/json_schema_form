@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # concerns
 require_relative 'field/concerns/base'
 require_relative 'field/concerns/response_settable'

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Concerns
@@ -54,7 +56,7 @@ module JSF
         def sort=(value)
           SuperHash::Utils.bury(self, :displayProperties, :sort, value)
         end
-        
+
         # Get the i18n label
         #
         # @param [String,Symbol] locale
@@ -62,7 +64,7 @@ module JSF
         def i18n_label(locale = DEFAULT_LOCALE)
           dig(:displayProperties, :i18n, :label, locale)
         end
-  
+
         # Set the i18n label
         #
         # @param [String,Symbol] locale
@@ -74,7 +76,7 @@ module JSF
 
         # @return [Boolean]
         def visible(is_create:)
-          !self.hidden? && !(is_create && self.hideOnCreate?)
+          !hidden? && !(is_create && hideOnCreate?)
         end
 
         # @return [String]

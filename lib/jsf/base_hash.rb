@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'super_hash'
 
 # base class used for all schema objects inside this gem
@@ -21,34 +23,35 @@ module JSF
 
   NONE_SUBSCHEMA_HASH_KEYS_WITH_UNKNOWN_KEYS = [
     'patternProperties'
-  ]
+  ].freeze
 
-  ARRAY_SUBSCHEMA_KEYS = [
-    'allOf',
-    'anyOf',
-    'oneOf',
-    'prefixItems'
+  ARRAY_SUBSCHEMA_KEYS = %w[
+    allOf
+    anyOf
+    oneOf
+    prefixItems
   ].freeze
 
   class BaseHash < ActiveSupport::HashWithIndifferentAccess
     include SuperHash::Hasher
 
     attr_reader :init_options
-  
+
     # prevent bug when an attribute has a default Proc and the attribute is a string but passed value
     # is a symbol
     #
     # @example
     #   attribute 'allOf', default: ->(data) { [].freeze } # passed data => {allOf: []}
-    def initialize(init_value, init_options={})
-
+    def initialize(init_value, init_options = {})
       # save init_options so we can pass them on @#dup
       @init_options = init_options
 
-      init_value&.transform_keys!{|k| convert_key(k) } unless init_value.is_a?(ActiveSupport::HashWithIndifferentAccess)
+      unless init_value.is_a?(ActiveSupport::HashWithIndifferentAccess)
+        init_value&.transform_keys! { |k| convert_key(k) }
+      end
       super(init_value, init_options)
     end
-  
+
     # ensure key is string since the beggining since :SuperHash::Hasher methods are called
     # before ActiveSupport::HashWithIndifferentAccess logic happens.
     #
@@ -67,13 +70,13 @@ module JSF
     # @see https://github.com/rails/rails/blob/v6.1.4.1/activesupport/lib/active_support/hash_with_indifferent_access.rb#L254
     #
     def dup
-      new_hash = self.class.new(self.to_hash, self.init_options).tap do |new_hash|
-        set_defaults(new_hash)
+      new_hash = self.class.new(to_hash, init_options)
+      set_defaults(new_hash)
+
+      new_hash.each_key do |k|
+        new_hash.delete(k) unless key?(k)
       end
 
-      new_hash.each do |k,v|
-        new_hash.delete(k) unless self.key?(k)
-      end
       new_hash
     end
 
@@ -84,57 +87,60 @@ module JSF
     #
     # Convert to a regular hash with string keys.
     def to_hash
-      _new_hash = ::Hash.new
-      # set_defaults(_new_hash)
+      new_hash = {}
+      # set_defaults(new_hash)
 
       each do |key, value|
-        _new_hash[key] = convert_value(value, conversion: :to_hash)
+        new_hash[key] = convert_value(value, conversion: :to_hash)
       end
-      _new_hash
+
+      new_hash
     end
 
     # Executes a method recursively to object and all its subschemas
     #
     # @param [String, Symbol] method
     # @return [void]
-    def send_recursive(method, *args, **kwargs, &block)
+    def send_recursive(method, ...)
+      send(method, ...) if respond_to?(method)
 
-      send(method, *args, **kwargs, &block) if self.respond_to?(method)
-
-      self.each do |key, value|
-
+      each do |key, value|
         if key == 'additionalProperties'
           next if !value.is_a?(::Hash)
-          self[:additionalProperties]&.each do |k,v|
-            v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
+
+          self[:additionalProperties]&.each_value do |v|
+            v.send_recursive(method, ...) if v.respond_to?(:send_recursive)
           end
         elsif key == '$defs'
-          self[:$defs]&.each do |k,v|
-            v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
+          self[:$defs]&.each_value do |v|
+            v.send_recursive(method, ...) if v.respond_to?(:send_recursive)
           end
         elsif key == 'dependentSchemas'
-          self[:dependentSchemas]&.each do |k,v|
+          self[:dependentSchemas]&.each_value do |v|
             next if !v.is_a?(::Hash)
-            v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
+
+            v.send_recursive(method, ...) if v.respond_to?(:send_recursive)
           end
         elsif key == 'properties'
-          self[:properties]&.each do |k,v|
-            v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
+          self[:properties]&.each_value do |v|
+            v.send_recursive(method, ...) if v.respond_to?(:send_recursive)
           end
         else
           case value
           when ::Array
             next if !ARRAY_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
+
             value.each do |v|
-              v.send_recursive(method, *args, **kwargs, &block) if v.respond_to?(:send_recursive)
+              v.send_recursive(method, ...) if v.respond_to?(:send_recursive)
             end
           else
             next if !HASH_SUBSCHEMA_KEYS.include?(key) # assume it is a Schema
-            value.send_recursive(method, *args, **kwargs, &block) if value.respond_to?(:send_recursive)
+
+            value.send_recursive(method, ...) if value.respond_to?(:send_recursive)
           end
         end
       end
     end
-  
+
   end
 end

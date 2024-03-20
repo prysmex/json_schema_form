@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module JSF
   module Core
-    
+
     # Contains a collection of modules that organize methods by 'type'
     # This is done so we can more selectively add methods to specific classes
     #
@@ -30,10 +32,10 @@ module JSF
       #
       module Objectable
 
-        #####################
-        #property management#
-        #####################
-  
+        #######################
+        # property management #
+        #######################
+
         # Adds a property to the 'properties' hash. If 'required' option is passed,
         # it will also add the property to the 'required' key
         #
@@ -43,27 +45,25 @@ module JSF
         # @param definition [Hash] the schema to add
         # @param options[:required] [Boolean] if the property should be required
         # @return [Object] added property
-        def add_property(name, definition, options={}, &block)
+        def add_property(name, definition, options = {}, &)
           name = name.to_s
           self[:properties] ||= {}
           StandardError.new("key #{name} already exists") if self[:properties]&.key?(name)
 
           # definition = definition.deep_dup
-          definition[:'$id'] = "#/properties/#{name}" #TODO this currently only works for main form
+          definition[:$id] = "#/properties/#{name}" # TODO: this currently only works for main form
           self[:properties].merge!({ name => definition })
           self[:properties] = self[:properties] # trigger transforms
-          
+
           # add to required array
-          if options[:required]
-            self[:required] = ((self[:required] || []) + [name]).uniq
-          end
+          self[:required] = ((self[:required] || []) + [name]).uniq if options[:required]
 
           added_property = self[:properties][name]
-          added_property.instance_exec(added_property, self, &block) if block_given?
+          added_property.instance_exec(added_property, self, &) if block_given?
           # yield(added_property, name.to_s, self) if block_given?
           added_property
         end
-  
+
         # Removes from 'properties' and 'required'
         #
         # @todo handle if other property depends on this one
@@ -73,13 +73,13 @@ module JSF
         def remove_property(id)
           id = id.to_s
           self[:properties].delete(id) if self[:properties]
-          self[:required].reject!{|name| name == id} if self[:required]
+          self[:required].reject! { |name| name == id } if self[:required]
           self
         end
 
-        #######################
-        #definition management#
-        #######################
+        #########################
+        # definition management #
+        #########################
 
         # Adds a definition to the '$defs' hash
         #
@@ -110,11 +110,11 @@ module JSF
           self[:$defs].delete(key) if self[:$defs]
           self
         end
-  
-        ##########
-        #required#
-        ##########
-        
+
+        ############
+        # required #
+        ############
+
         # Adds a property to 'required' key
         #
         # @param name [Symbol] name of key
@@ -122,16 +122,17 @@ module JSF
         def add_required(name)
           self[:required] = (self[:required] || []).push(name.to_s).uniq
         end
-        
+
         # Removes a property to 'required' key
         #
         # @param name [Symbol] name of key
         # @return [Array] required key
         def remove_required(name)
           return unless self[:required]
-          self[:required].reject!{|n| n == name.to_s }
+
+          self[:required].reject! { |n| n == name.to_s }
         end
-  
+
       end
 
       # Methods for all schemas with json-schema 'string' type

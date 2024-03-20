@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'time'
 
 module JSF
@@ -7,12 +9,12 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Stringable
-  
+
         set_strict_type('string')
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -24,9 +26,7 @@ module JSF
             required(:displayProperties).hash do
               required(:component).value(eql?: 'date_input')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -41,17 +41,15 @@ module JSF
               end
             end
             optional(:initExpr)
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:format).filled(Types::String.enum('date-time'))
             required(:type)
           end
         end
-  
-        ##############
-        ###METHODS####
-        ##############
+
+        ###########
+        # METHODS #
+        ###########
 
         def sample_value
           half_range_seconds = 60 * 60 * 24 * 365
@@ -59,7 +57,7 @@ module JSF
           seconds = rand(range)
           (Time.now + seconds).iso8601
         end
-  
+
       end
     end
   end

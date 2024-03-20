@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Core
 
@@ -13,7 +15,6 @@ module JSF
     module Buildable
 
       def self.included(base)
-
         # Set SuperHash::Hasher transforms for Hash keys
         base.update_attribute 'additionalProperties', transform: ADDITIONAL_PROPERTIES_TRANSFORM
         base.update_attribute 'contains', transform: CONTAINS_TRANSFORM
@@ -25,7 +26,7 @@ module JSF
         base.update_attribute 'not', transform: NOT_TRANSFORM
         base.update_attribute 'items', transform: ITEMS_TRANSFORM
         base.update_attribute 'properties', transform: PROPERTIES_TRANSFORM
-        
+
         # Set all transforms for Array keys
         base.update_attribute 'allOf', transform: All_OF_TRANSFORM
         base.update_attribute 'anyOf', transform: ANY_OF_TRANSFORM
@@ -36,7 +37,7 @@ module JSF
       # @param [Hash] init_value
       # @param [Hash] options SuperHash::Hasher options
       # @option options [Proc] :attributes_transform_proc
-      def initialize(init_value={}, options={})
+      def initialize(init_value = {}, options = {})
         @attributes_transform_proc = options.delete(:attributes_transform_proc)
         super(init_value, options)
       end
@@ -52,9 +53,9 @@ module JSF
       # @return [Object] transformed value
       def attributes_transform(attribute, value, meta)
         if @attributes_transform_proc
-          @attributes_transform_proc.call(attribute, value, self, {meta: meta})
+          @attributes_transform_proc.call(attribute, value, self, {meta:})
         else
-          self.class.new(value, {meta: meta})
+          self.class.new(value, {meta:})
         end
       end
 
@@ -70,7 +71,7 @@ module JSF
       # @param [Object] instance
       # @param [Array<String>] path
       CORE_TRANSFORM = ->(attribute, value, instance, path) {
-        path = path.map{|i| i.is_a?(Symbol) ? i.to_s : i }
+        path = path.map { |i| i.is_a?(Symbol) ? i.to_s : i }
         meta = {
           parent: instance,
           is_subschema: true,
@@ -80,7 +81,7 @@ module JSF
       }
 
       ###################
-      ##Hash transforms##
+      # Hash transforms #
       ###################
 
       ADDITIONAL_PROPERTIES_TRANSFORM = ->(attribute, value, instance) {
@@ -104,7 +105,7 @@ module JSF
         when ::Hash
           value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
-              attribute, 
+              attribute,
               definition,
               instance,
               [:$defs, name]
@@ -118,7 +119,7 @@ module JSF
         when ::Hash
           value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
-              attribute, 
+              attribute,
               definition,
               instance,
               [:dependentSchemas, name]
@@ -142,7 +143,7 @@ module JSF
         when ::Hash
           value.each_with_object({}) do |(name, definition), acum|
             acum[name] = instance.class::CORE_TRANSFORM.call(
-              attribute, 
+              attribute,
               definition,
               instance,
               [:properties, name]
@@ -151,9 +152,9 @@ module JSF
         end
       }
 
-      ##################
-      #Array Transforms#
-      ##################
+      ####################
+      # Array Transforms #
+      ####################
 
       All_OF_TRANSFORM = ->(attribute, value, instance) {
         case value

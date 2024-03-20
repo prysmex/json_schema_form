@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -5,12 +7,13 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Nullable
-  
-        set_strict_type(['string', 'null']) # @deprecate null after migration
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        set_strict_type(%w[string null]) # @deprecate null after migration
+
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -21,9 +24,7 @@ module JSF
             required(:displayProperties).hash do
               required(:component).value(eql?: 'markdown')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -42,10 +43,10 @@ module JSF
             required(:type)
           end
         end
-  
-        ##############
-        ###METHODS####
-        ##############
+
+        ###########
+        # METHODS #
+        ###########
 
         def sample_value
           half_range_seconds = 60 * 60 * 24 * 365
@@ -53,7 +54,7 @@ module JSF
           seconds = rand(range)
           (Time.now + seconds).iso8601
         end
-  
+
       end
     end
   end

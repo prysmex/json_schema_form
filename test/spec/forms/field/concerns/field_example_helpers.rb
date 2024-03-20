@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 # Collection of methods that allow defining tests independent of the field class name
 #

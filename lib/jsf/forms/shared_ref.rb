@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
-    
+
     #
     # Represents a placeholder for a form that may be referenced
     #
@@ -10,9 +12,9 @@ module JSF
       include JSF::Validations::Validatable
       include JSF::Validations::DrySchemaValidatable
 
-      ##################
-      ###VALIDATIONS####
-      ##################
+      ###############
+      # VALIDATIONS #
+      ###############
 
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
@@ -22,9 +24,9 @@ module JSF
         Dry::Schema.JSON do
           config.validate_keys = true
           if ref_presence
-            required(:$ref).filled{ int? }
+            required(:$ref).filled { int? }
           else
-            required(:$ref).maybe{ int? }
+            required(:$ref).maybe { int? }
           end
         end
       end
@@ -34,22 +36,22 @@ module JSF
       #   super
       # end
 
-      ##############
-      ###METHODS####
-      ##############
+      ###########
+      # METHODS #
+      ###########
 
       # Finds the shared pair inside the 'properties' key
-      # 
+      #
       # @note it assumes shareds are at root schema
       #
       # @return [NilClass, JSF::Forms::Field::Shared]
       def shared
-        parent = self.root_parent
+        parent = root_parent
         return unless parent
 
-        parent[:properties]&.find do |k,v|
+        parent[:properties]&.find do |_k, v|
           v.is_a?(JSF::Forms::Field::Shared) &&
-          self.db_id == v.db_id
+          db_id == v.db_id
         end&.last
       end
 
@@ -69,7 +71,7 @@ module JSF
       end
 
       # @return [Boolean]
-      def valid_for_locale?(locale=nil)
+      def valid_for_locale?(_locale = nil)
         true
       end
 

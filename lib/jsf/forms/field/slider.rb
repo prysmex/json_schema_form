@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -5,15 +7,15 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Numberable
-        
+
         MAX_ENUM_SIZE = 25
         MAX_PRECISION = 5
-  
+
         set_strict_type('number')
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -22,23 +24,20 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
 
           Dry::Schema.JSON(parent: super) do
-  
             before(:key_validator) do |result| # result.to_h (shallow dup)
               result.to_h.deep_dup.tap do |h|
-                h.dig('displayProperties', 'i18n', 'enum')&.each do |locale, data|
+                h.dig('displayProperties', 'i18n', 'enum')&.each_value do |data|
                   data&.clear if data.respond_to?(:clear)
                 end
               end
             end
-  
+
             required(:displayProperties).hash do
               required(:component).value(eql?: 'slider')
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
-                # ToDo create two types of sliders and remove this when only numbers
+                # TODO: create two types of sliders and remove this when only numbers
                 required(:enum).hash do
                   AVAILABLE_LOCALES.each do |locale|
                     optional(locale.to_sym).maybe(:hash)
@@ -56,10 +55,8 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array{ (int? | float?) & gteq?(0) }
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array { (int? | float?) & gteq?(0) }
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:type)
           end
         end
@@ -67,7 +64,7 @@ module JSF
         # @param passthru [Hash{Symbol => *}]
         def errors(**passthru)
           errors = {}
-  
+
           # extra enum validations
           if self[:enum].is_a?(Array)
 
@@ -84,16 +81,17 @@ module JSF
                 )
               end
             end
-  
+
             # check that all enums have same interval
             if run_validation?(passthru, :enum_interval)
               if self[:enum].size > 1
-                big_decimal_enum = self[:enum].map{|v| BigDecimal(v.to_s) }
+                big_decimal_enum = self[:enum].map { |v| BigDecimal(v.to_s) }
                 diff = (big_decimal_enum[1] - big_decimal_enum[0]).abs
-    
-                big_decimal_enum.each_with_index do |value, i|
+
+                big_decimal_enum.each_with_index do |_value, i|
                   next if i == 0
-                  new_diff = (big_decimal_enum[i] - big_decimal_enum[i-1]).abs
+
+                  new_diff = (big_decimal_enum[i] - big_decimal_enum[i - 1]).abs
                   if diff != new_diff
                     add_error_on_path(
                       errors,
@@ -107,9 +105,13 @@ module JSF
             end
 
           end
-  
+
           super.merge(errors)
         end
+
+        ###########
+        # METHODS #
+        ###########
 
         # Checks if field is valid for a locale
         #
@@ -117,11 +119,11 @@ module JSF
         # @return [Boolean]
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           label_is_valid = super
-  
+
           missing_locale = self[:enum].find do |value|
-            self.i18n_value(value, locale).to_s.empty?
+            i18n_value(value, locale).to_s.empty?
           end
-          
+
           label_is_valid && !missing_locale
         end
 
@@ -131,18 +133,14 @@ module JSF
         # @param [String,Symbol] locale
         # @return [String]
         def i18n_value(value, locale = DEFAULT_LOCALE)
-          self.dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
+          dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
         end
-  
-        ##################
-        #####METHODS######
-        ##################
-  
+
         # @retun [Integer, Float]
         def max_score
           self[:enum]&.max
         end
-  
+
         # Returns the score, which is equal to the value if number
         #
         # @todo should it validate inclusion of value in enum key?
@@ -170,7 +168,7 @@ module JSF
         def sample_value
           self[:enum]&.sample
         end
-  
+
       end
     end
   end

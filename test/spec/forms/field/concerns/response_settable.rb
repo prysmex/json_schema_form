@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'field_example_helpers'
 
 module ResponseSettableTests
@@ -7,27 +9,28 @@ module ResponseSettableTests
   # response_set_id and response_set_id=
 
   def test_response_set_id
-    example = self.tested_klass_example
+    example = tested_klass_example
     instance = tested_klass.new(example)
 
     refute_equal '#/$defs/h12jb3k', instance.response_set_id
     instance.response_set_id = 'h12jb3k'
+
     assert_equal '#/$defs/h12jb3k', instance.response_set_id
   end
 
   # response_set
 
   def test_returns_nil_when_no_response_set
-    example = self.tested_klass_example
+    example = tested_klass_example
     instance = tested_klass.new(example)
 
     assert_nil instance.response_set
   end
-  
+
   def test_response_set
     klass_example = tested_klass_example
     prop = nil
-    JSF::Forms::FormBuilder.build() do
+    JSF::Forms::FormBuilder.build do
       add_response_set(:sdfuio, example('response_set'))
       prop = append_property(:testprop, klass_example).tap do |field|
         field.response_set_id = :sdfuio
@@ -43,11 +46,11 @@ module ResponseSettableTests
     klass_example = tested_klass_example
     prop = nil
 
-    JSF::Forms::FormBuilder.build() do
+    JSF::Forms::FormBuilder.build do
       add_response_set(:jsdflkj3, example('response_set')).tap do |response_set|
         response_set.add_response(example('response')).tap do |r|
           r[:const] = 'test'
-          r[:displayProperties] = { i18n: { es: "score_1_es" } }
+          r[:displayProperties] = { i18n: { es: 'score_1_es' } }
         end
       end
 
@@ -64,12 +67,12 @@ module ResponseSettableTests
     prop = nil
     response = nil
 
-    JSF::Forms::FormBuilder.build() do
+    JSF::Forms::FormBuilder.build do
       add_response_set(:jsdflkj3, example('response_set')).tap do |response_set|
         response_set.add_response(example('response')).tap do |r|
           response = r
           r[:const] = 'test'
-          r[:displayProperties] = { i18n: { es: "score_1_es" } }
+          r[:displayProperties] = { i18n: { es: 'score_1_es' } }
         end
       end
 
@@ -80,6 +83,7 @@ module ResponseSettableTests
 
     assert_equal false, prop.scored?
     response[:score] = 1
+
     assert_equal true, prop.scored?
   end
 

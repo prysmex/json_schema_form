@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -5,12 +7,12 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Booleanable
-  
+
         set_strict_type('boolean')
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -23,9 +25,7 @@ module JSF
             required(:displayProperties).hash do
               required(:component).value(eql?: 'switch')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               required(:i18n).hash do
                 required(:falseLabel).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -49,9 +49,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:type)
           end
         end
@@ -60,13 +58,13 @@ module JSF
         # @return [Boolean]
         def valid_for_locale?(locale = DEFAULT_LOCALE)
           super &&
-            !self.dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
-            !self.dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
+            !dig(:displayProperties, :i18n, :trueLabel, locale).to_s.empty? &&
+            !dig(:displayProperties, :i18n, :falseLabel, locale).to_s.empty?
         end
-  
-        ##################
-        #####METHODS######
-        ##################
+
+        ###########
+        # METHODS #
+        ###########
 
         # get the translation for a value
         #
@@ -79,14 +77,14 @@ module JSF
           elsif value == false
             :falseLabel
           end
-          self.dig(:displayProperties, :i18n, label_key, locale)
+          dig(:displayProperties, :i18n, label_key, locale)
         end
-  
+
         # @return [1]
         def max_score
           1
         end
-  
+
         # Returns a score for a value
         #
         # @param [Boolean, Nilclass]
@@ -116,7 +114,7 @@ module JSF
         def sample_value
           [true, false].sample
         end
-  
+
       end
     end
   end

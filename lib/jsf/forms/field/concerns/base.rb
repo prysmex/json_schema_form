@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -8,7 +10,7 @@ module JSF
         # It also includes other core modules
         #
         module Base
-  
+
           def self.included(base)
             # require 'dry-schema'
 
@@ -20,14 +22,14 @@ module JSF
             base.include JSF::Forms::Concerns::DisplayProperties
             base.include JSF::Forms::Concerns::DocumentPath
           end
-    
+
         end
-    
+
         module InstanceMethods
 
-          ##################
-          ###VALIDATIONS####
-          ##################
+          ###############
+          # VALIDATIONS #
+          ###############
 
           # @param passthru [Hash{Symbol => *}]
           def errors(**passthru)
@@ -54,9 +56,9 @@ module JSF
             # end
 
             if (
-              self.key?('default') &&
+              key?('default') &&
               run_validation?(passthru, :verify_default) &&
-              !JSONSchemer.schema(self.as_json).valid?(self['default'])
+              !JSONSchemer.schema(as_json).valid?(self['default'])
             )
               add_error_on_path(
                 errors_hash,
@@ -70,12 +72,12 @@ module JSF
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
-          def dry_schema(passthru)
+          def dry_schema(_passthru)
             # is_subschema = meta[:is_subschema]
 
             Dry::Schema.JSON do
               config.validate_keys = true
-              optional(:$id).filled{ str? & format?(/\A#\/properties\/(?:\w|-)+\z/) }
+              optional(:$id).filled { str? & format?(%r{\A#/properties/(?:\w|-)+\z}) }
               # optional(:$schema).filled(:string) unless is_subschema
               optional(:title).maybe(:string)
               optional(:default)
@@ -92,9 +94,9 @@ module JSF
             !i18n_label(locale).to_s.empty?
           end
 
-          ##############
-          ###METHODS####
-          ##############
+          ###########
+          # METHODS #
+          ###########
 
           # Returns true if field contributes to scoring
           #
@@ -109,10 +111,10 @@ module JSF
           #
           # @return [void]
           def legalize!
-            self.delete(:displayProperties)
+            delete(:displayProperties)
             self
           end
-    
+
         end
 
       end
