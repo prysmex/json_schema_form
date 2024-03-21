@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
 
@@ -5,14 +7,14 @@ module JSF
     # Represents a 'single' response in a JSF::Forms::ResponseSet
     #
     class Response < BaseHash
-  
+
       include JSF::Core::Schemable
       include JSF::Validations::Validatable
       include JSF::Validations::DrySchemaValidatable
-  
-      ##################
-      ###VALIDATIONS####
-      ##################
+
+      ###############
+      # VALIDATIONS #
+      ###############
 
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
@@ -34,12 +36,10 @@ module JSF
             optional(:tags).value(:array?).array(:str?)
           end
           if scoring
-            required(:enableScore).value(Types::True) #deprecate?
-            required(:score) { nil? | ( (int? | float?) > gteq?(0) ) }
+            required(:enableScore).value(Types::True) # deprecate?
+            required(:score) { nil? | ((int? | float?) > gteq?(0)) }
           end
-          if failing
-            required(:failed).value(:bool)
-          end
+          required(:failed).value(:bool) if failing
         end
       end
 
@@ -53,13 +53,13 @@ module JSF
       # @param [String, Symbol] locale
       # @return [Boolean]
       def valid_for_locale?(locale = DEFAULT_LOCALE)
-        !self.dig(:displayProperties, :i18n, locale).to_s.empty?
+        !dig(:displayProperties, :i18n, locale).to_s.empty?
       end
-  
-      ##############
-      ###METHODS####
-      ##############
-  
+
+      ###########
+      # METHODS #
+      ###########
+
       # Sets a locale
       #
       # @param [String] label
@@ -70,10 +70,10 @@ module JSF
       end
 
       def legalize!
-        self.delete(:displayProperties)
-        self.delete(:enableScore)
-        self.delete(:failed)
-        self.delete(:score)
+        delete(:displayProperties)
+        delete(:enableScore)
+        delete(:failed)
+        delete(:score)
         self
       end
 
@@ -83,7 +83,7 @@ module JSF
       def scored?
         !self[:score].nil?
       end
-  
+
     end
   end
 end

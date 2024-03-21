@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -7,12 +9,12 @@ module JSF
         include JSF::Forms::Field::Concerns::ResponseSettable
 
         # set_strict_type('string')
-  
-        RESPONSE_SET_PATH = [:$ref]
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        RESPONSE_SET_PATH = [:$ref].freeze
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -21,19 +23,17 @@ module JSF
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
 
-          #TODO find a way to prevent enum from being valid
+          # TODO: find a way to prevent enum from being valid
           Dry::Schema.JSON(parent: super) do
             if ref_presence
-              required(:$ref).filled{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
+              required(:$ref).filled { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             else
-              required(:$ref).maybe{ str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
+              required(:$ref).maybe { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
             end
             required(:displayProperties).hash do
               required(:component).value(eql?: 'select')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               optional(:hideUntaggedOptions).filled(:bool)
               required(:i18n).hash do
                 required(:label).hash do
@@ -50,33 +50,31 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
           end
         end
-  
-        ##############
-        ###METHODS####
-        ##############
-  
+
+        ###########
+        # METHODS #
+        ###########
+
         # @return [Integer, Float]
         def max_score
-          self.response_set
-              &.[](:anyOf)
-              &.reject{|property| property[:score].nil?}
-              &.max_by{|property| property[:score] }
-              &.[](:score)
+          response_set
+            &.[](:anyOf)
+            &.reject { |property| property[:score].nil? }
+            &.max_by { |property| property[:score] }
+            &.[](:score)
         end
-  
+
         # Returns the score of a JSF::Forms::Response for a value
         #
         # @param [String]
         # @return [Integer, Float]
         def score_for_value(value)
-          self.response_set
+          response_set
             &.[](:anyOf)
-            &.find{|response| response[:const] == value}
+            &.find { |response| response[:const] == value }
             &.[](:score)
         end
 
@@ -87,18 +85,19 @@ module JSF
         def value_fails?(value)
           response_set = self.response_set
           return false if response_set.nil?
+
           response_set[:anyOf]
             .find { |response| response[:const] == value }
             &.[](:failed) || false
         end
 
         def sample_value
-          self.response_set
+          response_set
             &.dig(:anyOf)
             &.sample
             &.dig(:const)
         end
-  
+
       end
     end
   end

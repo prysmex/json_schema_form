@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # concerns
 require_relative 'forms/concerns/display_properties'
 require_relative 'forms/concerns/document_path'

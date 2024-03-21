@@ -1,27 +1,29 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
       module Concerns
         module Conditionable
-          def prepend_property(*args, **kwargs, &block)
-            meta.dig(:parent).prepend_conditional_property(*args, dependent_on: key_name, **kwargs, &block)
+          def prepend_property(*, **, &)
+            meta.dig(:parent).prepend_conditional_property(*, dependent_on: key_name, **, &)
           end
 
-          def append_property(*args, **kwargs, &block)
-            meta.dig(:parent).append_conditional_property(*args, dependent_on: key_name, **kwargs, &block)
+          def append_property(*, **, &)
+            meta.dig(:parent).append_conditional_property(*, dependent_on: key_name, **, &)
           end
 
-          def insert_property_at_index(*args, **kwargs, &block)
-            meta.dig(:parent).insert_conditional_property_at_index(*args, dependent_on: key_name, **kwargs, &block)
+          def insert_property_at_index(*, **, &)
+            meta.dig(:parent).insert_conditional_property_at_index(*, dependent_on: key_name, **, &)
           end
 
-          def find_or_add_condition(*arguments, &block)
-            meta.dig(:parent).find_or_add_condition(key_name, *arguments, &block)
+          def find_or_add_condition(*, &)
+            meta.dig(:parent).find_or_add_condition(key_name, *, &)
           end
 
           # delegate
-          def example(*arguments)
-            meta.dig(:parent).example(*arguments)
+          def example(*)
+            meta.dig(:parent).example(*)
           end
         end
       end

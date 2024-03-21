@@ -1,15 +1,17 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
       class Shared < BaseHash
 
         include JSF::Forms::Field::Concerns::Base
-    
-        REF_REGEX = /\A#\/\$defs\/\w+\z/
 
-        ##################
-        ###VALIDATIONS####
-        ##################
+        REF_REGEX = %r{\A#/\$defs/\w+\z}
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -20,16 +22,14 @@ module JSF
           Dry::Schema.JSON(parent: super) do
             config.validate_keys = true
             if ref_presence
-              required(:$ref).filled{ str? & format?(REF_REGEX) }
+              required(:$ref).filled { str? & format?(REF_REGEX) }
             else
-              required(:$ref).maybe{ str? & format?(REF_REGEX) }
+              required(:$ref).maybe { str? & format?(REF_REGEX) }
             end
             required(:displayProperties).hash do
               required(:component).value(eql?: 'shared')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -46,23 +46,23 @@ module JSF
           end
         end
 
-        ##############
-        ###METHODS####
-        ##############
-  
+        ###########
+        # METHODS #
+        ###########
+
         # Gets json pointer $ref, should point to its pair (JSF::Forms::SharedRef, JSF::Forms::Form)
         # inside the form's '$defs' key
         #
         # @return [String]
         def shared_def_pointer
-          self.dig(*[:$ref])
+          dig(:$ref)
         end
 
         # Extracts the id from the json pointer
         #
         # @return [Integer]
         def db_id
-          self.shared_def_pointer&.match(/\d+\z/)&.to_s&.to_i
+          shared_def_pointer&.match(/\d+\z/)&.to_s&.to_i
         end
 
         # Update the db id in the shared_def_pointer
@@ -72,16 +72,17 @@ module JSF
         def db_id=(id)
           self[:$ref] = "#/$defs/#{JSF::Forms::Form.shared_ref_key(id)}"
         end
-  
+
         # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
         def shared_def
-          path = self.shared_def_pointer&.sub('#/', '')&.split('/')&.map(&:to_sym)
+          path = shared_def_pointer&.sub('#/', '')&.split('/')&.map(&:to_sym)
           return if path.nil? || path.empty?
+
           find_parent do |current, _next|
             current.key?(:$defs)
           end&.dig(*path)
         end
-    
+
       end
     end
   end

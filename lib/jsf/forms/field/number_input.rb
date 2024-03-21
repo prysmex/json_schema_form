@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
     module Field
@@ -5,12 +7,12 @@ module JSF
 
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Numberable
-  
+
         set_strict_type('number')
-  
-        ##################
-        ###VALIDATIONS####
-        ##################
+
+        ###############
+        # VALIDATIONS #
+        ###############
 
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
@@ -22,9 +24,7 @@ module JSF
             required(:displayProperties).hash do
               required(:component).value(eql?: 'number_input')
               optional(:hidden).filled(:bool)
-              if hide_on_create
-                optional(:hideOnCreate).filled(:bool)
-              end
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
               required(:i18n).hash do
                 required(:label).hash do
                   AVAILABLE_LOCALES.each do |locale|
@@ -38,21 +38,19 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            if extras
-              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures])
-            end
+            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:type)
           end
         end
-  
-        ##############
-        ###METHODS####
-        ##############
+
+        ###########
+        # METHODS #
+        ###########
 
         def sample_value
           rand(-1000...1000)
         end
-  
+
       end
     end
   end

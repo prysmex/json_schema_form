@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Validations
 
@@ -20,7 +22,7 @@ module JSF
       #
       # @todo implement
       #
-      # @example 
+      # @example
       # schema.errors(
       #   recursive: true,
       #   if: [(instance, key)->{ false }]
@@ -45,9 +47,9 @@ module JSF
 
         errors_hash
       end
-      
+
       private
-      
+
       # Builds errors hash for all subschemas. It support two keys to
       # filter which subschemas' errors will be called
       #
@@ -65,21 +67,21 @@ module JSF
 
           subschema_errors = subschema.errors(**passthru, recursive: false)
           next if subschema_errors.empty?
-  
-          relative_path = subschema.meta[:path].slice((self.meta[:path].size)..-1)
-          
+
+          relative_path = subschema.meta[:path].slice((meta[:path].size)..-1)
+
           # create path if it does not exists
           if acum_subschemas_errors.dig(*relative_path).nil?
             SuperHash::Utils.bury(acum_subschemas_errors, *relative_path, {})
           end
-  
+
           # merge new errors
           acum_subschemas_errors.dig(*relative_path).merge!(subschema_errors)
         end
 
         ActiveSupport::HashWithIndifferentAccess.new(acum_subschemas_errors)
       end
-      
+
       # Utility to safely add an error on a nested path
       #
       # @param [Hash] errors_hash
@@ -123,13 +125,14 @@ module JSF
         if optional
           return true if passthru[:optional_if]&.call(self, validation_key) == true
           return true if passthru[:optional_unless]&.call(self, validation_key) == false
-  
+
           return false
         else
           return false if passthru[:if]&.call(self, validation_key) == false
           return false if passthru[:unless]&.call(self, validation_key) == true
-          # todo except, only
-  
+
+          # TODO: except, only
+
           true
         end
       end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JSF
   module Forms
 
@@ -22,42 +24,41 @@ module JSF
         raise StandardError.new("JSF::Forms::Condition transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
 
-      def initialize(obj={}, options={})
+      def initialize(obj = {}, options = {})
         options = {
           attributes_transform_proc: JSF::Forms::Condition::ATTRIBUTE_TRANSFORM
         }.merge(options)
-    
+
         super(obj, options)
       end
 
-      ##################
-      ###VALIDATIONS####
-      ##################
+      ###############
+      # VALIDATIONS #
+      ###############
 
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
-      def dry_schema(passthru={})
-
-        prop = self.condition_property_key || '__key_placeholder__'
+      def dry_schema(_passthru = {})
+        prop = condition_property_key || '__key_placeholder__'
 
         Dry::Schema.JSON do
           config.validate_keys = true
-        
+
           before(:key_validator) do |result| # result.to_h (shallow dup)
             result.to_h.tap do |h|
               h['then'] = {} if h.key?('then')
             end
           end
-        
+
           required(:if).hash do
             required(:required).value(:array?).array(:str?)
             required(:properties).filled(:hash) do
-              required(prop.to_sym).filled(:hash) do # ToDo this key is always valid if present, can be improved
+              required(prop.to_sym).filled(:hash) do # TODO: this key is always valid if present, can be improved
                 optional(:const)
-                optional(:enum).value(:array, min_size?: 1)# unless field.is_a?(JSF::Forms::Field::NumberInput)
+                optional(:enum).value(:array, min_size?: 1) # unless field.is_a?(JSF::Forms::Field::NumberInput)
                 optional(:not).filled(:hash) do
                   optional(:const)
-                  optional(:enum).value(:array, min_size?: 1)# unless field.is_a?(JSF::Forms::Field::NumberInput)
+                  optional(:enum).value(:array, min_size?: 1) # unless field.is_a?(JSF::Forms::Field::NumberInput)
                 end
               end
             end
@@ -76,9 +77,9 @@ module JSF
       #   super
       # end
 
-      ##################
-      #####METHODS######
-      ##################
+      ###########
+      # METHODS #
+      ###########
 
       # @return [NilClass, String]
       def condition_property_key
@@ -87,7 +88,7 @@ module JSF
 
       # @return [NilClass, String]
       def condition_property
-        self.meta[:parent]&.dig(:properties, condition_property_key)
+        meta[:parent]&.dig(:properties, condition_property_key)
       end
 
       # @return [Boolean]
@@ -119,7 +120,7 @@ module JSF
       # @param ['const', 'enum']
       #
       # @return [void]
-      def set_value(value, key: condition_property_key, type: self.condition_type)
+      def set_value(value, key: condition_property_key, type: condition_type)
         dig('if', 'properties', key)&.clear
         path = JSF::Forms::Form::CONDITION_TYPE_TO_PATH.call(type)
         SuperHash::Utils.bury(self, 'if', 'properties', key, *path, value)
@@ -132,16 +133,17 @@ module JSF
       # @param [Hash{String}] local_document must have the root key that will be evaluated
       # @return [Boolean]
       def evaluate(local_document)
-        condition_prop = self.condition_property
-        key = self.condition_property_key
+        condition_prop = condition_property
+        key = condition_property_key
         value = local_document[key]
-        fake_hash = {"#{key}" => value}
-        
+        fake_hash = {key.to_s => value}
+
         if block_given?
           # support custom evaluation
           yield(self[:if], fake_hash, condition_prop)
         else
           return false if negated && value.nil?
+
           JSONSchemer.schema(self[:if]).valid?(fake_hash) # need to call as_json to self and value?
         end
       end
