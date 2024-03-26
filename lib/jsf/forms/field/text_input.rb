@@ -32,7 +32,7 @@ module JSF
                   end
                 end
               end
-              required(:pictures).value(:array?).array(:str?)
+              optional(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:textarea).filled(:bool)
               required(:visibility).hash do

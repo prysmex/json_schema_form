@@ -21,8 +21,8 @@
     "format": "uri",
     "pattern": "^http"
   },
-  "maxItems": 5,
-  "title": "file_input",
+  // "maxItems": 5,
+  // "title": "file_input",
   "type": "array",
   "uniqueItems": true
 }

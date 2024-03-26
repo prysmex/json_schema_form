@@ -26,6 +26,6 @@
   },
   // "maxItems": 3
   // "maxItems": 1
-  "title": "geopoints_input",
+  // "title": "geopoints",
   "type": "array"
 }

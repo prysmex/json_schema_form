@@ -190,7 +190,10 @@ module JSF
             required(:$defs).value(:hash)
             required(:schemaFormVersion).value(eql?: VERSION)
             optional(:title).maybe(:string) # TODO: deprecate?
-            required(:hasScoring) { bool? } if scoring
+            if scoring && !exam
+              optional(:hasScoring) { bool? }
+              optional(:disableScoring) { bool? }
+            end
             if exam
               required(:$id).filled { str? & format?(/^((?!#).)*$/) } # does not contain '#'
               required(:displayProperties).hash do
@@ -1124,6 +1127,8 @@ module JSF
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
       def set_specific_max_scores!(document, is_create: false, condition_proc: nil, **kwargs)
+        return if self['disableScoring']
+
         score_value = score_initial_value
 
         # iterate recursively through schemas
@@ -1177,7 +1182,10 @@ module JSF
         score_value
       end
 
+      # @return [Float, NilClass]
       def set_scores!(document, is_create: false, **kwargs)
+        return if self['disableScoring']
+
         score_value = score_initial_value
 
         # iterate recursively through schemas
@@ -1248,21 +1256,32 @@ module JSF
       # Checks if the form has fields with scoring
       #
       # @return [Boolean]
-      def scored?(**args)
-        has_scoring = false
-        each_form(**args) do |form|
-          form.properties&.each_value do |field|
-            if field.scored?
-              has_scoring = true
-              break
+      def scored?(cache: false, **args)
+        return false if cache && self['hasScoring'] == false
+
+        value = if self['disableScoring']
+          false
+        else
+          has_scoring = false
+          each_form(**args) do |form|
+            form.properties&.each_value do |field|
+              if field.scored?
+                has_scoring = true
+                break
+              end
             end
           end
+          has_scoring
         end
-        has_scoring
+
+        self['hasScoring'] = value unless meta[:is_subschema]
+        value
       end
 
       # @return [Boolean]
       def scored_with_document?(document, is_create: false, **_kwargs)
+        return false if self['disableScoring']
+
         each_form_with_document(document) do |form, _condition, _current_level, _current_doc, _current_empty_doc, _document_path, _section_or_shared|
           form[:properties].each_value do |property|
             next unless property.visible(is_create:)
@@ -1278,7 +1297,7 @@ module JSF
       #
       # @return [Float, NilClass]
       def score_initial_value
-        (self[:hasScoring] || scored?) ? 0.0 : nil
+        scored?(cache: true) ? 0.0 : nil
       end
 
       # Calculates the MAXIMUM ATTAINABLE score considering all possible branches
@@ -1291,6 +1310,8 @@ module JSF
       # @param [Proc] &block
       # @return [Nil|Float]
       def max_score(skip_hidden: true, &block)
+        return if self['disableScoring']
+
         self[:properties]&.inject(nil) do |acum, (name, field)|
           if field.is_a?(JSF::Forms::Section)
             raise StandardError.new('JSF::Forms::Section field is not supported for max_score')
@@ -1555,6 +1576,7 @@ module JSF
           delete('schemaFormVersion')
           delete('availableLocales')
           delete('hasScoring')
+          delete('disableScoring')
         end
         delete('displayProperties')
         self

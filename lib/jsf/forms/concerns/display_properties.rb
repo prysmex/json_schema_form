@@ -84,6 +84,19 @@ module JSF
           dig(:displayProperties, :component)
         end
 
+        # @return [void]
+        def compress!
+          delete(:extra) if self[:extra]&.sort == %w[notes pictures reports]
+
+          d_p = self[:displayProperties]
+          return unless d_p
+
+          d_p.delete(:hidden) if d_p[:hidden] == false
+          d_p.delete(:hideOnCreate) if d_p[:hideOnCreate] == false
+          d_p.delete(:pictures) if d_p[:pictures] == []
+          d_p.compact!
+        end
+
       end
     end
   end

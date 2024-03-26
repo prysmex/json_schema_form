@@ -35,10 +35,7 @@ module JSF
             optional(:color).maybe(:string)
             optional(:tags).value(:array?).array(:str?)
           end
-          if scoring
-            required(:enableScore).value(Types::True) # deprecate?
-            required(:score) { nil? | ((int? | float?) > gteq?(0)) }
-          end
+          required(:score) { nil? | ((int? | float?) > gteq?(0)) } if scoring
           required(:failed).value(:bool) if failing
         end
       end
@@ -71,7 +68,6 @@ module JSF
 
       def legalize!
         delete(:displayProperties)
-        delete(:enableScore)
         delete(:failed)
         delete(:score)
         self
@@ -82,6 +78,18 @@ module JSF
       # @return [Boolean]
       def scored?
         !self[:score].nil?
+      end
+
+      def compress!
+        d_p = self[:displayProperties]
+        return unless d_p
+
+        d_p.delete(:tags) if d_p[:tags] == []
+        d_p.compact!
+      end
+
+      def migrate!
+        delete(:enableScore)
       end
 
     end
