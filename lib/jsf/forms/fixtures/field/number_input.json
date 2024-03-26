@@ -16,6 +16,6 @@
       "label": true
     }
   },
-  "title": "number_input",
+  // "title": "number_input",
   "type": "number"
 }

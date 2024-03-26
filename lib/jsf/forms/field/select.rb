@@ -42,7 +42,7 @@ module JSF
                   end
                 end
               end
-              required(:pictures).value(:array?).array(:str?)
+              optional(:pictures).value(:array?).array(:str?)
               optional(:responseSetFilters).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               optional(:unansweredBehavior).value(included_in?: %w[disable show_all])

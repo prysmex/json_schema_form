@@ -7,7 +7,6 @@
       "es": "score_1_es"
     }
   },
-  "enableScore": true,
   "failed": false,
   "score": null,
   "type": "string"

@@ -17,6 +17,6 @@
     }
   },
   "format": "date-time",
-  "title": "fecha3182",
+  // "title": "date_input",
   "type": "string"
 }

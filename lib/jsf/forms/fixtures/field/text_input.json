@@ -17,6 +17,6 @@
       "label": true
     }
   },
-  "title": "text_area",
+  // "title": "text_input",
   "type": "string"
 }

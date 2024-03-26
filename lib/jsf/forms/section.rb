@@ -63,7 +63,7 @@ module JSF
                 end
               end
             end
-            required(:pictures).value(:array?).array(:str?)
+            optional(:pictures).value(:array?).array(:str?)
             required(:sort).filled(:integer)
             required(:visibility).hash do
               required(:label).filled(:bool)
