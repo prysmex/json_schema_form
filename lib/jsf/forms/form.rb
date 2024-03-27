@@ -1597,13 +1597,14 @@ module JSF
         end
 
         # migration code goes here
-        properties.each_value do |v|
+        properties.each do |k, v|
           v.delete('$schema')
 
           case v
           when JSF::Forms::Field::Markdown
             v['format'] = 'date-time'
             v['type'] = 'string'
+            v.delete('kind') if v.key?('kind') && !JSF::Forms::Field::Markdown::KINDS.include?(v['kind'])
           when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox
             path = v.class::RESPONSE_SET_PATH
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
@@ -1616,6 +1617,8 @@ module JSF
             path = [:$ref]
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
             SuperHash::Utils.bury(v, *path, ref) if ref
+          when JSF::Forms::Section
+            properties.delete(k) unless (v.form&.properties&.size || 0).positive?
           end
         end
 

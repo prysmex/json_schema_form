@@ -5,11 +5,12 @@ module JSF
     module Field
       class Markdown < BaseHash
 
+        KINDS = %w[none neutral positive caution negative].freeze
+
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Nullable
 
         set_strict_type(%w[string null]) # @deprecate null after migration
-
 
         ###############
         # VALIDATIONS #
@@ -32,7 +33,7 @@ module JSF
                   end
                 end
               end
-              optional(:kind).value(included_in?: %w[none neutral positive caution negative])
+              optional(:kind).value(included_in?: KINDS)
               optional(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do
