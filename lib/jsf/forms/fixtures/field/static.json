@@ -1,5 +1,5 @@
 {
-  // "$id": "",
+  "$id": "#/properties/foo",
   "displayProperties": {
     "component": "static",
     // "hidden": false

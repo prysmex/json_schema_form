@@ -32,7 +32,7 @@ module JSF
                   end
                 end
               end
-              required(:kind).maybe(:string)
+              optional(:kind).value(included_in?: %w[none neutral positive caution negative])
               optional(:pictures).value(:array?).array(:str?)
               required(:sort).filled(:integer)
               required(:visibility).hash do
