@@ -1596,6 +1596,10 @@ module JSF
           self['$defs'] = delete('definitions') if key?('definitions')
         end
 
+        self['allOf']&.select! do |condition|
+          condition['then']&.properties.present?
+        end
+
         # migration code goes here
         properties.each do |k, v|
           v.delete('$schema')
@@ -1604,12 +1608,19 @@ module JSF
           when JSF::Forms::Field::Markdown
             v['format'] = 'date-time'
             v['type'] = 'string'
-            v.delete('kind') if v.key?('kind') && !JSF::Forms::Field::Markdown::KINDS.include?(v['kind'])
+            d_p = v['displayProperties']
+            d_p.delete('kind') if d_p.key?('kind') && !JSF::Forms::Field::Markdown::KINDS.include?(d_p['kind'])
           when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox
             path = v.class::RESPONSE_SET_PATH
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
             SuperHash::Utils.bury(v, *path, ref) if ref
           when JSF::Forms::Field::Signature
+            if v[:required].present?
+              self[:required].push(k) unless self[:required].include?(k)
+            else
+              self[:required] -= [k]
+            end
+
             v['properties']['by_id'] = {
               type: 'number'
             }
@@ -1618,7 +1629,7 @@ module JSF
             ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
             SuperHash::Utils.bury(v, *path, ref) if ref
           when JSF::Forms::Section
-            properties.delete(k) unless (v.form&.properties&.size || 0).positive?
+            properties.delete(k) unless v.form&.properties&.present?
           end
         end
 
