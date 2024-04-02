@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module JSF
-  VERSION = '0.15.30'
+  VERSION = '0.15.31'
 end

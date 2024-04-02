@@ -344,15 +344,14 @@ module JSF
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean]
-      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_sections: true, ignore_defs: false)
+      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_defs: false, any_property: meta[:is_subschema])
         return false if dig('displayProperties', 'component') == 'exam' && i18n_label(locale).to_s.empty?
 
-        # require at least 1 property for root schemas
-        any_property = meta[:is_subschema]
-
         # check properties and their response_sets
-        each_form(ignore_sections:, ignore_defs:) do |form|
+        each_form(ignore_sections: true, ignore_defs:) do |form|
           return false if form.properties.any? do |_k, v|
+            next unless v.visible(is_create: false)
+
             any_property = true
 
             if v.respond_to?(:response_set)
