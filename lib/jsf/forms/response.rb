@@ -88,10 +88,6 @@ module JSF
         d_p.compact!
       end
 
-      def migrate!
-        delete(:enableScore)
-      end
-
     end
   end
 end

@@ -41,7 +41,7 @@ module JSF
               end
             end
             required(:format).filled(Types::String.enum('date-time'))
-            required(:type)
+            required(:type).value(eql?: 'string')
           end
         end
 
@@ -54,6 +54,10 @@ module JSF
           range = (half_range_seconds * -1)...half_range_seconds
           seconds = rand(range)
           (Time.now + seconds).iso8601
+        end
+
+        def migrate!
+          self['type'] = 'string'
         end
 
       end

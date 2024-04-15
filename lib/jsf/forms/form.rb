@@ -1581,59 +1581,12 @@ module JSF
         self
       end
 
-      # Allows the definition of migrations to 'upgrade' schemas when the standard changes
-      # The method is only the last migration script (not versioned)
-      #
-      # @return [void]
-      def migrate!
-        return if self['schemaFormVersion'] == VERSION
-
-        if meta[:is_subschema]
-          delete('$schema')
-        else
-          self['$schema'] = SCHEMA_VERSION
-          self['$defs'] = delete('definitions') if key?('definitions')
-        end
-
-        self['allOf']&.select! do |condition|
-          condition['then']&.properties.present?
-        end
-
-        # migration code goes here
-        properties.each do |k, v|
-          v.delete('$schema')
-
-          case v
-          when JSF::Forms::Field::Markdown
-            v['format'] = 'date-time'
-            v['type'] = 'string'
-            d_p = v['displayProperties']
-            d_p.delete('kind') if d_p.key?('kind') && !JSF::Forms::Field::Markdown::KINDS.include?(d_p['kind'])
-          when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox
-            path = v.class::RESPONSE_SET_PATH
-            ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
-            SuperHash::Utils.bury(v, *path, ref) if ref
-          when JSF::Forms::Field::Signature
-            if v[:required].present?
-              self[:required].push(k) unless self[:required].include?(k)
-            else
-              self[:required] -= [k]
-            end
-
-            v['properties']['by_id'] = {
-              type: 'number'
-            }
-          when JSF::Forms::Field::Shared
-            path = [:$ref]
-            ref = v.dig(*path)&.sub('#/definitions/', '#/$defs/')
-            SuperHash::Utils.bury(v, *path, ref) if ref
-          when JSF::Forms::Section
-            properties.delete(k) unless v.form&.properties&.present?
-          end
-        end
-
-        self['schemaFormVersion'] = VERSION unless meta[:is_subschema]
-      end
+      # # Allows the definition of migrations to 'upgrade' schemas when the standard changes
+      # # The method is only the last migration script (not versioned)
+      # #
+      # # @return [void]
+      # def migrate!
+      # end
 
       private
 
