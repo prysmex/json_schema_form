@@ -2,6 +2,7 @@
   // "$id": "",
   "displayProperties": {
     "component": "checkbox",
+    // "disableScoring": true,
     // "hidden": false,
     // "hideOnCreate": false,
     "i18n": {

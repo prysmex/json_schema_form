@@ -2,6 +2,7 @@
   // "$id": "",
   "displayProperties": {
     "component": "slider",
+    // "disableScoring": true,
     // "hidden": false,
     // "hideOnCreate": false,
     "i18n": {

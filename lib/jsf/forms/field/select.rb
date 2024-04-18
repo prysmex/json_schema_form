@@ -22,6 +22,7 @@ module JSF
           ref_presence = run_validation?(passthru, :ref_presence)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
+          scoring = run_validation?(passthru, :scoring, optional: true)
 
           # TODO: find a way to prevent enum from being valid
           Dry::Schema.JSON(parent: super) do
@@ -32,6 +33,7 @@ module JSF
             end
             required(:displayProperties).hash do
               required(:component).value(eql?: 'select')
+              optional(:disableScoring) { bool? } if scoring
               optional(:hidden).filled(:bool)
               optional(:hideOnCreate).filled(:bool) if hide_on_create
               optional(:hideUntaggedOptions).filled(:bool)

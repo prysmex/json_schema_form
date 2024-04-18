@@ -3,6 +3,7 @@
   "$ref": null,
   "displayProperties": {
     "component": "select",
+    // "disableScoring": true,
     // "hideOnCreate": false,
     // "hidden": false
     "i18n": {

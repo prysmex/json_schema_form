@@ -3,6 +3,7 @@
   "default": false,
   "displayProperties": {
     "component": "switch",
+    // "disableScoring": true,
     // "hidden": false
     // "hideOnCreate": false,
     "i18n": {

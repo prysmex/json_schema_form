@@ -104,6 +104,7 @@ module JSF
       #
       # @return [Boolean]
       def scored?
+        # dig(:displayProperties, :disableScoring) != true &&
         !!form&.scored?
       end
 

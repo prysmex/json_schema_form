@@ -94,6 +94,7 @@ module JSF
           d_p.delete(:hidden) if d_p[:hidden] == false
           d_p.delete(:hideOnCreate) if d_p[:hideOnCreate] == false
           d_p.delete(:pictures) if d_p[:pictures] == []
+          d_p.delete(:disableScoring) unless d_p[:disableScoring]
           d_p.compact!
         end
 

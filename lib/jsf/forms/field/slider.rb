@@ -22,6 +22,7 @@ module JSF
         def dry_schema(passthru)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
+          scoring = run_validation?(passthru, :scoring, optional: true)
 
           Dry::Schema.JSON(parent: super) do
             before(:key_validator) do |result| # result.to_h (shallow dup)
@@ -34,6 +35,7 @@ module JSF
 
             required(:displayProperties).hash do
               required(:component).value(eql?: 'slider')
+              optional(:disableScoring) { bool? } if scoring
               optional(:hideOnCreate).filled(:bool) if hide_on_create
               optional(:hidden).filled(:bool)
               required(:i18n).hash do
@@ -162,7 +164,7 @@ module JSF
         #
         # @return [Boolean]
         def scored?
-          true
+          dig(:displayProperties, :disableScoring) != true
         end
 
         def sample_value

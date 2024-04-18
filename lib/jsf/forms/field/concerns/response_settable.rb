@@ -95,7 +95,7 @@ module JSF
           #
           # @return [Boolean]
           def scored?
-            !!response_set&.scored?
+            dig(:displayProperties, :disableScoring) != true && !!response_set&.scored?
           end
 
         end
