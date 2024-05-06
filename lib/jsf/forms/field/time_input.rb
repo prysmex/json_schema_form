@@ -41,7 +41,7 @@ module JSF
               end
             end
             optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:pattern).value(eql?: '^(?:(?:[0-1][0-9])|(?:[2][0-4])):[0-5][0-9](?::[0-5][0-9])?$')
+            required(:pattern).value(eql?: '^(?:(?:[0-1][0-9])|(?:[2][0-3])):[0-5][0-9](?::[0-5][0-9])?$')
             required(:type)
           end
         end
@@ -53,6 +53,10 @@ module JSF
         def sample_value
           time = Time.now + rand(0...86_400)
           time.strftime('%H:%M:%S')
+        end
+
+        def migrate!
+          self['pattern'] = '^(?:(?:[0-1][0-9])|(?:[2][0-3])):[0-5][0-9](?::[0-5][0-9])?$'
         end
 
       end

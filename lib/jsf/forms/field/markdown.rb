@@ -56,10 +56,6 @@ module JSF
           (Time.now + seconds).iso8601
         end
 
-        def migrate!
-          self['type'] = 'string'
-        end
-
       end
     end
   end

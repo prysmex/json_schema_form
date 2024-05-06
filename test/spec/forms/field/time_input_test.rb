@@ -24,4 +24,9 @@ class TimeInputTest < Minitest::Test
     assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
   end
 
+  # def test_format
+  #   valid = %w[00:00 04:00 10:20 14:30 18:30 23:59]
+  #   invalid = %w[24:59 27:00 13:60 01:72]
+  # end
+
 end
