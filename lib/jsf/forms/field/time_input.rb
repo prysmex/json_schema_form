@@ -10,6 +10,8 @@ module JSF
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Stringable
 
+        FORMAT = '^(?:(?:[0-1][0-9])|(?:[2][0-3])):[0-5][0-9](?::[0-5][0-9])?$'
+
         set_strict_type('string')
 
         ###############
@@ -41,7 +43,7 @@ module JSF
               end
             end
             optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:pattern).value(eql?: '^(?:(?:[0-1][0-9])|(?:[2][0-3])):[0-5][0-9](?::[0-5][0-9])?$')
+            required(:pattern).value(eql?: FORMAT)
             required(:type)
           end
         end

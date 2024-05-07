@@ -40,8 +40,8 @@ module JSF
             end
             optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             required(:items).hash do
-              required(:format).filled(Types::String.enum('uri'))
-              required(:type).filled(Types::String.enum('string'))
+              required(:format).value(eql?: 'uri')
+              required(:type).value(eql?: 'string')
               required(:pattern).value(eql?: '^http')
             end
             optional(:maxItems)

@@ -182,7 +182,7 @@ module JSF
           required(:allOf).array(:hash)
           required(:properties).value(:hash)
           required(:required).value(:array?).array(:str?)
-          required(:type).filled(Types::String.enum('object'))
+          required(:type).value(eql?: 'object')
 
           if !is_subschema
             required(:$schema).value(eql?: SCHEMA_VERSION)

@@ -53,7 +53,7 @@ module JSF
                   required(:maximum).value(eql?: 180)
                 end
               end
-              required(:type).filled(Types::String.enum('object'))
+              required(:type).value(eql?: 'object')
             end
             optional(:maxItems)
             optional(:minItems)

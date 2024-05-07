@@ -49,7 +49,7 @@ module JSF
             end
           end
 
-          required(:type).filled(Types::String.enum('string'))
+          required(:type).value(eql?: 'string')
           optional(:title).maybe(:string)
           required(:isResponseSet).filled(Types::True)
           optional(:sort).hash do

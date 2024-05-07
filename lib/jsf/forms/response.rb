@@ -24,7 +24,7 @@ module JSF
 
         Dry::Schema.JSON do
           config.validate_keys = true
-          required(:type).filled(Types::String.enum('string'))
+          required(:type).value(eql?: 'string')
           required(:const).value(:string)
           required(:displayProperties).hash do
             required(:i18n).hash do

@@ -12,6 +12,9 @@ module JSF
 
         set_strict_type('string')
 
+        # validate utc
+        # FORMAT = '[0-9]{4}-[0-1][0-9]-[0-3][0-9](?:T|t|)(?:(?:[0-1][0-9])|(?:[2][0-3])):[0-5][0-9](?::[0-5][0-9])?\.?[0-9]{0,}(?:Z|z|[-+]00:00)'.freeze
+
         ###############
         # VALIDATIONS #
         ###############
@@ -42,7 +45,7 @@ module JSF
             end
             optional(:initExpr)
             optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:format).filled(Types::String.enum('date-time'))
+            required(:format).value(eql?: 'date-time')
             required(:type)
           end
         end

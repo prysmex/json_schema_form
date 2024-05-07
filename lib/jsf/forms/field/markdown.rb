@@ -40,7 +40,7 @@ module JSF
                 required(:label).filled(:bool)
               end
             end
-            required(:format).filled(Types::String.enum('date-time'))
+            required(:format).value(eql?: 'date-time')
             required(:type).value(eql?: 'string')
           end
         end
