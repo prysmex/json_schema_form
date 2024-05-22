@@ -96,7 +96,10 @@ module JSF
 
         # Checks if parent schema's 'properties' array contains they key of current subschema
         def required?
-          meta.dig(:parent, :required).include?(key_name&.to_s) if meta.dig(:parent, :required)
+          required = meta.dig(:parent, :required)
+          return false unless required
+
+          required.include?(key_name&.to_s)
         end
 
         # Get name of key if nested inside properties or $defs by checking the path

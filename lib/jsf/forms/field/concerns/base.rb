@@ -133,6 +133,18 @@ module JSF
             self
           end
 
+          def migrate!
+            return unless types == ['array']
+
+            min_items = self['minItems'] || 0
+
+            if required? && min_items < 1
+              self['minItems'] = 1
+            elsif min_items.positive? && !required?
+              (meta[:parent]['required'] ||= []).push(key_name)
+            end
+          end
+
         end
 
       end

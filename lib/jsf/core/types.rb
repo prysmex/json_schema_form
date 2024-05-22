@@ -56,7 +56,7 @@ module JSF
           self[:properties] = self[:properties] # trigger transforms
 
           # add to required array
-          self[:required] = ((self[:required] || []) + [name]).uniq if options[:required]
+          (self[:required] ||= []).push(name) if options[:required]
 
           added_property = self[:properties][name]
           added_property.instance_exec(added_property, self, &) if block_given?
