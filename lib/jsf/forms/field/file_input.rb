@@ -45,8 +45,10 @@ module JSF
               required(:pattern).value(eql?: '^http')
             end
             optional(:maxItems)
+            optional(:minItems)
+            optional(:contentMediaType).value(:string)
             required(:type)
-            required(:uniqueItems)
+            required(:uniqueItems).value(eql?: true)
           end
         end
 

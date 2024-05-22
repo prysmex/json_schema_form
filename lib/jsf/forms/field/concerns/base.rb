@@ -55,6 +55,24 @@ module JSF
             #   end
             # end
 
+            # validate that required array properties also have minItems
+            if types == ['array'] && run_validation?(passthru, :required_array)
+              min_items = self['minItems'] || 0
+              if required? && min_items < 1
+                add_error_on_path(
+                  errors_hash,
+                  ['minItems'],
+                  'must be at least 1 when property is required'
+                )
+              elsif min_items.positive? && !required?
+                add_error_on_path(
+                  errors_hash,
+                  ['base'],
+                  'must be required when minItems exist'
+                )
+              end
+            end
+
             if (
               key?('default') &&
               run_validation?(passthru, :verify_default) &&

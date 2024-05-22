@@ -56,8 +56,10 @@ module JSF
                 required(:$ref).maybe { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
               end
             end
+            optional(:maxItems)
+            optional(:minItems)
             required(:type)
-            required(:uniqueItems)
+            required(:uniqueItems).value(eql?: true)
           end
         end
 

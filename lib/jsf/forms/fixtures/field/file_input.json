@@ -23,6 +23,7 @@
   },
   // "maxItems": 5,
   // "title": "file_input",
+  // contentMediaType: ".pdf",
   "type": "array",
   "uniqueItems": true
 }
