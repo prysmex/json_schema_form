@@ -11,6 +11,42 @@ class SignatureTest < Minitest::Test
 
   # @todo
 
+  def test_match_parent_required
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:signature_1, example('signature'))
+      append_property(:signature_2, example('signature'), required: true)
+      append_property(:signature_3, example('signature')) do |f|
+        f[:required] = %w[signature]
+      end
+      append_property(:signature_4, example('signature'), required: true) do |f|
+        f[:required] = %w[signature]
+      end
+    end
+
+    assert_empty form.dig('properties', 'signature_1').errors
+    assert_equal({'required' => ['must match parent required']}, form.dig('properties', 'signature_2').errors)
+    assert_equal({'required' => ['must match parent required']}, form.dig('properties', 'signature_3').errors)
+    assert_empty form.dig('properties', 'signature_4').errors
+  end
+
+  def test_signature_must_be_required
+    form = JSF::Forms::FormBuilder.build do
+      append_property(:signature_1, example('signature'), required: true) do |f|
+        f[:required] = %w[name]
+      end
+      append_property(:signature_2, example('signature'), required: true) do |f|
+        f[:required] = %w[signature]
+      end
+      append_property(:signature_3, example('signature'), required: true) do |f|
+        f[:required] = %w[name signature]
+      end
+    end
+
+    assert_equal({'required' => ['signature must be required when other key is required']}, form.dig('properties', 'signature_1').errors)
+    assert_empty form.dig('properties', 'signature_2').errors
+    assert_empty form.dig('properties', 'signature_3').errors
+  end
+
   ###########
   # METHODS #
   ###########

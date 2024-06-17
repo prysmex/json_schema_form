@@ -26,6 +26,14 @@ module JSF
             )
           end
 
+          if self[:required]&.present? && !self[:required].include?('signature')
+            add_error_on_path(
+              errors_hash,
+              ['required'],
+              'signature must be required when other key is required'
+            )
+          end
+
           errors_hash
         end
 
@@ -104,6 +112,12 @@ module JSF
             'name' => string,
             'signature' => "https://picsum.photos/#{rand(10...500)}"
           }
+        end
+
+        def migrate!
+          return unless self[:required]&.present? && !self[:required].include?('signature')
+
+          self[:required].push('signature')
         end
 
       end
