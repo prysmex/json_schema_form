@@ -5,6 +5,8 @@ module JSF
     module Field
       class Signature < BaseHash
 
+        REQUIRED = %w[name signature].freeze
+
         include JSF::Forms::Field::Concerns::Base
         # include JSF::Core::Type::Objectable
 
@@ -26,11 +28,11 @@ module JSF
             )
           end
 
-          if self[:required]&.present? && !self[:required].include?('signature')
+          if self[:required].present? && self[:required].sort != REQUIRED
             add_error_on_path(
               errors_hash,
               ['required'],
-              'signature must be required when other key is required'
+              'if required, signature and name must be required'
             )
           end
 
@@ -115,9 +117,9 @@ module JSF
         end
 
         def migrate!
-          return unless self[:required]&.present? && !self[:required].include?('signature')
+          return unless self[:required].present? && self[:required].sort != REQUIRED
 
-          self[:required].push('signature')
+          self[:required] = %w[name signature]
         end
 
       end

@@ -16,10 +16,10 @@ class SignatureTest < Minitest::Test
       append_property(:signature_1, example('signature'))
       append_property(:signature_2, example('signature'), required: true)
       append_property(:signature_3, example('signature')) do |f|
-        f[:required] = %w[signature]
+        f[:required] = %w[signature name]
       end
       append_property(:signature_4, example('signature'), required: true) do |f|
-        f[:required] = %w[signature]
+        f[:required] = %w[signature name]
       end
     end
 
@@ -42,8 +42,8 @@ class SignatureTest < Minitest::Test
       end
     end
 
-    assert_equal({'required' => ['signature must be required when other key is required']}, form.dig('properties', 'signature_1').errors)
-    assert_empty form.dig('properties', 'signature_2').errors
+    assert_equal({'required' => ['if required, signature and name must be required']}, form.dig('properties', 'signature_1').errors)
+    assert_equal({'required' => ['if required, signature and name must be required']}, form.dig('properties', 'signature_2').errors)
     assert_empty form.dig('properties', 'signature_3').errors
   end
 
