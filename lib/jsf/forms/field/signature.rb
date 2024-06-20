@@ -20,19 +20,11 @@ module JSF
         def errors(**passthru)
           errors_hash = super
 
-          if (required? && !self[:required].present?) || (!required? && self[:required].present?)
+          unless REQUIRED.all? { |k| self[:required]&.include?(k) }
             add_error_on_path(
               errors_hash,
               ['required'],
-              'must match parent required'
-            )
-          end
-
-          if self[:required].present? && self[:required].sort != REQUIRED
-            add_error_on_path(
-              errors_hash,
-              ['required'],
-              'if required, signature and name must be required'
+              'signature and name must be required'
             )
           end
 
@@ -117,8 +109,6 @@ module JSF
         end
 
         def migrate!
-          return unless self[:required].present? && self[:required].sort != REQUIRED
-
           self[:required] = %w[name signature]
         end
 

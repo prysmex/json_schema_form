@@ -34,7 +34,7 @@
     }
   },
   "additionalProperties": false,
-  "required": [],
+  "required": ["name", "signature"],
   // "title": "signature",
   "type": "object"
 }
