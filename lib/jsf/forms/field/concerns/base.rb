@@ -39,7 +39,7 @@ module JSF
             #   if self.hidden? && self.required?
             #     add_error_on_path(
             #       errors_hash,
-            #       ['base'],
+            #       'base',
             #       'cannot be hidden and required'
             #     )
             #   end
@@ -49,7 +49,7 @@ module JSF
             #   if self.hideOnCreate? && self.required?
             #     add_error_on_path(
             #       errors_hash,
-            #       ['base'],
+            #       'base',
             #       'cannot be hideOnCreate and required'
             #     )
             #   end
@@ -61,13 +61,13 @@ module JSF
               if required? && min_items < 1
                 add_error_on_path(
                   errors_hash,
-                  ['minItems'],
+                  'minItems',
                   'must be at least 1 when property is required'
                 )
               elsif min_items.positive? && !required?
                 add_error_on_path(
                   errors_hash,
-                  ['base'],
+                  'base',
                   'must be required when minItems exist'
                 )
               end
@@ -80,7 +80,7 @@ module JSF
             )
               add_error_on_path(
                 errors_hash,
-                ['default'],
+                'default',
                 'invalid value'
               )
             end

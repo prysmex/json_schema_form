@@ -85,20 +85,24 @@ module JSF
       # Utility to safely add an error on a nested path
       #
       # @param [Hash] errors_hash
-      # @param [Array<String,Symbol>] path
+      # @param [Array<String,Symbol>|String|Symbol] path
       # @param [String] str error to add
       # @return [String] added error
       def add_error_on_path(errors_hash, path, str)
         current = errors_hash
-        path.each.with_index do |key, i|
-          if (i + 1) == path.size
-            current[key] ||= []
-            current[key] << str
-          else
-            current[key] ||= {}
-            current = current[key]
+
+        if path.is_a?(Array)
+          path.each.with_index do |key, i|
+            if (i + 1) == path.size
+              (current[key] ||= []) << str
+            else
+              current = (current[key] ||= {})
+            end
           end
+        else
+          (current[path] ||= []) << str
         end
+
         str
       end
 

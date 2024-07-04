@@ -240,7 +240,7 @@ module JSF
            properties.none? { |_k, v| v.visible(is_create: false) }
           add_error_on_path(
             errors_hash,
-            ['properties'],
+            'properties',
             'at least 1 property must exist'
           )
         end
@@ -250,7 +250,7 @@ module JSF
           unless verify_sort_order
             add_error_on_path(
               errors_hash,
-              ['base'],
+              'base',
               "incorrect sorting, should start with 0 and increase consistently"
             )
           end
@@ -262,7 +262,7 @@ module JSF
             if v.is_a?(JSF::Forms::SharedRef) && v.shared.nil?
               add_error_on_path(
                 errors_hash,
-                ['base'],
+                'base',
                 "missing shared field for shared reference (#{k})"
               )
             end
@@ -297,7 +297,7 @@ module JSF
             if meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Shared)
               add_error_on_path(
                 errors_hash,
-                ['base'],
+                'base',
                 "shareds can only exist in root schema (#{k})"
               )
             end
@@ -310,7 +310,7 @@ module JSF
               if field.shared_def.nil?
                 add_error_on_path(
                   errors_hash,
-                  ['base'],
+                  'base',
                   "missing shared reference for field #{field.shared_def_pointer}"
                 )
               end
@@ -325,7 +325,7 @@ module JSF
                 fields = CONDITIONAL_FIELDS.map { |klass| klass.name.split('::').last }.join(', ')
                 add_error_on_path(
                   errors_hash,
-                  ['base'],
+                  'base',
                   "only the following fields can have conditionals (#{fields})"
                 )
               end

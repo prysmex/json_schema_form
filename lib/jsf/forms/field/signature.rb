@@ -23,7 +23,7 @@ module JSF
           unless REQUIRED.all? { |k| self[:required]&.include?(k) }
             add_error_on_path(
               errors_hash,
-              ['required'],
+              'required',
               'signature and name must be required'
             )
           end

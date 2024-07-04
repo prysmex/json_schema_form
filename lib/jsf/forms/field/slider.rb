@@ -78,7 +78,7 @@ module JSF
               if !precision_errors.empty?
                 add_error_on_path(
                   errors,
-                  ['enum'],
+                  'enum',
                   "invalid enum values #{precision_errors.join(', ')}, max decimal precision is #{MAX_PRECISION}"
                 )
               end
@@ -97,7 +97,7 @@ module JSF
                   if diff != new_diff
                     add_error_on_path(
                       errors,
-                      ['enum'],
+                      'enum',
                       "found different interval from initial at index #{i}"
                     )
                     break

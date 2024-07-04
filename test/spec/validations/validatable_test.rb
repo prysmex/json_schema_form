@@ -85,9 +85,26 @@ class ValidatableTest < Minitest::Test
   # methods
 
   # add_error_on_path
-  def test_add_error_on_path
+  def test_add_error_on_path_array
     hash = {}
     path = %i[some new path]
+    schema = SampleSchema.new
+
+    # create new path
+    schema.send(:add_error_on_path, hash, path, 'some_error')
+
+    assert_equal 'some_error', hash.dig(*path)[0]
+
+    # append error
+    schema.send(:add_error_on_path, hash, path, 'other_error')
+
+    assert_equal 'other_error', hash.dig(*path)[1]
+  end
+
+  # add_error_on_path
+  def test_add_error_on_path
+    hash = {}
+    path = :some
     schema = SampleSchema.new
 
     # create new path

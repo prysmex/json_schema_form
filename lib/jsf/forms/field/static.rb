@@ -21,7 +21,7 @@ module JSF
           unless self['$id']
             add_error_on_path(
               errors_hash,
-              ['$id'],
+              '$id',
               'must be present'
             )
           end
