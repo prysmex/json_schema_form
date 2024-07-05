@@ -28,8 +28,20 @@ module JSF
     #
     module DrySchemaValidatable
 
-      def self.included(_base)
+      def self.included(base)
         require 'dry-schema'
+
+        base.extend ClassMethods
+      end
+
+      module ClassMethods
+        # TODO: We can make an interface to support Rail's memory cache
+        def cache(key, **, &)
+          return yield if key.nil?
+
+          @cache ||= {}
+          @cache[key] ||= yield
+        end
       end
 
       # Returns a Dry::Schema.JSON that can validate a Hash according to the

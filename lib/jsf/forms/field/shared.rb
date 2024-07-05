@@ -19,28 +19,30 @@ module JSF
           ref_presence = run_validation?(passthru, :ref_presence)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            config.validate_keys = true
-            if ref_presence
-              required(:$ref).filled { str? & format?(REF_REGEX) }
-            else
-              required(:$ref).maybe { str? & format?(REF_REGEX) }
-            end
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'shared')
-              optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              required(:i18n).hash do
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
+          self.class.cache("#{ref_presence}#{hide_on_create}") do
+            Dry::Schema.JSON(parent: super) do
+              config.validate_keys = true
+              if ref_presence
+                required(:$ref).filled { str? & format?(REF_REGEX) }
+              else
+                required(:$ref).maybe { str? & format?(REF_REGEX) }
+              end
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'shared')
+                optional(:hidden).filled(:bool)
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                required(:i18n).hash do
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
-              end
-              optional(:pictures).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              required(:visibility).hash do
-                required(:label).filled(:bool)
+                optional(:pictures).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
+                end
               end
             end
           end

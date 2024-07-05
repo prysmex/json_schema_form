@@ -21,12 +21,14 @@ module JSF
       def dry_schema(passthru)
         ref_presence = run_validation?(passthru, :ref_presence)
 
-        Dry::Schema.JSON do
-          config.validate_keys = true
-          if ref_presence
-            required(:$ref).filled { int? }
-          else
-            required(:$ref).maybe { int? }
+        self.class.cache(ref_presence.to_s) do
+          Dry::Schema.JSON do
+            config.validate_keys = true
+            if ref_presence
+              required(:$ref).filled { int? }
+            else
+              required(:$ref).maybe { int? }
+            end
           end
         end
       end

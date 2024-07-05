@@ -24,42 +24,44 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
           scoring = run_validation?(passthru, :scoring, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            before(:key_validator) do |result| # result.to_h (shallow dup)
-              result.to_h.deep_dup.tap do |h|
-                h.dig('displayProperties', 'i18n', 'enum')&.each_value do |data|
-                  data&.clear if data.respond_to?(:clear)
+          self.class.cache("#{hide_on_create}#{extras}#{scoring}") do
+            Dry::Schema.JSON(parent: super) do
+              before(:key_validator) do |result| # result.to_h (shallow dup)
+                result.to_h.deep_dup.tap do |h|
+                  h.dig('displayProperties', 'i18n', 'enum')&.each_value do |data|
+                    data&.clear if data.respond_to?(:clear)
+                  end
                 end
               end
-            end
 
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'slider')
-              optional(:disableScoring) { bool? } if scoring
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              optional(:hidden).filled(:bool)
-              required(:i18n).hash do
-                # TODO: create two types of sliders and remove this when only numbers
-                required(:enum).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:hash)
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'slider')
+                optional(:disableScoring) { bool? } if scoring
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                optional(:hidden).filled(:bool)
+                required(:i18n).hash do
+                  # TODO: create two types of sliders and remove this when only numbers
+                  required(:enum).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:hash)
+                    end
+                  end
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
-                  end
+                optional(:pictures).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
                 end
               end
-              optional(:pictures).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              required(:visibility).hash do
-                required(:label).filled(:bool)
-              end
+              required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array { (int? | float?) & gteq?(0) }
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
+              required(:type)
             end
-            required(:enum).value(min_size?: 2, max_size?: MAX_ENUM_SIZE).array { (int? | float?) & gteq?(0) }
-            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:type)
           end
         end
 

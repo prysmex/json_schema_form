@@ -41,33 +41,35 @@ module JSF
       def dry_schema(_passthru = {})
         prop = condition_property_key || '__key_placeholder__'
 
-        Dry::Schema.JSON do
-          config.validate_keys = true
+        self.class.cache(nil) do
+          Dry::Schema.JSON do
+            config.validate_keys = true
 
-          before(:key_validator) do |result| # result.to_h (shallow dup)
-            result.to_h.tap do |h|
-              h['then'] = {} if h.key?('then')
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              result.to_h.tap do |h|
+                h['then'] = {} if h.key?('then')
+              end
             end
-          end
 
-          required(:if).hash do
-            required(:required).value(:array?).array(:str?)
-            required(:properties).filled(:hash) do
-              required(prop.to_sym).filled(:hash) do # TODO: this key is always valid if present, can be improved
-                optional(:const)
-                optional(:enum).value(:array, min_size?: 1) # unless field.is_a?(JSF::Forms::Field::NumberInput)
-                optional(:not).filled(:hash) do
+            required(:if).hash do
+              required(:required).value(:array?).array(:str?)
+              required(:properties).filled(:hash) do
+                required(prop.to_sym).filled(:hash) do # TODO: this key is always valid if present, can be improved
                   optional(:const)
                   optional(:enum).value(:array, min_size?: 1) # unless field.is_a?(JSF::Forms::Field::NumberInput)
+                  optional(:not).filled(:hash) do
+                    optional(:const)
+                    optional(:enum).value(:array, min_size?: 1) # unless field.is_a?(JSF::Forms::Field::NumberInput)
+                  end
                 end
               end
             end
-          end
-          required(:then).hash do
-            optional(:properties)
-            optional(:allOf)
-            optional(:required)
-            optional(:type)
+            required(:then).hash do
+              optional(:properties)
+              optional(:allOf)
+              optional(:required)
+              optional(:type)
+            end
           end
         end
       end

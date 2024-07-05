@@ -21,27 +21,29 @@ module JSF
         def dry_schema(passthru)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'markdown')
-              optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              required(:i18n).hash do
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
+          self.class.cache(hide_on_create.to_s) do
+            Dry::Schema.JSON(parent: super) do
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'markdown')
+                optional(:hidden).filled(:bool)
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                required(:i18n).hash do
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
+                optional(:kind).value(included_in?: KINDS)
+                optional(:pictures).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
+                end
               end
-              optional(:kind).value(included_in?: KINDS)
-              optional(:pictures).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              required(:visibility).hash do
-                required(:label).filled(:bool)
-              end
+              required(:format).value(eql?: 'date-time')
+              required(:type).value(eql?: 'string')
             end
-            required(:format).value(eql?: 'date-time')
-            required(:type).value(eql?: 'string')
           end
         end
 

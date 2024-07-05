@@ -25,34 +25,36 @@ module JSF
           scoring = run_validation?(passthru, :scoring, optional: true)
 
           # TODO: find a way to prevent enum from being valid
-          Dry::Schema.JSON(parent: super) do
-            if ref_presence
-              required(:$ref).filled { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
-            else
-              required(:$ref).maybe { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
-            end
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'select')
-              optional(:disableScoring) { bool? } if scoring
-              optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              optional(:hideUntaggedOptions).filled(:bool)
-              required(:i18n).hash do
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
+          self.class.cache("#{ref_presence}#{hide_on_create}#{extras}#{scoring}") do
+            Dry::Schema.JSON(parent: super) do
+              if ref_presence
+                required(:$ref).filled { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
+              else
+                required(:$ref).maybe { str? & format?(::JSF::Forms::Field::Concerns::ResponseSettable::REF_REGEX) }
+              end
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'select')
+                optional(:disableScoring) { bool? } if scoring
+                optional(:hidden).filled(:bool)
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                optional(:hideUntaggedOptions).filled(:bool)
+                required(:i18n).hash do
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
+                optional(:pictures).value(:array?).array(:str?)
+                optional(:responseSetFilters).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
+                end
               end
-              optional(:pictures).value(:array?).array(:str?)
-              optional(:responseSetFilters).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              optional(:unansweredBehavior).value(included_in?: %w[disable show_all])
-              required(:visibility).hash do
-                required(:label).filled(:bool)
-              end
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
             end
-            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
           end
         end
 

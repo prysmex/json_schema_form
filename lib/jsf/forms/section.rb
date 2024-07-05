@@ -43,39 +43,41 @@ module JSF
       def dry_schema(passthru)
         hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-        Dry::Schema.JSON do
-          config.validate_keys = true
+        self.class.cache(hide_on_create.to_s) do
+          Dry::Schema.JSON do
+            config.validate_keys = true
 
-          before(:key_validator) do |result| # result.to_h (shallow dup)
-            result.to_h.tap do |h|
-              h['items'] = {} if h.key?('items')
-            end
-          end
-
-          required(:displayProperties).hash do
-            required(:component).value(eql?: 'section')
-            optional(:hidden).filled(:bool)
-            optional(:hideOnCreate).filled(:bool) if hide_on_create
-            required(:i18n).hash do
-              required(:label).hash do
-                AVAILABLE_LOCALES.each do |locale|
-                  optional(locale.to_sym).maybe(:string)
-                end
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              result.to_h.tap do |h|
+                h['items'] = {} if h.key?('items')
               end
             end
-            optional(:pictures).value(:array?).array(:str?)
-            required(:sort).filled(:integer)
-            required(:visibility).hash do
-              required(:label).filled(:bool)
+
+            required(:displayProperties).hash do
+              required(:component).value(eql?: 'section')
+              optional(:hidden).filled(:bool)
+              optional(:hideOnCreate).filled(:bool) if hide_on_create
+              required(:i18n).hash do
+                required(:label).hash do
+                  AVAILABLE_LOCALES.each do |locale|
+                    optional(locale.to_sym).maybe(:string)
+                  end
+                end
+              end
+              optional(:pictures).value(:array?).array(:str?)
+              required(:sort).filled(:integer)
+              required(:visibility).hash do
+                required(:label).filled(:bool)
+              end
             end
+            optional(:maxItems).filled(:integer)
+            optional(:minItems).filled(:integer)
+            required(:items).hash
+            required(:type)
+            optional(:$id).filled(:string)
+            optional(:title).maybe(:string)
+            # optional(:default)
           end
-          optional(:maxItems).filled(:integer)
-          optional(:minItems).filled(:integer)
-          required(:items).hash
-          required(:type)
-          optional(:$id).filled(:string)
-          optional(:title).maybe(:string)
-          # optional(:default)
         end
       end
 

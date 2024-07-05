@@ -21,38 +21,40 @@ module JSF
           extras = run_validation?(passthru, :extras, optional: true)
           scoring = run_validation?(passthru, :scoring, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            optional(:default).value(:bool)
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'switch')
-              optional(:disableScoring) { bool? } if scoring
-              optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              required(:i18n).hash do
-                required(:falseLabel).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
+          self.class.cache("#{hide_on_create}#{extras}#{scoring}") do
+            Dry::Schema.JSON(parent: super) do
+              optional(:default).value(:bool)
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'switch')
+                optional(:disableScoring) { bool? } if scoring
+                optional(:hidden).filled(:bool)
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                required(:i18n).hash do
+                  required(:falseLabel).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
+                  end
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
+                  end
+                  required(:trueLabel).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
-                  end
-                end
-                required(:trueLabel).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
-                  end
+                optional(:pictures).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
                 end
               end
-              optional(:pictures).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              required(:visibility).hash do
-                required(:label).filled(:bool)
-              end
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
+              required(:type)
             end
-            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:type)
           end
         end
 

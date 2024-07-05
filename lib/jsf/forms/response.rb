@@ -22,21 +22,24 @@ module JSF
         scoring = run_validation?(passthru, :scoring, optional: true)
         failing = run_validation?(passthru, :failing, optional: true)
 
-        Dry::Schema.JSON do
-          config.validate_keys = true
-          required(:type).value(eql?: 'string')
-          required(:const).value(:string)
-          required(:displayProperties).hash do
-            required(:i18n).hash do
-              AVAILABLE_LOCALES.each do |locale|
-                optional(locale.to_sym).maybe(:string)
+        self.class.cache("#{scoring}#{failing}") do
+          Dry::Schema.JSON do
+            config.validate_keys = true
+
+            required(:type).value(eql?: 'string')
+            required(:const).value(:string)
+            required(:displayProperties).hash do
+              required(:i18n).hash do
+                AVAILABLE_LOCALES.each do |locale|
+                  optional(locale.to_sym).maybe(:string)
+                end
               end
+              optional(:color).maybe(:string)
+              optional(:tags).value(:array?).array(:str?)
             end
-            optional(:color).maybe(:string)
-            optional(:tags).value(:array?).array(:str?)
+            required(:score) { nil? | ((int? | float?) > gteq?(0)) } if scoring
+            required(:failed).value(:bool) if failing
           end
-          required(:score) { nil? | ((int? | float?) > gteq?(0)) } if scoring
-          required(:failed).value(:bool) if failing
         end
       end
 

@@ -93,6 +93,8 @@ module JSF
           def dry_schema(_passthru)
             # is_subschema = meta[:is_subschema]
 
+            # IMPORTANT. this schema currently does not support conditions since
+            # other schemas that inherit from it are cached
             Dry::Schema.JSON do
               config.validate_keys = true
               optional(:$id).filled { str? & format?(%r{\A#/properties/(?:\w|-)+\z}) }

@@ -19,6 +19,8 @@ module JSF
           # @param passthru [Hash{Symbol => *}] Options passed
           # @return [Dry::Schema::JSON] Schema
           def dry_schema(passthru)
+            # IMPORTANT. this schema currently does not support conditions since
+            # other schemas that inherit from it are cached
             Dry::Schema.JSON(parent: super) do
               before(:key_validator) do |result| # result.to_h (shallow dup)
                 result.to_h.deep_dup.tap do |h|

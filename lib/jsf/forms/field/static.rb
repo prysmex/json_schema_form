@@ -34,14 +34,16 @@ module JSF
         def dry_schema(passthru)
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            required(:displayProperties).hash do
-              required(:component).value(eql?: 'static')
-              optional(:hidden).filled(:bool)
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              required(:sort).filled(:integer)
+          self.class.cache(hide_on_create.to_s) do
+            Dry::Schema.JSON(parent: super) do
+              required(:displayProperties).hash do
+                required(:component).value(eql?: 'static')
+                optional(:hidden).filled(:bool)
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                required(:sort).filled(:integer)
+              end
+              required(:type)
             end
-            required(:type)
           end
         end
 

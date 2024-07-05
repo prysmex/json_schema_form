@@ -37,59 +37,61 @@ module JSF
           hide_on_create = run_validation?(passthru, :hideOnCreate, optional: true)
           extras = run_validation?(passthru, :extras, optional: true)
 
-          Dry::Schema.JSON(parent: super) do
-            before(:key_validator) do |result| # result.to_h (shallow dup)
-              result.to_h.deep_dup.tap do |h|
-                if (audience = h&.dig('displayProperties', 'audience'))
-                  audience.each do |v|
-                    v['values'] = [] if v['values'].is_a?(::Array)
+          self.class.cache("#{hide_on_create}#{extras}") do
+            Dry::Schema.JSON(parent: super) do
+              before(:key_validator) do |result| # result.to_h (shallow dup)
+                result.to_h.deep_dup.tap do |h|
+                  if (audience = h&.dig('displayProperties', 'audience'))
+                    audience.each do |v|
+                      v['values'] = [] if v['values'].is_a?(::Array)
+                    end
                   end
                 end
               end
-            end
 
-            required(:displayProperties).hash do
-              optional(:audience).array(:hash) do
-                required(:field)
-                required(:values)
-                optional(:type)
-              end
-              optional(:hideOnCreate).filled(:bool) if hide_on_create
-              optional(:hidden).filled(:bool)
-              required(:i18n).hash do
-                required(:label).hash do
-                  AVAILABLE_LOCALES.each do |locale|
-                    optional(locale.to_sym).maybe(:string)
+              required(:displayProperties).hash do
+                optional(:audience).array(:hash) do
+                  required(:field)
+                  required(:values)
+                  optional(:type)
+                end
+                optional(:hideOnCreate).filled(:bool) if hide_on_create
+                optional(:hidden).filled(:bool)
+                required(:i18n).hash do
+                  required(:label).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
                   end
                 end
+                optional(:pictures).value(:array?).array(:str?)
+                required(:sort).filled(:integer)
+                required(:component).value(eql?: 'signature')
+                required(:visibility).hash do
+                  required(:label).filled(:bool)
+                end
               end
-              optional(:pictures).value(:array?).array(:str?)
-              required(:sort).filled(:integer)
-              required(:component).value(eql?: 'signature')
-              required(:visibility).hash do
-                required(:label).filled(:bool)
+              required(:properties).hash do
+                required(:by_id).hash do
+                  required(:type).value(eql?: 'number')
+                end
+                required(:db_identifier).hash do
+                  required(:type).value(eql?: 'number')
+                end
+                required(:name).hash do
+                  required(:type).value(eql?: 'string')
+                end
+                required(:signature).hash do
+                  required(:type).value(eql?: 'string')
+                  required(:format).value(eql?: 'uri')
+                  required(:pattern).value(eql?: '^http')
+                end
               end
+              required(:additionalProperties).value(eql?: false)
+              optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
+              required(:required).value(:array, min_size?: 0, max_size?: 4).each(included_in?: %w[by_id db_identifier name signature])
+              required(:type)
             end
-            required(:properties).hash do
-              required(:by_id).hash do
-                required(:type).value(eql?: 'number')
-              end
-              required(:db_identifier).hash do
-                required(:type).value(eql?: 'number')
-              end
-              required(:name).hash do
-                required(:type).value(eql?: 'string')
-              end
-              required(:signature).hash do
-                required(:type).value(eql?: 'string')
-                required(:format).value(eql?: 'uri')
-                required(:pattern).value(eql?: '^http')
-              end
-            end
-            required(:additionalProperties).value(eql?: false)
-            optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-            required(:required).value(:array, min_size?: 0, max_size?: 4).each(included_in?: %w[by_id db_identifier name signature])
-            required(:type)
           end
         end
 

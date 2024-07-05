@@ -172,50 +172,52 @@ module JSF
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
 
-        Dry::Schema.JSON do
-          config.validate_keys = true
+        self.class.cache("#{is_subschema}#{scoring}#{exam}") do
+          Dry::Schema.JSON do
+            config.validate_keys = true
 
-          before(:key_validator) do |result| # result.to_h (shallow dup)
-            JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
-          end
-
-          required(:allOf).array(:hash)
-          required(:properties).value(:hash)
-          required(:required).value(:array?).array(:str?)
-          required(:type).value(eql?: 'object')
-
-          if !is_subschema
-            required(:$schema).value(eql?: SCHEMA_VERSION)
-            required(:availableLocales).value(:array?).array(:str?)
-            required(:$defs).value(:hash)
-            required(:schemaFormVersion).value(eql?: VERSION)
-            optional(:title).maybe(:string) # TODO: deprecate?
-            if scoring && !exam
-              optional(:hasScoring) { bool? }
-              optional(:disableScoring) { bool? }
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
             end
-            if exam
-              required(:$id).filled { str? & format?(/^((?!#).)*$/) } # does not contain '#'
-              required(:displayProperties).hash do
-                required(:component).value(eql?: 'exam')
-                required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
-                required(:gradeWeight).filled(:integer, gt?: 0, lteq?: 100)
-                optional(:maxTakes).filled(:integer, gt?: 0)
-                # optional(:hidden).filled(:bool)
-                required(:sort).filled(:integer)
-                required(:i18n).hash do
-                  required(:label).hash do
-                    AVAILABLE_LOCALES.each do |locale|
-                      optional(locale.to_sym).maybe(:string)
+
+            required(:allOf).array(:hash)
+            required(:properties).value(:hash)
+            required(:required).value(:array?).array(:str?)
+            required(:type).value(eql?: 'object')
+
+            if !is_subschema
+              required(:$schema).value(eql?: SCHEMA_VERSION)
+              required(:availableLocales).value(:array?).array(:str?)
+              required(:$defs).value(:hash)
+              required(:schemaFormVersion).value(eql?: VERSION)
+              optional(:title).maybe(:string) # TODO: deprecate?
+              if scoring && !exam
+                optional(:hasScoring) { bool? }
+                optional(:disableScoring) { bool? }
+              end
+              if exam
+                required(:$id).filled { str? & format?(/^((?!#).)*$/) } # does not contain '#'
+                required(:displayProperties).hash do
+                  required(:component).value(eql?: 'exam')
+                  required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
+                  required(:gradeWeight).filled(:integer, gt?: 0, lteq?: 100)
+                  optional(:maxTakes).filled(:integer, gt?: 0)
+                  # optional(:hidden).filled(:bool)
+                  required(:sort).filled(:integer)
+                  required(:i18n).hash do
+                    required(:label).hash do
+                      AVAILABLE_LOCALES.each do |locale|
+                        optional(locale.to_sym).maybe(:string)
+                      end
                     end
                   end
                 end
+              else
+                optional(:$id).filled(:string)
               end
             else
-              optional(:$id).filled(:string)
+              # optional(:$schema).filled(:string)
             end
-          else
-            # optional(:$schema).filled(:string)
           end
         end
       end

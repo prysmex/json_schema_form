@@ -38,25 +38,27 @@ module JSF
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
       def dry_schema(_passthru)
-        Dry::Schema.JSON do
-          config.validate_keys = true
+        self.class.cache('') do
+          Dry::Schema.JSON do
+            config.validate_keys = true
 
-          before(:key_validator) do |result| # result.to_h (shallow dup)
-            result.to_h.tap do |h|
-              h.each do |k, v|
-                h[k] = [] if v.is_a?(::Array) && k == 'anyOf'
+            before(:key_validator) do |result| # result.to_h (shallow dup)
+              result.to_h.tap do |h|
+                h.each do |k, v|
+                  h[k] = [] if v.is_a?(::Array) && k == 'anyOf'
+                end
               end
             end
-          end
 
-          required(:type).value(eql?: 'string')
-          optional(:title).maybe(:string)
-          required(:isResponseSet).filled(Types::True)
-          optional(:sort).hash do
-            required(:sortBy).value(included_in?: %w[alphabetical score])
-            required(:sortOrder).value(included_in?: %w[asc desc])
+            required(:type).value(eql?: 'string')
+            optional(:title).maybe(:string)
+            required(:isResponseSet).filled(Types::True)
+            optional(:sort).hash do
+              required(:sortBy).value(included_in?: %w[alphabetical score])
+              required(:sortOrder).value(included_in?: %w[asc desc])
+            end
+            required(:anyOf).array(:hash)
           end
-          required(:anyOf).array(:hash)
         end
       end
 
