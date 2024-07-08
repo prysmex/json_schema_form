@@ -82,16 +82,7 @@ module JSF
       # @param [Integer] id
       # @return [String]
       def self.shared_ref_key(id)
-        "shared_schema_template_#{id}"
-      end
-
-      # Some keys where migrated with _9999 suffix at some point
-      #
-      # TODO migrate and remove this
-      #
-      # @return [Boolean]
-      def self.match_shared_property_key(property_key, db_id)
-        property_key.sub(/_9999\z/, '') == shared_ref_key(db_id)
+        "shared_#{SecureRandom.uuid[0...6]}"
       end
 
       # Defined in a Proc so it can be reused:
@@ -412,23 +403,22 @@ module JSF
       # Finds a JSF::Forms::SharedRef from a db_id
       #
       # @param [Integer] db_id
-      # @return [JSF::Forms::SharedRef, JSF::Forms::Form]
+      # @return [NilClass, JSF::Forms::SharedRef, JSF::Forms::Form]
       def get_shared_def(db_id:)
-        self['$defs'].find do |k, _v|
-          k == shared_ref_key(db_id)
+        self['$defs'].find do |_k, v|
+          v.db_id == db_id
         end&.last
       end
 
       # Removes a JSF::Forms::SharedRef or JSF::Forms::Form from the '$defs' key
       #
       # @param [Integer] db_id (DB id)
-      # @return [JSF::Forms::Form] mutated self
+      # @return [NilClass, JSF::Forms::Form] mutated self
       def remove_shared_def(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
 
-        key = shared_ref_key(db_id)
-
-        remove_def(key)
+        key = get_shared_def(db_id:)&.key_name
+        remove_def(key) if key
       end
 
       # Adds a shared. If index is passed, it will also add a JSF::Forms::Field::Shared
@@ -439,6 +429,9 @@ module JSF
       # @return [JSF::Forms::SharedRef]
       def add_shared_pair(db_id:, index:, key: shared_ref_key(db_id), definition: nil, options: {}, &)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
+
+        # add definition
+        def_obj = add_shared_def(db_id:, definition:)
 
         # add property
         shared = JSF::Forms::FormBuilder.example('shared')
@@ -453,10 +446,9 @@ module JSF
           raise ArgumentError.new("invalid index argument #{index}")
         end
 
-        prop.db_id = db_id
+        prop.shared_def_pointer = def_obj.key_name
 
-        # add definition
-        add_shared_def(db_id:, definition:)
+        def_obj
       end
 
       # Removes a shared ref.
@@ -466,17 +458,14 @@ module JSF
       def remove_shared_pair(db_id:)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
 
-        key = shared_ref_key(db_id)
-
         # remove property
-        # self.remove_property(key)
-        self[:properties].reject! do |k, _v|
-          self.class.match_shared_property_key(k, db_id)
+        self[:properties].reject! do |_k, v|
+          v.is_a?(JSF::Forms::Field::Shared) && v.db_id == db_id
         end
         resort!
 
         # remove definition
-        remove_def(key)
+        remove_shared_def(db_id:)
       end
 
       ###########################

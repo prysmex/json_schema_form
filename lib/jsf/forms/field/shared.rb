@@ -60,11 +60,17 @@ module JSF
           dig(:$ref)
         end
 
+        # @param [String] key
+        # @return [String]
+        def shared_def_pointer=(key)
+          self[:$ref] = "#/$defs/#{key}"
+        end
+
         # Extracts the id from the json pointer
         #
         # @return [Integer]
         def db_id
-          shared_def_pointer&.match(/\d+\z/)&.to_s&.to_i
+          shared_def&.db_id
         end
 
         # Update the db id in the shared_def_pointer
@@ -72,7 +78,7 @@ module JSF
         # @param [Integer]
         # @return [void]
         def db_id=(id)
-          self[:$ref] = "#/$defs/#{JSF::Forms::Form.shared_ref_key(id)}"
+          shared_def.db_id = id
         end
 
         # @return [JSF::Forms::SharedRef, JSF::Forms::Form]

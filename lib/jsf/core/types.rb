@@ -106,8 +106,7 @@ module JSF
         # @param [String,Symbol] key name of the key to remove
         # @return [Object] mutated self
         def remove_def(key)
-          key = key.to_s
-          self[:$defs].delete(key) if self[:$defs]
+          self[:$defs].delete(key.to_s) if self[:$defs]
           self
         end
 

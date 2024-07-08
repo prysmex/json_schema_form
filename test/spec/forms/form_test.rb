@@ -37,7 +37,7 @@ class FormTest < Minitest::Test
     # $defs
     assert_instance_of JSF::Forms::Form, form[:$defs][:form1]
     assert_instance_of JSF::Forms::ResponseSet, form[:$defs][:response_set_1]
-    assert_instance_of JSF::Forms::SharedRef, form[:$defs][JSF::Forms::Form.shared_ref_key(1)]
+    assert_instance_of JSF::Forms::SharedRef, form[:$defs].find { |k, _v| k.start_with?('shared') }&.last
 
     # all field types
     form[:properties].each do |name, field|
@@ -120,7 +120,8 @@ class FormTest < Minitest::Test
     assert_empty form.errors(if: error_proc)
 
     # missmatch id
-    form[:$defs][:shared_schema_template_1].db_id = 2
+    form[:$defs] = { other_key: form[:$defs].first.last }
+    # form[:$defs].first.last.shared_def_pointer = '__key__'
 
     refute_empty form.errors(if: error_proc)
 
@@ -194,11 +195,13 @@ class FormTest < Minitest::Test
     db_id = 1
 
     form = JSF::Forms::FormBuilder.build do
-      append_property(:shared_1, example('shared')).tap { |c| c.db_id = db_id }
+      append_property(:shared_1, example('shared'))
     end
 
     refute_empty form.errors(if: error_proc)
-    form.add_shared_def(db_id:)
+
+    def_obj = form.add_shared_def(db_id:)
+    form.properties.first.last.shared_def_pointer = def_obj.key_name
 
     assert_empty form.errors(if: error_proc)
   end
@@ -322,7 +325,7 @@ class FormTest < Minitest::Test
       add_def(:some_key, JSF::Forms::Form.new)
     end
 
-    assert_equal %w[shared_schema_template_1 some_key], form.shared_defs.keys
+    assert_equal 2, form.shared_defs.size
   end
 
   def test_add_shared_def
