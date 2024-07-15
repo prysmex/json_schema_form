@@ -406,7 +406,7 @@ module JSF
       # @return [NilClass, JSF::Forms::SharedRef, JSF::Forms::Form]
       def get_shared_def(db_id:)
         self['$defs'].find do |_k, v|
-          v.db_id == db_id
+          v.respond_to?(:db_id) && v.db_id == db_id
         end&.last
       end
 
