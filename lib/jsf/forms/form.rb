@@ -431,7 +431,7 @@ module JSF
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
 
         # add definition
-        def_obj = add_shared_def(db_id:, definition:)
+        def_obj = get_shared_def(db_id:) || add_shared_def(db_id:, definition:)
 
         # add property
         shared = JSF::Forms::FormBuilder.example('shared')
