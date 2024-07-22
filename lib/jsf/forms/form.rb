@@ -79,9 +79,8 @@ module JSF
       # converts and Integer into a string that can be used for
       # JSF::Forms::SharedRef and JSF::Forms::Form inside '$defs'
       #
-      # @param [Integer] id
       # @return [String]
-      def self.shared_ref_key(id)
+      def self.shared_ref_key
         "shared_#{SecureRandom.uuid[0...6]}"
       end
 
@@ -373,8 +372,8 @@ module JSF
       # Util
       #
       # @see .shared_ref_key
-      def shared_ref_key(*)
-        self.class.shared_ref_key(*)
+      def shared_ref_key
+        self.class.shared_ref_key
       end
 
       # Gets all shared $defs, which may be only the reference
@@ -395,7 +394,7 @@ module JSF
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
 
         definition ||= JSF::Forms::FormBuilder.example('shared_ref')
-        definition = add_def(shared_ref_key(db_id), definition)
+        definition = add_def(shared_ref_key, definition)
         definition.db_id = db_id if definition.is_a?(JSF::Forms::SharedRef)
         definition
       end
@@ -427,7 +426,7 @@ module JSF
       # @param [Integer] db_id (DB id)
       # @param [Integer] index
       # @return [JSF::Forms::SharedRef]
-      def add_shared_pair(db_id:, index:, key: shared_ref_key(db_id), definition: nil, options: {}, &)
+      def add_shared_pair(db_id:, index:, key: shared_ref_key, definition: nil, options: {}, &)
         raise TypeError.new("db_id must be integer, got: #{db_id}, #{db_id.class}") unless db_id.is_a? Integer
 
         # add definition
