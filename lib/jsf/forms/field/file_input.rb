@@ -8,6 +8,13 @@ module JSF
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Arrayable
 
+        PATTERN_ANY = '^http.+\.?(?:)$'
+        PATTERN_PDF = '^http.+\.?(?:pdf)$'
+        PATTERN_IMAGES = '^http.+\.?(?:heic|heif|jpeg|jpg|png)$'
+        PATTERNS = [PATTERN_ANY, PATTERN_PDF, PATTERN_IMAGES].freeze
+
+        # PATTERN_REGEX = /^\^http\.\+\\\.\?\(\?:(?:\w*(?<=\w)\|?(?=\w)\w*)*\)\$/.freeze
+
         set_strict_type('array')
 
         ###############
@@ -43,11 +50,10 @@ module JSF
               required(:items).hash do
                 required(:format).value(eql?: 'uri')
                 required(:type).value(eql?: 'string')
-                required(:pattern).value(eql?: '^http')
+                required(:pattern).value(included_in?: PATTERNS) # format?: PATTERN_REGEX
               end
               optional(:maxItems)
               optional(:minItems)
-              optional(:contentMediaType).value(:string)
               required(:type)
               required(:uniqueItems).value(eql?: true)
             end
@@ -61,6 +67,17 @@ module JSF
         def sample_value
           range = (0..rand(0..2))
           range.map { "https://picsum.photos/#{rand(10...1000)}" }.uniq
+        end
+
+        def migrate!
+          self['items']['pattern'] = case delete('contentMediaType')
+          when '.pdf'
+            PATTERN_PDF
+          when String
+            PATTERN_IMAGES
+          else
+            PATTERN_ANY
+          end
         end
 
       end

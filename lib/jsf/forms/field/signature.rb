@@ -110,10 +110,6 @@ module JSF
           }
         end
 
-        def migrate!
-          self[:required] = %w[name signature]
-        end
-
       end
     end
   end

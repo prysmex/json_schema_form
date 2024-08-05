@@ -19,11 +19,10 @@
   "items": {
     "type": "string",
     "format": "uri",
-    "pattern": "^http"
+    "pattern": "^http.+\\.?(?:)$"
   },
   // "maxItems": 5,
   // "title": "file_input",
-  // contentMediaType: ".pdf",
   "type": "array",
   "uniqueItems": true
 }
