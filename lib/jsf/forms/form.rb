@@ -184,6 +184,9 @@ module JSF
               if scoring && !exam
                 optional(:hasScoring) { bool? }
                 optional(:disableScoring) { bool? }
+                required(:displayProperties).hash do
+                  optional(:suggestedReportSchemaTemplates).array { str? & format?(/\d+/) }
+                end
               end
               if exam
                 required(:$id).filled { str? & format?(/^((?!#).)*$/) } # does not contain '#'
