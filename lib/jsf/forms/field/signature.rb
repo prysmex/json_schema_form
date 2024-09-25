@@ -50,6 +50,7 @@ module JSF
               end
 
               required(:displayProperties).hash do
+                optional(:restrictToCurrentUser).filled(:bool)
                 optional(:audience).array(:hash) do
                   required(:field)
                   required(:values)
