@@ -29,7 +29,7 @@ module JSF
           attributes_transform_proc: JSF::Forms::Condition::ATTRIBUTE_TRANSFORM
         }.merge(options)
 
-        super(obj, options)
+        super
       end
 
       ###############

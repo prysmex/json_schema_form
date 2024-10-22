@@ -10,7 +10,7 @@ module JSF
         include JSF::Forms::Field::Concerns::Base
         include JSF::Core::Type::Nullable
 
-        set_strict_type(%w[string null]) # @deprecate null after migration
+        set_strict_type('string')
 
         ###############
         # VALIDATIONS #

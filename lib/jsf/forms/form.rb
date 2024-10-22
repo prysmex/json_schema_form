@@ -146,7 +146,7 @@ module JSF
           attributes_transform_proc: ATTRIBUTE_TRANSFORM
         }.merge(options)
 
-        super(obj, options)
+        super
       end
 
       ###############
@@ -1585,7 +1585,7 @@ module JSF
 
       # redefined as private to favor append*, prepend* methods
       def add_property(*args, &block)
-        super(*args, &block)
+        super
       end
 
       # Raises an error if form is NOT the root form

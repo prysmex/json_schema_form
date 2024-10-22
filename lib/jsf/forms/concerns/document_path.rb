@@ -35,6 +35,7 @@ module JSF
         #     }
         #   }
         #
+        # @param [NilClass|Integer|Array<Integer>] section_indices
         # @return [Array<String>]
         def document_path(section_indices: nil)
           section_indices = section_indices.dup if section_indices.is_a?(::Array)
@@ -69,7 +70,7 @@ module JSF
               doc_path.push(shared_field.key_name)
             elsif current_schema.is_a?(JSF::Forms::Section)
 
-              if section_indices.present? # rubocop:disable Style/GuardClause
+              if section_indices.is_a?(Integer) || (section_indices.is_a?(::Array) && !section_indices.empty?) # rubocop:disable Style/GuardClause
                 doc_path.push(current_schema.key_name)
                 val = section_indices.is_a?(::Array) ? section_indices.shift : section_indices
                 doc_path.push(val)

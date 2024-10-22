@@ -49,7 +49,7 @@ module JSF
       unless init_value.is_a?(ActiveSupport::HashWithIndifferentAccess)
         init_value&.transform_keys! { |k| convert_key(k) }
       end
-      super(init_value, init_options)
+      super
     end
 
     # ensure key is string since the beggining since :SuperHash::Hasher methods are called

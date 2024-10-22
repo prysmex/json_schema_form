@@ -62,7 +62,7 @@ module JSF
             is_subschema: false
           }.merge(options[:meta] || {})
 
-          super(obj, options)
+          super
         end
 
         # Returns an array of json-schema types, even when self[:type] is a single string

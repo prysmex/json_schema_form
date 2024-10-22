@@ -39,7 +39,7 @@ module JSF
       # @option options [Proc] :attributes_transform_proc
       def initialize(init_value = {}, options = {})
         @attributes_transform_proc = options.delete(:attributes_transform_proc)
-        super(init_value, options)
+        super
       end
 
       # This method is called by CORE_TRANSFORM which is called by all attribute transforms
