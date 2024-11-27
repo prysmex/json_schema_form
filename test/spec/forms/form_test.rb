@@ -644,7 +644,7 @@ class FormTest < Minitest::Test
 
   def test_each_form
     # create vars to store forms in
-    form1, form2 = form3 = form4 = form5 = form6 = nil
+    form2 = form3 = form4 = form5 = form6 = nil
 
     # build the form
     form1 = JSF::Forms::FormBuilder.build do

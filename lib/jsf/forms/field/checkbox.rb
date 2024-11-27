@@ -117,12 +117,7 @@ module JSF
           response_set = self.response_set
           return [] if response_set.nil?
 
-          response_set[:anyOf].sample(2)
-
-          self.response_set
-            &.dig(:anyOf)
-            &.sample(2)
-            &.map { |o| o&.dig(:const) }
+          response_set[:anyOf].sample(2).map { |o| o&.dig(:const) }
         end
 
       end
