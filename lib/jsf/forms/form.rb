@@ -339,25 +339,31 @@ module JSF
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean]
-      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_defs: false, any_property: meta[:is_subschema])
+      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_defs: false, no_props_validity: meta[:is_subschema])
         return false if dig('displayProperties', 'component') == 'exam' && i18n_label(locale).to_s.empty?
+
+        any_property = false
 
         # check properties and their response_sets
         each_form(ignore_sections: true, ignore_defs:) do |form|
-          return false if form.properties.any? do |_k, v|
+          return false if form.properties.any? do |k, v|
             next unless v.visible(is_create: false)
 
             any_property = true
 
-            if v.respond_to?(:response_set)
+            is_invalid = if v.respond_to?(:response_set)
               !v.valid_for_locale?(locale) || !v.response_set&.valid_for_locale?(locale)
             else
               !v.valid_for_locale?(locale)
             end
+
+            yield k, v if block_given? && is_invalid
+
+            is_invalid
           end
         end
 
-        any_property
+        any_property ? true : no_props_validity
       end
 
       ###########

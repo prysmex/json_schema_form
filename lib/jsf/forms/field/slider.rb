@@ -133,11 +133,11 @@ module JSF
 
         # get the translation for a value
         #
-        # @param [] value
+        # @param [number|String] value
         # @param [String,Symbol] locale
         # @return [String]
         def i18n_value(value, locale = DEFAULT_LOCALE)
-          dig(:displayProperties, :i18n, :enum, locale, value.to_i.to_s)
+          dig(:displayProperties, :i18n, :enum, locale, value.to_s)
         end
 
         # @retun [Integer, Float]
