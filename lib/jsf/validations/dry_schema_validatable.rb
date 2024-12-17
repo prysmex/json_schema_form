@@ -35,12 +35,10 @@ module JSF
       end
 
       module ClassMethods
-        # TODO: We can make an interface to support Rail's memory cache
         def cache(key, **, &)
           return yield if key.nil?
 
-          @cache ||= {}
-          @cache[key] ||= yield
+          CACHE.fetch("#{name}#{key}", &)
         end
       end
 

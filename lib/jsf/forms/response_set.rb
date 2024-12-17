@@ -38,7 +38,7 @@ module JSF
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
       def dry_schema(_passthru)
-        self.class.cache('') do
+        self.class.cache(nil) do
           Dry::Schema.JSON do
             config.validate_keys = true
 
