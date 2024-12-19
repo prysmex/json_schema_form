@@ -162,13 +162,27 @@ module JSF
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
 
-        self.class.cache("#{is_subschema}#{scoring}#{exam}") do
+        cache_key = "#{is_subschema}#{scoring}#{exam}"
+
+        # TODO: this could later be implemented for all schema classes by centralizing it
+        # dry_schema_config
+        instance = self
+        if (dry_schema_config = passthru[:dry_schema_config])
+          id = dry_schema_config[:id]
+          raise StandardError.new('id is required when using dry_schema_config') unless id
+
+          cache_key += id
+        end
+
+        self.class.cache(cache_key) do
           Dry::Schema.JSON do
             config.validate_keys = true
 
             before(:key_validator) do |result| # result.to_h (shallow dup)
               JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
             end
+
+            instance_exec(instance, &dry_schema_config[:proc]) if dry_schema_config&.[](:proc)
 
             required(:allOf).array(:hash)
             required(:properties).value(:hash)
