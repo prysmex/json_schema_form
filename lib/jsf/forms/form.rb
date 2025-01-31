@@ -66,6 +66,7 @@ module JSF
           'text_input' => JSF::Forms::Field::TextInput,
           'time_input' => JSF::Forms::Field::TimeInput,
           'video' => JSF::Forms::Field::Video,
+          'slideshow' => JSF::Forms::Field::Slideshow,
           'section' => JSF::Forms::Section
         }
 
@@ -174,6 +175,8 @@ module JSF
           cache_key += id
         end
 
+        dry_schema_config_proc = dry_schema_config&.[](:proc)
+
         self.class.cache(cache_key) do
           Dry::Schema.JSON do
             config.validate_keys = true
@@ -182,7 +185,8 @@ module JSF
               JSF::Validations::DrySchemaValidated::WITHOUT_SUBSCHEMAS_PROC.call(result.to_h)
             end
 
-            instance_exec(instance, &dry_schema_config[:proc]) if dry_schema_config&.[](:proc)
+            # support customizing with proc
+            instance_exec(:root, instance, &dry_schema_config_proc) if dry_schema_config_proc
 
             required(:allOf).array(:hash)
             required(:properties).value(:hash)
@@ -195,16 +199,12 @@ module JSF
               required(:$defs).value(:hash)
               required(:schemaFormVersion).value(eql?: VERSION)
               optional(:title).maybe(:string) # TODO: deprecate?
-              if scoring && !exam
-                optional(:hasScoring) { bool? }
-                optional(:disableScoring) { bool? }
-                optional(:displayProperties).hash do
-                  optional(:suggestedReportSchemaTemplates).array { str? & format?(/\d+/) }
-                end
-              end
               if exam
                 required(:$id).filled { str? & format?(/^((?!#).)*$/) } # does not contain '#'
                 required(:displayProperties).hash do
+                  # support customizing with proc
+                  instance_exec(:displayProperties, instance, &dry_schema_config_proc) if dry_schema_config_proc
+
                   required(:component).value(eql?: 'exam')
                   required(:passingGrade).filled(:integer, gt?: 0, lteq?: 100)
                   required(:gradeWeight).filled(:integer, gt?: 0, lteq?: 100)
@@ -219,7 +219,19 @@ module JSF
                     end
                   end
                 end
+              elsif scoring
+                optional(:hasScoring) { bool? }
+                optional(:disableScoring) { bool? }
+                optional(:displayProperties).hash do
+                  # support customizing with proc
+                  instance_exec(:displayProperties, instance, &dry_schema_config_proc) if dry_schema_config_proc
+                  optional(:suggestedReportSchemaTemplates).array { str? & format?(/\d+/) }
+                end
               else
+                optional(:displayProperties).hash do
+                  # support customizing with proc
+                  instance_exec(:displayProperties, instance, &dry_schema_config_proc) if dry_schema_config_proc
+                end
                 optional(:$id).filled(:string)
               end
             else

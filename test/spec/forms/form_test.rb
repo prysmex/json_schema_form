@@ -32,6 +32,7 @@ class FormTest < Minitest::Test
       append_property(:time_input, example('time_input'))
       append_property(:signature, example('signature'))
       append_property(:video, example('video'))
+      append_property(:slideshow, example('slideshow'))
     end
 
     # $defs

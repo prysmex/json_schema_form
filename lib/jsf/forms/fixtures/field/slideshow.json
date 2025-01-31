@@ -1,0 +1,23 @@
+{
+  // "$id": "",
+  "displayProperties": {
+    "component": "slideshow",
+    // "hidden": false
+    // "hideOnCreate": false,
+    "i18n": {
+      "label": {
+        "es": "Slideshow",
+        "en": "Slideshow"
+      }
+    },
+    "url": "http://localhost:3000/slideshow1",
+    "sort": 0,
+    "visibility": {
+      "label": true
+    }
+  },
+  // "title": "slideshow",
+  // "max": 100,
+  "min": 0,
+  "type": "number"
+}

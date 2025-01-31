@@ -71,6 +71,8 @@ module JSF
             '/field/time_input.json'
           when 'video'
             '/field/video.json'
+          when 'slideshow'
+            '/field/slideshow.json'
           else
             raise StandardError.new("invalid example name: #{ex_name}")
           end
