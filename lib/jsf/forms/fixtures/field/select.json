@@ -10,7 +10,8 @@
       "label": {
         "es": "Seleccion",
         "en": "Dropdown"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

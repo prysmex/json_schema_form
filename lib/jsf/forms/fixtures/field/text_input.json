@@ -8,7 +8,8 @@
       "label": {
         "es": "Area de texto",
         "en": "Text area"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

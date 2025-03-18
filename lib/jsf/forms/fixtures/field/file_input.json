@@ -8,7 +8,8 @@
       "label": {
         "es": "Archivo",
         "en": "File"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

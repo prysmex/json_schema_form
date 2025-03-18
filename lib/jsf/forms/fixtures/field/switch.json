@@ -11,14 +11,15 @@
         "en": "Some negative text",
         "es": "Algun texto negativo"
       },
+      "trueLabel": {
+        "en": "Some positive text",
+        "es": "Algun texto positivo"
+      },
       "label": {
         "es": "Switch",
         "en": "Switch"
       },
-      "trueLabel": {
-        "en": "Some positive text",
-        "es": "Algun texto positivo"
-      }
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

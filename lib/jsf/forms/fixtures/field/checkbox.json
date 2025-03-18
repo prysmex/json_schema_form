@@ -9,7 +9,8 @@
       "label": {
         "es": "opciones",
         "en": "checkbox"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

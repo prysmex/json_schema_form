@@ -39,6 +39,11 @@ module JSF
                       optional(locale.to_sym).maybe(:string)
                     end
                   end
+                  optional(:helpText).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
+                  end
                 end
                 optional(:pictures).value(:array?).array(:str?)
                 required(:sort).filled(:integer)

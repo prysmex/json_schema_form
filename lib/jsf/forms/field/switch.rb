@@ -35,12 +35,17 @@ module JSF
                       optional(locale.to_sym).maybe(:string)
                     end
                   end
+                  required(:trueLabel).hash do
+                    AVAILABLE_LOCALES.each do |locale|
+                      optional(locale.to_sym).maybe(:string)
+                    end
+                  end
                   required(:label).hash do
                     AVAILABLE_LOCALES.each do |locale|
                       optional(locale.to_sym).maybe(:string)
                     end
                   end
-                  required(:trueLabel).hash do
+                  optional(:helpText).hash do
                     AVAILABLE_LOCALES.each do |locale|
                       optional(locale.to_sym).maybe(:string)
                     end

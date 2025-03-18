@@ -27,7 +27,8 @@
       "label": {
         "es": "Min: 5, Max: 10, Inc: 1",
         "en": "Min: 5, Max: 10, Inc: 1"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

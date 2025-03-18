@@ -8,7 +8,8 @@
       "label": {
         "es": "Numero",
         "en": "Number"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,

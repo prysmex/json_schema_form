@@ -10,7 +10,8 @@
       "label": {
         "es": "Firma",
         "en": "Signature"
-      }
+      },
+      "helpText": {}
     },
     "pictures": [],
     "sort": 0,
