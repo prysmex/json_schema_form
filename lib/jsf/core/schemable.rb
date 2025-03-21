@@ -135,10 +135,10 @@ module JSF
         #
         # @param value [] value to evaluate
         # @return [Nil, Array]
-        def dependent_conditions_for_value(value, &block)
+        def dependent_conditions_for_value(value, &)
           dependent_conditions&.select do |condition|
             if condition.respond_to?(:evaluate)
-              condition.evaluate(value, &block)
+              condition.evaluate(value, &)
             else
               yield(condition)
             end

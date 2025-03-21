@@ -834,7 +834,7 @@ module JSF
           levels: nil,
           skip_tree_when_hidden: false,
           start_level: 0,
-          &block
+          &
         )
           # stop execution if levels limit matches
           return if !levels.nil? && current_level >= (start_level + levels)
@@ -869,7 +869,7 @@ module JSF
               prop[:items]&.each_form(
                 current_level: current_level + 1,
                 **kwargs,
-                &block
+                &
               )
             end
           end
@@ -882,7 +882,7 @@ module JSF
               prop&.each_form(
                 current_level: current_level + 1,
                 **kwargs,
-                &block
+                &
               )
             end
           end
@@ -899,7 +899,7 @@ module JSF
             cond[:then]&.each_form(
               current_level: current_level + 1,
               **kwargs,
-              &block
+              &
             )
           end
       end
@@ -919,7 +919,7 @@ module JSF
       # @yieldparam [Array<String,Integer>] document_path
       #
       # @return [void]
-      def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_on_condition: false, condition_proc: nil, **kwargs, &block)
+      def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_on_condition: false, condition_proc: nil, **kwargs, &)
         empty_document = {}
 
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
@@ -959,7 +959,7 @@ module JSF
                     section_or_shared: property,
                     condition_proc:,
                     **kwargs,
-                    &block
+                    &
                   )
               end
             elsif !kwargs[:ignore_defs] && property.is_a?(JSF::Forms::Field::Shared)
@@ -973,7 +973,7 @@ module JSF
                   section_or_shared: property,
                   condition_proc:,
                   **kwargs,
-                  &block
+                  &
                 )
             end
           end
@@ -983,7 +983,7 @@ module JSF
       end
 
       # @return void
-      def each_sorted_property(**kwargs)
+      def each_sorted_property(**)
         is_create = false
 
         all_sorted_properties = []
@@ -994,7 +994,7 @@ module JSF
           skip_tree_when_hidden: true,
           ignore_defs: false,
           is_create:,
-          **kwargs
+          **
         ) do |form, condition, _current_level|
           current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
             next unless property.visible(is_create:)
@@ -1033,7 +1033,7 @@ module JSF
       end
 
       # @return void
-      def each_sorted_form_with_document(document, **kwargs)
+      def each_sorted_form_with_document(document, **)
         is_create = false
 
         all_sorted_properties = []
@@ -1052,7 +1052,7 @@ module JSF
           skip_on_condition: true,
           skip_tree_when_hidden: true,
           is_create:,
-          **kwargs
+          **
         ) do |form, condition, _current_level, current_doc, _current_empty_doc, document_path, section_or_shared|
           current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
             next unless property.visible(is_create:)
@@ -1118,14 +1118,14 @@ module JSF
       #   - removes all keys in unactive trees
       #
       # @return [JSF::Forms::Document]
-      def cleaned_document(document, is_create: false, **kwargs)
+      def cleaned_document(document, is_create: false, **)
         # iterate recursively through schemas
         new_document = each_form_with_document(
           document,
           skip_tree_when_hidden: true,
           skip_on_condition: true,
           is_create:,
-          **kwargs
+          **
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           form[:properties].each do |key, property|
             next unless property.visible(is_create:)
@@ -1150,7 +1150,7 @@ module JSF
       #
       # @param document [Hash{String}, JSF::Forms::Document]
       # @return [Float, NilClass]
-      def set_specific_max_scores!(document, is_create: false, condition_proc: nil, **kwargs)
+      def set_specific_max_scores!(document, is_create: false, condition_proc: nil, **)
         return if self['disableScoring']
 
         score_value = score_initial_value
@@ -1161,7 +1161,7 @@ module JSF
           skip_tree_when_hidden: true,
           skip_on_condition: true,
           is_create:,
-          **kwargs
+          **
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties
           form[:properties].each do |k, prop|
@@ -1207,7 +1207,7 @@ module JSF
       end
 
       # @return [Float, NilClass]
-      def set_scores!(document, is_create: false, **kwargs)
+      def set_scores!(document, is_create: false, **)
         return if self['disableScoring']
 
         score_value = score_initial_value
@@ -1218,7 +1218,7 @@ module JSF
           skip_tree_when_hidden: true,
           skip_on_condition: true,
           is_create:,
-          **kwargs
+          **
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties and increment score_value if needed
           form[:properties].each do |k, prop|
@@ -1243,7 +1243,7 @@ module JSF
         score_value
       end
 
-      def set_failures!(document, is_create: false, **kwargs)
+      def set_failures!(document, is_create: false, **)
         total_failed = 0
 
         # iterate recursively through schemas
@@ -1252,7 +1252,7 @@ module JSF
           skip_tree_when_hidden: true,
           skip_on_condition: true,
           is_create:,
-          **kwargs
+          **
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties
           form[:properties].each do |k, prop|

@@ -835,16 +835,16 @@ class FormTest < Minitest::Test
 
       if (form.properties.keys & %w[switch_1 switch_2 switch_3 section_1]).size > 0
         assert_empty document_path
-        assert_equal '{"switch_1"=>true, "switch_2"=>true, "section_1"=>[{"switch_4"=>true}, {"switch_4"=>false}]}', current_doc.to_s
+        assert_equal '{"switch_1" => true, "switch_2" => true, "section_1" => [{"switch_4" => true}, {"switch_4" => false}]}', current_doc.to_s
       else
         refute_empty document_path
         case document_path.to_s
         when '["section_1", 0]'
 
-          assert_equal '{"switch_4"=>true}', current_doc.to_s
+          assert_equal '{"switch_4" => true}', current_doc.to_s
         when '["section_1", 1]'
 
-          assert_equal '{"switch_4"=>false}', current_doc.to_s
+          assert_equal '{"switch_4" => false}', current_doc.to_s
         else
           raise StandardError.new
         end
@@ -973,79 +973,79 @@ class FormTest < Minitest::Test
 
     # allows meta
     document = {'meta' => {'some_key' => 1}}
-    expected = '{"section_1"=>[], "meta"=>{"some_key"=>1}}'
+    expected = '{"section_1" => [], "meta" => {"some_key" => 1}}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # removes hidden
     document = {'hidden' => 'hey' }
-    expected = '{"section_1"=>[]}'
+    expected = '{"section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # allows hide_on_create on create when not is_create
     document = {'hide_on_create' => 'hey' }
-    expected = '{"hide_on_create"=>"hey", "section_1"=>[]}'
+    expected = '{"hide_on_create" => "hey", "section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # removes hide_on_create on create when is_create
     document = {'hide_on_create' => 'hey' }
-    expected = '{"section_1"=>[]}'
+    expected = '{"section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document, is_create: true).to_s
 
     # empty document
     document = {}
-    expected = '{"section_1"=>[]}'
+    expected = '{"section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # known property
     document = {'switch_1' => true }
-    expected = '{"switch_1"=>true, "section_1"=>[]}'
+    expected = '{"switch_1" => true, "section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # unknown property
     document = {'other_prop' => true }
-    expected = '{"section_1"=>[]}'
+    expected = '{"section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # known dynamic property
     document = {'switch_1' => true, 'switch_2' => true }
-    expected = '{"switch_1"=>true, "section_1"=>[], "switch_2"=>true}'
+    expected = '{"switch_1" => true, "section_1" => [], "switch_2" => true}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # hidden dynamic property
     document = {'switch_1' => false, 'switch_2' => true }
-    expected = '{"switch_1"=>false, "section_1"=>[]}'
+    expected = '{"switch_1" => false, "section_1" => []}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # deep hidden dynamic property
     document = {'switch_1' => true, 'switch_2' => false, 'switch_3' => true }
-    expected = '{"switch_1"=>true, "section_1"=>[], "switch_2"=>false}'
+    expected = '{"switch_1" => true, "section_1" => [], "switch_2" => false}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # unknown property in section
     document = {'section_1' => [{ 'some_prop' => 3 }] }
-    expected = '{"section_1"=>[{}]}'
+    expected = '{"section_1" => [{}]}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # known property in section
     document = {'section_1' => [{ 'number_input_section' => 2 }] }
-    expected = '{"section_1"=>[{"number_input_section"=>2}]}'
+    expected = '{"section_1" => [{"number_input_section" => 2}]}'
 
     assert_equal expected, form.cleaned_document(document).to_s
 
     # dynamic property in section
     document = {'section_1' => [{ 'number_input_section' => 1 }] }
-    expected = '{"section_1"=>[{"number_input_section"=>1, "sub_section_1"=>[]}]}'
+    expected = '{"section_1" => [{"number_input_section" => 1, "sub_section_1" => []}]}'
 
     assert_equal expected, form.cleaned_document(document).to_s
   end
@@ -1068,9 +1068,9 @@ class FormTest < Minitest::Test
         docs.each do |doc|
           assert_nil form.set_specific_max_scores!(doc, is_create:)
           if doc.key? 'some_key'
-            assert_equal '{"some_key"=>1, "meta"=>{"specific_max_score_hash"=>{}, "specific_max_score_total"=>nil}}', doc.to_s
+            assert_equal '{"some_key" => 1, "meta" => {"specific_max_score_hash" => {}, "specific_max_score_total" => nil}}', doc.to_s
           else
-            assert_equal '{"meta"=>{"specific_max_score_hash"=>{}, "specific_max_score_total"=>nil}}', doc.to_s
+            assert_equal '{"meta" => {"specific_max_score_hash" => {}, "specific_max_score_total" => nil}}', doc.to_s
           end
         end
       end
