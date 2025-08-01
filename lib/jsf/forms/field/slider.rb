@@ -57,7 +57,10 @@ module JSF
                     end
                   end
                 end
+                optional(:modifyWarning).filled(:string)
+                optional(:notes).filled(:string)
                 optional(:pictures).value(:array?).array(:str?)
+                optional(:readOnly).filled(:bool)
                 required(:sort).filled(:integer)
                 required(:visibility).hash do
                   required(:label).filled(:bool)

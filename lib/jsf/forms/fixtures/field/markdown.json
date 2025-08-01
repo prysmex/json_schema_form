@@ -11,7 +11,10 @@
       }
     },
     "kind": "neutral",
+    // "modifyWarning": "Some warning",
+    // "notes": "My awesome notes",
     "pictures": [],
+    // "readOnly": false,
     "sort": 0,
     "visibility": {
       "label": true

@@ -46,7 +46,10 @@ module JSF
                     end
                   end
                 end
+                optional(:modifyWarning).filled(:string)
+                optional(:notes).filled(:string)
                 optional(:pictures).value(:array?).array(:str?)
+                optional(:readOnly).filled(:bool)
                 optional(:responseSetFilters).value(:array?).array(:str?)
                 required(:sort).filled(:integer)
                 optional(:unansweredBehavior).value(included_in?: %w[disable show_all])

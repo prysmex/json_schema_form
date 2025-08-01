@@ -91,11 +91,15 @@ module JSF
           d_p = self[:displayProperties]
           return unless d_p
 
+          d_p.compact! # remove all nil values
+
           d_p.delete(:hidden) if d_p[:hidden] == false
           d_p.delete(:hideOnCreate) if d_p[:hideOnCreate] == false
+          d_p.delete(:modifyWarning) if d_p[:modifyWarning] == ''
+          d_p.delete(:notes) if d_p[:notes] == ''
           d_p.delete(:pictures) if d_p[:pictures] == []
-          d_p.delete(:disableScoring) unless d_p[:disableScoring]
-          d_p.compact!
+          d_p.delete(:disableScoring) if d_p[:disableScoring] == false
+          d_p.delete(:readOnly) if d_p[:readOnly] == false
         end
 
       end

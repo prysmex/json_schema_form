@@ -70,7 +70,10 @@ module JSF
                     end
                   end
                 end
+                optional(:modifyWarning).filled(:string)
+                optional(:notes).filled(:string)
                 optional(:pictures).value(:array?).array(:str?)
+                optional(:readOnly).filled(:bool)
                 required(:sort).filled(:integer)
                 required(:component).value(eql?: 'signature')
                 required(:visibility).hash do

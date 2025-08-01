@@ -10,7 +10,10 @@
       },
       "helpText": {}
     },
+    // "modifyWarning": "Some warning",
+    // "notes": "My awesome notes",
     "pictures": [],
+    // "readOnly": false,
     "sort": 0,
     "hidden": false,
     "visibility": {

@@ -35,7 +35,10 @@ module JSF
                   end
                 end
                 optional(:kind).value(included_in?: KINDS)
+                optional(:modifyWarning).filled(:string)
+                optional(:notes).filled(:string)
                 optional(:pictures).value(:array?).array(:str?)
+                optional(:readOnly).filled(:bool)
                 required(:sort).filled(:integer)
                 required(:visibility).hash do
                   required(:label).filled(:bool)
