@@ -76,7 +76,11 @@ module JSF
 
         # @return [Boolean]
         def visible(is_create:)
-          !hidden? && !(is_create && hideOnCreate?)
+          if is_create
+            !hidden? && !hideOnCreate?
+          else
+            !hidden?
+          end
         end
 
         # @return [String]
