@@ -1118,7 +1118,7 @@ module JSF
       #   - removes all keys in unactive trees
       #
       # @return [JSF::Forms::Document]
-      def cleaned_document(document, is_create: false, **)
+      def cleaned_document(document, is_create: false, skip_proc: nil, **)
         # iterate recursively through schemas
         new_document = each_form_with_document(
           document,
@@ -1132,6 +1132,7 @@ module JSF
 
             value = current_doc[key]
             next if value.nil? # skip nil value
+            next if skip_proc&.call(key, property, value)
 
             current_empty_doc[key] = value
           end
