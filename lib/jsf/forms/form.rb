@@ -1554,26 +1554,34 @@ module JSF
         end
       end
 
-      # @param document [JSF::Forms::Document]
-      # @return [Hash{String =>*}]
-      def collect_values_from_document(document)
-        data = {}
+      FINAL = :__final_stop
 
-        return data unless block_given?
+      # @param document [JSF::Forms::Document]
+      # @param skip_nil [Boolean]
+      # @return [Hash{String =>*}]
+
+      def collect_values_from_document(document, skip_nil: true)
+        acum = {}
+        return acum unless block_given?
 
         each_form_with_document(
           document,
-          ignore_defs: false
+          ignore_defs: false,
+          skip_tree_when_hidden: true
         ) do |form, _condition, _current_level, current_doc, _current_empty_doc, _document_path|
           form.properties.each do |k, v|
-            next unless yield(v)
+            doc_value = current_doc[k]
+            next if skip_nil && doc_value.nil?
 
-            value = current_doc[k]
-            data[k] = value if value
+            rv = yield(v, doc_value, acum, k)
+            next unless rv
+
+            acum[k] = doc_value
+            return acum if rv == FINAL
           end
         end
 
-        data
+        acum
       end
 
       # @return [void]
