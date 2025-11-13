@@ -258,7 +258,7 @@ module JSF
 
         if run_validation?(passthru, :subschema_properties) &&
            meta[:is_subschema] &&
-           properties.none? { |_k, v| v.visible(is_create: false) }
+           properties.none? { |_k, v| v.visible?(is_create: false) }
           add_error_on_path(
             errors_hash,
             'properties',
@@ -373,7 +373,7 @@ module JSF
         # check properties and their response_sets
         each_form(ignore_sections: true, ignore_defs:) do |form|
           return false if form.properties.any? do |k, v|
-            next unless v.visible(is_create: false)
+            next unless v.visible?(is_create: false)
 
             any_property = true
 
@@ -799,7 +799,7 @@ module JSF
         # remove not visible fields from required
         each_form(ignore_defs:) do |form|
           form[:required]&.select! do |name|
-            form[:properties][name].visible(**)
+            form[:properties][name].visible?(**)
           end
         end
 
@@ -864,7 +864,7 @@ module JSF
             properties&.each_value do |prop|
               next unless prop.is_a?(JSF::Forms::Section)
 
-              next if skip_tree_when_hidden && !prop.visible(is_create:)
+              next if skip_tree_when_hidden && !prop.visible?(is_create:)
 
               prop[:items]&.each_form(
                 current_level: current_level + 1,
@@ -893,7 +893,7 @@ module JSF
           self[:allOf]&.each do |cond|
             prop = cond.condition_property
 
-            next if skip_tree_when_hidden && !prop.visible(is_create:)
+            next if skip_tree_when_hidden && !prop.visible?(is_create:)
 
             # go to next level recursively
             cond[:then]&.each_form(
@@ -940,7 +940,7 @@ module JSF
 
           # handle all properties that have a value in which the document_path is modified (sections, shared)
           form[:properties].each do |key, property|
-            next if kwargs[:skip_tree_when_hidden] && !property.visible(is_create: kwargs[:is_create])
+            next if kwargs[:skip_tree_when_hidden] && !property.visible?(is_create: kwargs[:is_create])
 
             # go recursive
             if !kwargs[:ignore_sections] && property.is_a?(JSF::Forms::Section)
@@ -997,7 +997,7 @@ module JSF
           **
         ) do |form, condition, _current_level|
           current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
-            next unless property.visible(is_create:)
+            next unless property.visible?(is_create:)
 
             value = [property]
             array.push(value)
@@ -1055,7 +1055,7 @@ module JSF
           **
         ) do |form, condition, _current_level, current_doc, _current_empty_doc, document_path, section_or_shared|
           current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
-            next unless property.visible(is_create:)
+            next unless property.visible?(is_create:)
 
             value = [property, current_doc, document_path]
             array.push(value)
@@ -1128,7 +1128,7 @@ module JSF
           **
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           form[:properties].each do |key, property|
-            next unless property.visible(is_create:)
+            next unless property.visible?(is_create:)
 
             value = current_doc[key]
             next if value.nil? # skip nil value
@@ -1166,7 +1166,7 @@ module JSF
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties
           form[:properties].each do |k, prop|
-            next unless prop.visible(is_create:)
+            next unless prop.visible?(is_create:)
             next unless (SCORABLE_FIELDS.include?(prop.class) && prop.scored?)
 
             value = current_doc.dig(k)
@@ -1223,7 +1223,7 @@ module JSF
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties and increment score_value if needed
           form[:properties].each do |k, prop|
-            next unless prop.visible(is_create:)
+            next unless prop.visible?(is_create:)
             next unless prop.respond_to?(:score_for_value) && prop.scored?
 
             value = current_doc.dig(k)
@@ -1257,7 +1257,7 @@ module JSF
         ) do |form, _condition, _current_level, current_doc, current_empty_doc, _document_path|
           # iterate properties
           form[:properties].each do |k, prop|
-            next unless prop.visible(is_create:)
+            next unless prop.visible?(is_create:)
             next unless prop.respond_to?(:value_fails?)
 
             value = current_doc.dig(k)
@@ -1309,7 +1309,7 @@ module JSF
 
         each_form_with_document(document) do |form, _condition, _current_level, _current_doc, _current_empty_doc, _document_path, _section_or_shared|
           form[:properties].each_value do |property|
-            next unless property.visible(is_create:)
+            next unless property.visible?(is_create:)
             next if property.is_a?(JSF::Forms::Section)
 
             return true if property.scored?
@@ -1515,7 +1515,7 @@ module JSF
         ) do |form, _condition, _current_level, _current_doc, current_empty_doc, _document_path|
           # iterate properties
           form[:properties].each do |k, prop|
-            next unless prop.visible(is_create:)
+            next unless prop.visible?(is_create:)
             next unless prop.respond_to?(:sample_value)
 
             # set for field
@@ -1594,7 +1594,7 @@ module JSF
           form[:properties].each do |key, property|
             val = current_doc[key]
             next unless val && previous_document&.dig(*document_path, key) != val
-            next unless property.visible(is_create:) # always?
+            next unless property.visible?(is_create:) # always?
 
             yield(form, key, property, current_doc, document_path)
           end

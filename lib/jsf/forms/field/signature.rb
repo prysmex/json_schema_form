@@ -8,6 +8,7 @@ module JSF
         REQUIRED = %w[name signature].freeze
 
         include JSF::Forms::Field::Concerns::Base
+
         # include JSF::Core::Type::Objectable
 
         set_strict_type('object')

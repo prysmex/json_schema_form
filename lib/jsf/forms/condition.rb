@@ -94,7 +94,7 @@ module JSF
       end
 
       # @return [Boolean]
-      def negated
+      def negated?
         !!dig('if', 'properties', condition_property_key)&.key?('not')
       end
 
@@ -144,7 +144,7 @@ module JSF
           # support custom evaluation
           yield(self[:if], fake_hash, condition_prop)
         else
-          return false if negated && value.nil?
+          return false if negated? && value.nil?
 
           JSONSchemer.schema(self[:if]).valid?(fake_hash) # need to call as_json to self and value?
         end

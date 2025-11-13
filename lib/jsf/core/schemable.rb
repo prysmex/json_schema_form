@@ -12,7 +12,7 @@ module JSF
     #
     module Schemable
 
-      def self.included(base)
+      def self.included(base) # rubocop:disable Naming/PredicateMethod
         base.instance_variable_set(:@allow_dynamic_attributes, true)
         base.include InstanceMethods
         base.extend ClassMethods

@@ -833,7 +833,7 @@ class FormTest < Minitest::Test
     form.each_form_with_document(document) do |form, _condition, _current_level, current_doc, current_empty_doc, document_path|
       count += 1
 
-      if (form.properties.keys & %w[switch_1 switch_2 switch_3 section_1]).size > 0
+      if form.properties.keys.intersect?(%w[switch_1 switch_2 switch_3 section_1])
         assert_empty document_path
         assert_equal '{"switch_1" => true, "switch_2" => true, "section_1" => [{"switch_4" => true}, {"switch_4" => false}]}', current_doc.to_s
       else

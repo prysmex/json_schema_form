@@ -75,7 +75,7 @@ module JSF
         end
 
         # @return [Boolean]
-        def visible(is_create:)
+        def visible?(is_create:)
           if is_create
             !hidden? && !hideOnCreate?
           else
