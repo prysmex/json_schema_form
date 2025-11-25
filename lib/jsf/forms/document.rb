@@ -17,7 +17,7 @@ module JSF
       #
       # @return [Document] self without ROOT_KEYWORDS
       def without_keywords
-        self.select { |k, _v| !ROOT_KEYWORDS.include?(k) }
+        except(*ROOT_KEYWORDS)
       end
 
       # Iterates extras hash and yields a key value pair where:
