@@ -14,8 +14,7 @@ module JSF
     # @param [Integer] max_size
     def initialize(max_size = 20)
       @max_size = max_size
-      @store = {}
-      @order = [] # Tracks keys in usage order
+      clear
     end
 
     # Write an entry to the cache
@@ -47,6 +46,11 @@ module JSF
       value = yield if block_given?
       write(key, value)
       value
+    end
+
+    def clear
+      @store = {}
+      @order = [] # Tracks keys in usage order
     end
   end
 
