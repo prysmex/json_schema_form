@@ -421,6 +421,15 @@ module JSF
         end
       end
 
+      # NOTE: keep in sync with `shared_defs`. Use instead of shared_defs.each
+      def each_shared_def
+        return enum_for(__method__) unless block_given?
+
+        self[:$defs].each do |k, v|
+          yield(k, v) if v.is_a?(JSF::Forms::SharedRef) || v.is_a?(JSF::Forms::Form)
+        end
+      end
+
       # Adds a JSF::Forms::SharedRef to the '$defs' key
       #
       # @param [Integer] db_id (DB id)
@@ -512,6 +521,15 @@ module JSF
       def response_sets
         self[:$defs].select do |_k, v|
           v[:isResponseSet]
+        end
+      end
+
+      # NOTE: keep in sync with `response_sets`. Use instead of response_sets.each
+      def each_response_set
+        return enum_for(__method__) unless block_given?
+
+        self[:$defs].each do |k, v|
+          yield(k, v) if v[:isResponseSet]
         end
       end
 
