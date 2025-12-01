@@ -1475,6 +1475,8 @@ module JSF
       #
       # @ToDo consider shared fields
       #
+      # @param [Proc] property_id_proc
+      # @param [Proc] response_set_id_proc
       # @return [JSF::Forms::Form] new instance with changed ids
       def dup_with_new_references(
         property_id_proc: ->(id) { id.slice(0...-6) + SecureRandom.uuid[0...6] },
@@ -1484,16 +1486,15 @@ module JSF
         migrated_props = {}
 
         each_form(ignore_defs: false) do |form|
-          # migrate properties
-          prop_keys = form['properties'].keys
-          prop_keys.each do |prop_key|
-            prop = form['properties'][prop_key]
+          # TODO: handle non-referenced response sets
+          # migrate properties and their response sets
+          form['properties'].each do |key, prop|
             next if prop.is_a?(JSF::Forms::Field::Static)
             next if prop.is_a?(JSF::Forms::Field::Shared)
 
-            migrated_props[prop_key] ||= property_id_proc.call(prop_key)
+            migrated_props[key] ||= property_id_proc.call(key)
 
-            # migrate response sets
+            # response sets
             if prop.respond_to?(:response_set_id)
               id = prop.response_set_id.sub('#/$defs/', '')
               migrated_response_sets[id] ||= response_set_id_proc.call(id)
@@ -1501,7 +1502,7 @@ module JSF
           end
 
           # migrate conditions
-          # this is not required since all condition_property_keys should be a subset of the form's properties
+          # this might not be required since all condition_property_keys should be a subset of the form's properties
           form[:allOf].each do |condition|
             prop_key = condition.condition_property_key
             migrated_props[prop_key] ||= property_id_proc.call(prop_key)
@@ -1515,7 +1516,20 @@ module JSF
           strigified.gsub!(/\b#{old}\b/, key)
         end
 
-        self.class.new(JSON.parse(strigified))
+        dup = self.class.new(JSON.parse(strigified))
+
+        # TODO: do this also for response sets
+        # Restore possibly modified display properties due to regex replace
+        dp_key = 'displayProperties'
+        dup.each_form(ignore_defs: false) do |form|
+          form['properties'].each do |key, prop|
+            if (dp = dig(*prop.meta[:path].slice(0...-1), migrated_props.key(key), dp_key))
+              prop[dp_key] = dp.as_json
+            end
+          end
+        end
+
+        dup
       end
 
       def sample_document(is_create: false, **_kwargs)
