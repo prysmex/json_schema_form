@@ -8,52 +8,6 @@ require 'super_hash'
 
 module JSF
 
-  # Use this basic class as ActiveSupport::Cache::MemoryStore is not compatible with complex objects
-  # such as Proc
-  class SimpleLRUCache
-    # @param [Integer] max_size
-    def initialize(max_size = 20)
-      @max_size = max_size
-      clear
-    end
-
-    # Write an entry to the cache
-    def write(key, value)
-      if @store.key?(key)
-        @order.delete(key) # Remove existing key to update its position
-      elsif @store.size >= @max_size
-        lru_key = @order.shift # Evict the least recently used key
-        @store.delete(lru_key)
-      end
-
-      @store[key] = value
-      @order << key # Mark as most recently used
-    end
-
-    # Read an entry from the cache
-    def read(key)
-      return unless @store.key?(key)
-
-      @order.delete(key) # Update usage order
-      @order << key
-      @store[key]
-    end
-
-    # Fetch or store the result of the block
-    def fetch(key)
-      return read(key) if @store.key?(key)
-
-      value = yield if block_given?
-      write(key, value)
-      value
-    end
-
-    def clear
-      @store = {}
-      @order = [] # Tracks keys in usage order
-    end
-  end
-
   CACHE = SimpleLRUCache.new
 
   HASH_SUBSCHEMA_KEYS = [
