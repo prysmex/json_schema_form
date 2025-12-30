@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'activesupport', '~> 8.0'
+  spec.add_dependency 'activesupport', '~> 8.1'
   spec.add_dependency 'super_hash', '~> 0.3'
   spec.add_dependency 'dry-schema', '1.14.1'
   spec.add_dependency 'json_schemer', '2.5.0'
