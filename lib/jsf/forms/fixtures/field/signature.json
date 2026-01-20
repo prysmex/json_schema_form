@@ -2,7 +2,7 @@
   // "$id": "",
   "displayProperties": {
     // "restrictToCurrentUser": true,
-    // "audience": [],
+    // "audience": {},
     "component": "signature",
     // "hidden": false,
     // "hideOnCreate": false,

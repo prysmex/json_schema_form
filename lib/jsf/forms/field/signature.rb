@@ -42,21 +42,15 @@ module JSF
             Dry::Schema.JSON(parent: super) do
               before(:key_validator) do |result| # result.to_h (shallow dup)
                 result.to_h.deep_dup.tap do |h|
-                  if (audience = h&.dig('displayProperties', 'audience'))
-                    audience.each do |v|
-                      v['values'] = [] if v['values'].is_a?(::Array)
-                    end
+                  if (dp = h&.dig('displayProperties')).is_a?(::Hash) && dp['audience'].is_a?(::Hash)
+                    dp['audience'] = {}
                   end
                 end
               end
 
               required(:displayProperties).hash do
                 optional(:restrictToCurrentUser).filled(:bool)
-                optional(:audience).array(:hash) do
-                  required(:field)
-                  required(:values)
-                  optional(:type)
-                end
+                optional(:audience).value(:hash?)
                 optional(:hideOnCreate).filled(:bool) if hide_on_create
                 optional(:hidden).filled(:bool)
                 required(:i18n).hash do
