@@ -24,7 +24,7 @@ module JSF
         raise StandardError.new("JSF::Forms::Condition transform conditions not met: (attribute: #{attribute}, value: #{value}, meta: #{instance.meta})")
       }
 
-      def initialize(obj = {}, options = {})
+      def initialize(obj = {}, options = {}, *)
         options = {
           attributes_transform_proc: JSF::Forms::Condition::ATTRIBUTE_TRANSFORM
         }.merge(options)

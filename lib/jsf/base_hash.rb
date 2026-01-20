@@ -36,68 +36,7 @@ module JSF
 
   class BaseHash < ActiveSupport::HashWithIndifferentAccess
     include SuperHash::Hasher
-
-    attr_reader :init_options
-
-    # prevent bug when an attribute has a default Proc and the attribute is a string but passed value
-    # is a symbol
-    #
-    # @example
-    #   attribute 'allOf', default: ->(data) { [].freeze } # passed data => {allOf: []}
-    def initialize(init_value, init_options = {})
-      # save init_options so we can pass them on @#dup
-      @init_options = init_options
-
-      unless init_value.is_a?(ActiveSupport::HashWithIndifferentAccess)
-        init_value&.transform_keys! { |k| convert_key(k) }
-      end
-      super
-    end
-
-    # ensure key is string since the beggining since :SuperHash::Hasher methods are called
-    # before ActiveSupport::HashWithIndifferentAccess logic happens.
-    #
-    # @see []= (super runs after validation and other logic)
-    def []=(key, value, **params)
-      super(convert_key(key), convert_value(value), **params)
-    end
-
-    # ActiveSupport::HashWithIndifferentAccess has its own implementation of dup,
-    # which ignores all instance variables. We need that all 'dup' instances are
-    # exactaly the same, so we ensure they are initialized the same way the original
-    # instance was, mainly by passing init_options and removing keys added by SuperHash attributes API
-    #
-    # @override
-    #
-    # @see https://github.com/rails/rails/blob/v6.1.4.1/activesupport/lib/active_support/hash_with_indifferent_access.rb#L254
-    #
-    def dup
-      new_hash = self.class.new(to_hash, init_options)
-      set_defaults(new_hash)
-
-      new_hash.each_key do |k|
-        new_hash.delete(k) unless key?(k)
-      end
-
-      new_hash
-    end
-
-    # Commented set_defaults method because it caused SuperHash attributes default values to be added
-    # when calling to_hash
-    #
-    # @override
-    #
-    # Convert to a regular hash with string keys.
-    def to_hash
-      new_hash = {}
-      # set_defaults(new_hash)
-
-      each do |key, value|
-        new_hash[key] = convert_value(value, conversion: :to_hash)
-      end
-
-      new_hash
-    end
+    include SuperHash::Hasher::IndifferentAccess
 
     # Executes a method recursively to object and all its subschemas
     #

@@ -1417,6 +1417,26 @@ class FormTest < Minitest::Test
     assert_equal 'Missing Translation', i18n_doc.dig('section', 0, 'switch_2')
   end
 
+  # TODO: move to base_hash_test.rb?
+  def test_dup_maintains_instance_variables
+    field = nil
+    JSF::Forms::FormBuilder.build do
+      field = append_property(:number_input, example('number_input'))
+    end
+
+    assert_equal field.meta, field.dup.meta
+  end
+
+  def test_dup_does_not_re_add_default_keys
+    form = JSF::Forms::Form.new
+
+    refute_nil form['type']
+
+    form.delete('type')
+
+    assert_nil form.dup['type']
+  end
+
   # def test_dup_with_new_references
   #   property_id_proc = ->(id){ id + '__1__' },
   #   response_set_id_proc = ->(id){ id + '__2__' }

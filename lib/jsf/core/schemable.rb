@@ -55,7 +55,7 @@ module JSF
         # @param [Hash] obj
         # @param [Hash] options SuperHash::Hasher options
         # @option options [Hash] :meta
-        def initialize(obj = {}, options = {})
+        def initialize(obj = {}, options = {}, *)
           @meta = {
             parent: nil,
             path: [],

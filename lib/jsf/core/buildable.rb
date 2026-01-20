@@ -37,7 +37,7 @@ module JSF
       # @param [Hash] init_value
       # @param [Hash] options SuperHash::Hasher options
       # @option options [Proc] :attributes_transform_proc
-      def initialize(init_value = {}, options = {})
+      def initialize(init_value = {}, options = {}, *)
         @attributes_transform_proc = options.delete(:attributes_transform_proc)
         super
       end

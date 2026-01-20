@@ -142,7 +142,7 @@ module JSF
       update_attribute '$schema', default: ->(_data) { meta[:is_subschema] ? nil : SCHEMA_VERSION }
       attribute? 'availableLocales', default: ->(_data) { meta[:is_subschema] ? nil : [].freeze }
 
-      def initialize(obj = {}, options = {})
+      def initialize(obj = {}, options = {}, *)
         options = {
           attributes_transform_proc: ATTRIBUTE_TRANSFORM
         }.merge(options)
