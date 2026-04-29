@@ -59,7 +59,11 @@ module ResponseSettableTests
       end
     end
 
-    assert_equal 'score_1_es', prop.i18n_value('test', :es)
+    if prop['type'] == 'array'
+      assert_equal ['score_1_es'], prop.i18n_value(['test'], :es)
+    else
+      assert_equal 'score_1_es', prop.i18n_value('test', :es)
+    end
   end
 
   def test_scored?

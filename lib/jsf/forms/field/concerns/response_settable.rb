@@ -31,7 +31,7 @@ module JSF
             end
           end
 
-          # # Consider response set
+          # # TODO: Consider response set
           # #
           # # @param [] locale
           # # @return [Boolean]
@@ -84,11 +84,18 @@ module JSF
           #
           # @param [Object] value
           # @param [String,Symbol] locale
+          # @param [String] default
           # @return [String]
-          def i18n_value(value, locale = DEFAULT_LOCALE)
-            response_set
-              &.get_response_from_value(value)
-              &.dig(:displayProperties, :i18n, locale)
+          def i18n_value(value, locale = DEFAULT_LOCALE, default = nil)
+            r_set = response_set
+
+            if value.is_a?(::Array)
+              value.map do |v|
+                r_set&.get_response_from_value(v)&.dig(:displayProperties, :i18n, locale) || default
+              end
+            else
+              r_set&.get_response_from_value(value)&.dig(:displayProperties, :i18n, locale) || default
+            end
           end
 
           # Returns true if field contributes to scoring
