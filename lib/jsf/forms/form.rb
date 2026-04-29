@@ -1426,26 +1426,18 @@ module JSF
       #
       # @return [Hash{String}]
       def i18n_document(document, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation')
-        document.each_with_object({}) do |(key, value), hash|
+        document.each_with_object({}) do |(key, value), acum|
           i18n_value = if JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
             value
           else
             property = get_merged_property(key, ignore_sections: true)
 
             case property
-            when JSF::Forms::Field::Checkbox
-              value.map { |v|
-                property.i18n_value(v, locale) || missing_locale_msg
-              }
-            when JSF::Forms::Field::Select
-              property.i18n_value(value, locale) || missing_locale_msg
-            when JSF::Forms::Field::Slider
-              property.i18n_value(value, locale) || missing_locale_msg
-            when JSF::Forms::Field::Switch
-              property.i18n_value(value, locale) || missing_locale_msg
+            when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox, JSF::Forms::Field::Slider, JSF::Forms::Field::Switch
+              property.i18n_value(value, locale, missing_locale_msg)
             # parse date
             when JSF::Forms::Field::DateInput
-              value.class == DateTime ? value : DateTime.parse(value)
+              value.class == DateTime ? value : DateTime.iso8601(value)
             # go recursive on section
             when JSF::Forms::Section
               value&.map do |doc|
@@ -1461,7 +1453,7 @@ module JSF
             end
           end
 
-          hash[key] = i18n_value
+          acum[key] = i18n_value
         end
       end
 

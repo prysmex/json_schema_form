@@ -143,9 +143,10 @@ module JSF
         #
         # @param [number|String] value
         # @param [String,Symbol] locale
+        # @param [String] default
         # @return [String]
-        def i18n_value(value, locale = DEFAULT_LOCALE)
-          dig(:displayProperties, :i18n, :enum, locale, value.to_s)
+        def i18n_value(value, locale = DEFAULT_LOCALE, default = nil)
+          dig(:displayProperties, :i18n, :enum, locale, value.to_s) || default
         end
 
         # @retun [Integer, Float]

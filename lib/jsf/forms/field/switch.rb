@@ -82,14 +82,15 @@ module JSF
         #
         # @param [] value
         # @param [String,Symbol] locale
+        # @param [String] default
         # @return [String]
-        def i18n_value(value, locale = DEFAULT_LOCALE)
+        def i18n_value(value, locale = DEFAULT_LOCALE, default = nil)
           label_key = if value == true
             :trueLabel
           elsif value == false
             :falseLabel
           end
-          dig(:displayProperties, :i18n, label_key, locale)
+          dig(:displayProperties, :i18n, label_key, locale) || default
         end
 
         # @return [1]
