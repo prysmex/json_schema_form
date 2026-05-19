@@ -70,14 +70,21 @@ module JSF
 
           # get the field's response set. It looks for it in the first parent with the `$defs` key
           #
+          # @param cache [Boolean]
           # @return [JSF::Forms::ResponseSet]
-          def response_set
+          def response_set(cache: JSF::Current.use_cache)
+            return @response_set if cache && defined?(@response_set)
+
             path = response_set_id&.sub('#/', '')&.split('/')&.map(&:to_sym)
             return if path.nil? || path.empty?
 
-            find_parent do |current, _next|
+            result = find_parent do |current, _next|
               current.key?(:$defs)
             end&.dig(*path)
+
+            @response_set = result if cache
+
+            result
           end
 
           # get the translation for a value in the field's response set
@@ -105,6 +112,11 @@ module JSF
           # @return [Boolean]
           def scored?
             dig(:displayProperties, :disableScoring) != true && !!response_set&.scored?
+          end
+
+          # @return [void]
+          def expire_local_cache!
+            remove_instance_variable(:@response_set) if defined?(@response_set)
           end
 
         end

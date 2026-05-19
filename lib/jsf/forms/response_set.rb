@@ -100,9 +100,15 @@ module JSF
       # Finds a response for a value
       #
       # @param [String] value
+      # @param [Boolean] cache
       # @return [NilClass, Hash]
-      def get_response_from_value(value)
-        self[:anyOf].find { |r| r[:const] == value }
+      def get_response_from_value(value, cache: JSF::Current.use_cache)
+        if cache
+          @response_lookup ||= self[:anyOf]&.index_by { |r| r[:const] } || {}
+          @response_lookup[value]
+        else
+          self[:anyOf]&.find { |r| r[:const] == value }
+        end
       end
 
       # def get_failing_responses
@@ -121,6 +127,11 @@ module JSF
       # @return [Boolean]
       def scored?
         !!self[:anyOf]&.any? { |r| r.scored? }
+      end
+
+      # @return [void]
+      def expire_local_cache!
+        remove_instance_variable(:@response_lookup) if defined?(@response_lookup)
       end
 
     end

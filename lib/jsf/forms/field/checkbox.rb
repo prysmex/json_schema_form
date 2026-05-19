@@ -81,30 +81,52 @@ module JSF
         #
         # @return [NilClass, Integer, Float]
         def max_score
-          response_set
-            &.[](:anyOf)
-            &.reduce(nil) do |sum, response|
-              [
-                sum,
-                response[:score]
-              ].compact.inject(&:+)
-            end
+          sum = nil
+
+          response_set&.[](:anyOf)&.each do |response|
+            score = response[:score]
+            next if score.nil?
+
+            sum = sum.nil? ? score : sum + score
+          end
+
+          sum
         end
 
         # Returns the sum of the score matching JSF::Forms::Response
         #
-        # @param [Array]
-        # @return [Integer, Float]
+        # @param [Array] value
+        # @return [NilClass, Integer, Float]
         def score_for_value(value)
-          response_set
-            &.[](:anyOf)
-            &.select { |response| value.include? response[:const] }
-            &.reduce(nil) do |sum, response|
-              [
-                sum,
-                response[:score]
-              ].compact.inject(&:+)
+          return nil if value.nil? || value.empty?
+
+          r_set = response_set
+          return nil if r_set.nil?
+
+          sum = nil
+
+          # Branch iteration strategy depending on cache usage:
+          # - cached lookups are O(1), so iterating selected values is faster
+          # - uncached lookups are O(n), so iterating anyOf once is faster
+          if JSF::Current.use_cache
+            value.each do |v|
+              score = r_set.get_response_from_value(v)&.[](:score)
+              next if score.nil?
+
+              sum = sum.nil? ? score : sum + score
             end
+          else
+            r_set[:anyOf]&.each do |response|
+              next unless value.include?(response[:const])
+
+              score = response[:score]
+              next if score.nil?
+
+              sum = sum.nil? ? score : sum + score
+            end
+          end
+
+          sum
         end
 
         # Checks if any of the matching JSF::Forms::Response are considered 'failed'
@@ -112,15 +134,26 @@ module JSF
         # @param [Array] value
         # @return [Boolean]
         def value_fails?(value)
-          response_set = self.response_set
-          return false if response_set.nil? || value.nil?
+          return false if value.nil? || value.empty?
 
-          !response_set[:anyOf]
-            &.find do |response|
+          r_set = response_set
+          return false if r_set.nil?
+
+          # Branch iteration strategy depending on cache usage:
+          #   - cached lookups are O(1), so iterating selected values is faster
+          #   - uncached lookups are O(n), so iterating anyOf once is faster
+          if JSF::Current.use_cache
+            value.any? do |v|
+              r_set.get_response_from_value(v)&.[](:failed) == true
+            end
+          else
+            r_set[:anyOf]&.any? do |response|
               value.include?(response[:const]) && response[:failed] == true
-            end.nil?
+            end || false
+          end
         end
 
+        # @return [Array]
         def sample_value
           response_set = self.response_set
           return [] if response_set.nil?

@@ -68,7 +68,7 @@ module JSF
           subschema_errors = subschema.errors(**passthru, recursive: false)
           next if subschema_errors.empty?
 
-          relative_path = subschema.meta[:path].slice((meta[:path].size)..-1)
+          relative_path = subschema.meta[:path].slice((@meta[:path].size)..-1)
 
           # create path if it does not exists
           if acum_subschemas_errors.dig(*relative_path).nil?

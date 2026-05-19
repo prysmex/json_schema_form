@@ -79,7 +79,7 @@ module JSF
         #
         # @param [Proc] block
         def find_parent
-          parent = meta[:parent]
+          parent = @meta[:parent]
           return if parent.nil?
 
           loop do
@@ -96,7 +96,7 @@ module JSF
 
         # Checks if parent schema's 'properties' array contains they key of current subschema
         def required?
-          required = meta.dig(:parent, :required)
+          required = @meta.dig(:parent, :required)
           return false unless required
 
           required.include?(key_name&.to_s)
@@ -105,7 +105,7 @@ module JSF
         # Get name of key if nested inside properties or $defs by checking the path
         # {properties: {some_key: {}}} => 'some_key'
         def key_name
-          attribute, key_name = meta[:path].last(2)
+          attribute, key_name = @meta[:path].last(2)
           key_name if %i[properties $defs].include?(attribute&.to_sym)
         end
 
@@ -119,7 +119,7 @@ module JSF
           key = key_name
           return if key.nil?
 
-          parent_all_of = meta.dig(:parent, :allOf) || []
+          parent_all_of = @meta.dig(:parent, :allOf) || []
 
           parent_all_of.select do |condition|
             condition.dig(:if, :properties).keys.include?(key.to_s)

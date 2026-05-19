@@ -90,7 +90,7 @@ module JSF
 
       # @return [NilClass, String]
       def condition_property
-        meta[:parent]&.dig(:properties, condition_property_key)
+        @meta[:parent]&.dig(:properties, condition_property_key)
       end
 
       # @return [Boolean]
