@@ -91,7 +91,7 @@ module JSF
         # @param passthru [Hash{Symbol => *}] Options passed
         # @return [Dry::Schema::JSON] Schema
           def dry_schema(_passthru)
-            # is_subschema = meta[:is_subschema]
+            # is_subschema = @meta[:is_subschema]
 
             # IMPORTANT. this schema currently does not support conditions since
             # other schemas that inherit from it are cached

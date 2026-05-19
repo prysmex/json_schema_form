@@ -6,7 +6,7 @@ module JSF
   # such as Proc
   class SimpleLRUCache
     # @param [Integer] max_size
-    def initialize(max_size = 20)
+    def initialize(max_size = 50)
       @max_size = max_size
       clear
     end

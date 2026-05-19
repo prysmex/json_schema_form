@@ -39,7 +39,7 @@ module JSF
         # @return [Array<String>]
         def document_path(section_indices: nil)
           section_indices = section_indices.dup if section_indices.is_a?(::Array)
-          schema_path = meta[:path]
+          schema_path = @meta[:path]
           root_form = root_parent
           doc_path = []
 

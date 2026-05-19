@@ -70,13 +70,18 @@ module JSF
         # METHODS #
         ###########
 
-        # @return [Integer, Float]
+        # @return [Integer, Float, nil]
         def max_score
-          response_set
-            &.[](:anyOf)
-            &.reject { |property| property[:score].nil? }
-            &.max_by { |property| property[:score] }
-            &.[](:score)
+          max = nil
+
+          response_set&.[](:anyOf)&.each do |property|
+            score = property[:score]
+            next if score.nil?
+
+            max = score if max.nil? || score > max
+          end
+
+          max
         end
 
         # Returns the score of a JSF::Forms::Response for a value
@@ -84,10 +89,7 @@ module JSF
         # @param [String]
         # @return [Integer, Float]
         def score_for_value(value)
-          response_set
-            &.[](:anyOf)
-            &.find { |response| response[:const] == value }
-            &.[](:score)
+          response_set&.get_response_from_value(value)&.[](:score)
         end
 
         # Checks the JSF::Forms::Response for a value is considered 'failed'
@@ -95,12 +97,7 @@ module JSF
         # @param [String]
         # @return [Boolean]
         def value_fails?(value)
-          response_set = self.response_set
-          return false if response_set.nil?
-
-          response_set[:anyOf]
-            .find { |response| response[:const] == value }
-            &.[](:failed) || false
+          response_set&.get_response_from_value(value)&.[](:failed) || false
         end
 
         def sample_value

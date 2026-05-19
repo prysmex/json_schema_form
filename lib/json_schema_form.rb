@@ -7,6 +7,7 @@ require 'active_support/core_ext/hash/indifferent_access'
 require 'active_support/core_ext/object/json'
 # require 'active_support/core_ext/hash/deep_merge'
 # require "active_support/core_ext/time"
+require 'active_support/current_attributes'
 
 require 'json_schemer'
 
@@ -17,3 +18,4 @@ require 'jsf/simple_l_r_u_cache'
 require 'jsf/base_hash'
 require 'jsf/schema'
 require 'jsf/forms'
+require 'jsf/current'

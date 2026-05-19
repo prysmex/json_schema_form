@@ -133,14 +133,14 @@ module JSF
         end
       }
 
-      update_attribute '$defs', default: ->(_data) { meta[:is_subschema] ? nil : {}.freeze }
+      update_attribute '$defs', default: ->(_data) { @meta[:is_subschema] ? nil : {}.freeze }
       update_attribute 'properties', default: ->(_data) { {}.freeze }
       update_attribute 'required', default: ->(_data) { [].freeze }
       update_attribute 'allOf', default: ->(_data) { [].freeze }
       update_attribute 'type', default: ->(_data) { 'object' }
-      update_attribute 'schemaFormVersion', default: ->(_data) { meta[:is_subschema] ? nil : VERSION }
-      update_attribute '$schema', default: ->(_data) { meta[:is_subschema] ? nil : SCHEMA_VERSION }
-      attribute? 'availableLocales', default: ->(_data) { meta[:is_subschema] ? nil : [].freeze }
+      update_attribute 'schemaFormVersion', default: ->(_data) { @meta[:is_subschema] ? nil : VERSION }
+      update_attribute '$schema', default: ->(_data) { @meta[:is_subschema] ? nil : SCHEMA_VERSION }
+      attribute? 'availableLocales', default: ->(_data) { @meta[:is_subschema] ? nil : [].freeze }
 
       def initialize(obj = {}, options = {}, *)
         options = {
@@ -159,7 +159,7 @@ module JSF
       # @param passthru [Hash{Symbol => *}] Options passed
       # @return [Dry::Schema::JSON] Schema
       def dry_schema(passthru)
-        is_subschema = meta[:is_subschema]
+        is_subschema = @meta[:is_subschema]
         scoring = run_validation?(passthru, :scoring, optional: true)
         exam = run_validation?(passthru, :exam, optional: true)
 
@@ -257,7 +257,7 @@ module JSF
         errors_hash = super
 
         if run_validation?(passthru, :subschema_properties) &&
-           meta[:is_subschema] &&
+           @meta[:is_subschema] &&
            properties.none? { |_k, v| v.visible?(is_create: false) }
           add_error_on_path(
             errors_hash,
@@ -315,7 +315,7 @@ module JSF
 
           # ensure JSF::Forms::Field::Shared only exist in root form
           if run_validation?(passthru, :shared_in_root)
-            if meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Shared)
+            if @meta[:is_subschema] && field.is_a?(JSF::Forms::Field::Shared)
               add_error_on_path(
                 errors_hash,
                 'base',
@@ -365,7 +365,7 @@ module JSF
       #
       # @param locale [String,Symbol] locale
       # @return [Boolean]
-      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_defs: false, no_props_validity: meta[:is_subschema])
+      def valid_for_locale?(locale = DEFAULT_LOCALE, ignore_defs: false, no_props_validity: @meta[:is_subschema])
         return false if dig('displayProperties', 'component') == 'exam' && i18n_label(locale).to_s.empty?
 
         any_property = false
@@ -528,7 +528,7 @@ module JSF
       def each_response_set
         return enum_for(__method__) unless block_given?
 
-        self[:$defs].each do |k, v|
+        self[:$defs]&.each do |k, v|
           yield(k, v) if v[:isResponseSet]
         end
       end
@@ -809,13 +809,19 @@ module JSF
       #
       # @return [Boolean]
       def is_shared_def?
-        meta[:path].first == '$defs'
+        @meta[:path].first == '$defs'
       end
 
       # @return [JSF::Forms::Form]
       def validation_schema!(ignore_defs: false, **)
         # remove not visible fields from required
         each_form(ignore_defs:) do |form|
+          # faster validation with single enum vs iterative const
+          form.each_response_set do |_k, v|
+            v[:enum] = v[:anyOf].map { |r| r[:const] } if v[:anyOf]
+            v.delete('anyOf')
+          end
+
           form[:required]&.select! do |name|
             form[:properties][name].visible?(**)
           end
@@ -869,7 +875,7 @@ module JSF
 
           # yield only if reached start_level or start_level is nil
           if start_level.nil? || current_level >= start_level
-            condition = meta[:parent] if meta[:parent].is_a?(JSF::Forms::Condition)
+            condition = @meta[:parent] if @meta[:parent].is_a?(JSF::Forms::Condition)
             skip_branch = catch(:skip_branch) do
               yield(self, condition, current_level)
               false
@@ -1317,7 +1323,7 @@ module JSF
           has_scoring
         end
 
-        self['hasScoring'] = value unless meta[:is_subschema]
+        self['hasScoring'] = value unless @meta[:is_subschema]
         value
       end
 
@@ -1422,39 +1428,50 @@ module JSF
       # Builds a new hash where the values of translatable fields are localized
       #
       # @param [Hash{String}, Document] document
-      # @param [Symbol] locale <description>
+      # @param [Symbol|Array<Symbol>] locale
+      # @param [String] missing_locale_msg
+      # @param [Boolean] parse_dates
       #
       # @return [Hash{String}]
-      def i18n_document(document, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation')
-        document.each_with_object({}) do |(key, value), acum|
-          i18n_value = if JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
-            value
-          else
-            property = get_merged_property(key, ignore_sections: true)
+      def i18n_document(document, locale: DEFAULT_LOCALE, missing_locale_msg: 'Missing Translation', parse_dates: false)
+        locales = Array(locale)
+        single_locale = !locale.is_a?(Array)
 
-            case property
-            when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox, JSF::Forms::Field::Slider, JSF::Forms::Field::Switch
-              property.i18n_value(value, locale, missing_locale_msg)
-            # parse date
-            when JSF::Forms::Field::DateInput
-              value.class == DateTime ? value : DateTime.iso8601(value)
-            # go recursive on section
-            when JSF::Forms::Section
-              value&.map do |doc|
-                property.form.i18n_document(doc, locale:, missing_locale_msg:)
-              end
-            # go recursive on shared
-            when JSF::Forms::Field::Shared
-              property
-                .shared_def
-                .i18n_document(value, locale:, missing_locale_msg:)
-            else
-              value
-            end
+        documents = locales.index_with { {} }
+
+        document.each do |key, value|
+          if JSF::Forms::Document::ROOT_KEYWORDS.include?(key)
+            locales.each { |l| documents[l][key] = value }
+            next
           end
 
-          acum[key] = i18n_value
+          property = get_merged_property(key, ignore_sections: true)
+
+          # parse date
+          if parse_dates && property.is_a?(JSF::Forms::Field::DateInput) && value.class != DateTime
+            value = DateTime.iso8601(value)
+          end
+
+          locales.each do |l|
+            documents[l][key] =
+              case property
+              when JSF::Forms::Field::Select, JSF::Forms::Field::Checkbox, JSF::Forms::Field::Slider, JSF::Forms::Field::Switch
+                property.i18n_value(value, l, missing_locale_msg)
+              # go recursive on section
+              when JSF::Forms::Section
+                value&.map do |doc|
+                  property.form.i18n_document(doc, locale: l, missing_locale_msg:, parse_dates:)
+                end
+              # go recursive on shared
+              when JSF::Forms::Field::Shared
+                property.shared_def.i18n_document(value, locale: l, missing_locale_msg:, parse_dates:)
+              else
+                value
+              end
+          end
         end
+
+        single_locale ? documents[locales.first] : documents
       end
 
       # Changes all important references to support a 'duplicate' feature.
@@ -1629,7 +1646,7 @@ module JSF
       #
       # @return [void]
       def legalize!
-        if !meta[:is_subschema]
+        if !@meta[:is_subschema]
           delete('schemaFormVersion')
           delete('availableLocales')
           delete('hasScoring')
@@ -1658,7 +1675,7 @@ module JSF
       # @param [String] error_msg
       # @return [<Type>] <description>
       def raise_if_subschema(msg = 'method can only be called for root form')
-        raise StandardError.new(msg) if meta[:is_subschema]
+        raise StandardError.new(msg) if @meta[:is_subschema]
       end
 
       # Raises error if form is the root form
@@ -1666,7 +1683,7 @@ module JSF
       # @param [<Type>] msg <description>
       # @return [<Type>] <description>
       def raise_unless_subschema(msg = 'method cannot be called for root form')
-        raise StandardError.new(msg) unless meta[:is_subschema]
+        raise StandardError.new(msg) unless @meta[:is_subschema]
       end
 
     end
