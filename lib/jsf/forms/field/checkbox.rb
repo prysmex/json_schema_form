@@ -108,7 +108,7 @@ module JSF
           # Branch iteration strategy depending on cache usage:
           # - cached lookups are O(1), so iterating selected values is faster
           # - uncached lookups are O(n), so iterating anyOf once is faster
-          if JSF::Current.use_cache
+          if Thread.current[:jsf_use_cache]
             value.each do |v|
               score = r_set.get_response_from_value(v)&.[](:score)
               next if score.nil?
@@ -142,7 +142,7 @@ module JSF
           # Branch iteration strategy depending on cache usage:
           #   - cached lookups are O(1), so iterating selected values is faster
           #   - uncached lookups are O(n), so iterating anyOf once is faster
-          if JSF::Current.use_cache
+          if Thread.current[:jsf_use_cache]
             value.any? do |v|
               r_set.get_response_from_value(v)&.[](:failed) == true
             end

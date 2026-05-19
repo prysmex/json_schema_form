@@ -72,7 +72,7 @@ module JSF
           #
           # @param cache [Boolean]
           # @return [JSF::Forms::ResponseSet]
-          def response_set(cache: JSF::Current.use_cache)
+          def response_set(cache: Thread.current[:jsf_use_cache])
             return @response_set if cache && defined?(@response_set)
 
             path = response_set_id&.sub('#/', '')&.split('/')&.map(&:to_sym)

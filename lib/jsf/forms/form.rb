@@ -258,7 +258,7 @@ module JSF
 
         if run_validation?(passthru, :subschema_properties) &&
            @meta[:is_subschema] &&
-           properties.none? { |_k, v| v.visible?(is_create: false) }
+           self[:properties].none? { |_k, v| v.visible?(is_create: false) }
           add_error_on_path(
             errors_hash,
             'properties',
@@ -372,7 +372,7 @@ module JSF
 
         # check properties and their response_sets
         each_form(ignore_sections: true, ignore_defs:) do |form|
-          return false if form.properties.any? do |k, v|
+          return false if form[:properties].any? do |k, v|
             next unless v.visible?(is_create: false)
 
             any_property = true
@@ -560,7 +560,7 @@ module JSF
       # @return [Hash{String => JSF::Forms::Field::*}]
       def merged_properties(**args)
         reduce_each_form({}, **args) do |acum, form|
-          acum.merge!(form&.properties || {})
+          acum.merge!(form&.[](:properties) || {})
         end
       end
 
@@ -588,7 +588,7 @@ module JSF
       def get_merged_property(property, **args)
         prop = nil
         each_form(**args) do |form|
-          props = form&.properties
+          props = form&.[](:properties)
           if props&.key?(property)
             prop = props[property]
             break
@@ -801,6 +801,40 @@ module JSF
         insert_conditional_property_at_index(:prepend, ...)
       end
 
+      # Iterates properties matching the provided types.
+      #
+      # Primarily intended for performance-sensitive paths where repeatedly
+      # and has benefits when properties are 50+
+      #
+      # @param [Array<Class>] types
+      # @param [Boolean] cache
+      # @yield [key, property]
+      # @return [Enumerator]
+      def each_property_of_type(*types, cache: Thread.current[:jsf_use_cache], &)
+        # return enum_for(__method__, *types, cache:) unless block_given?
+
+        # Fast path: use cached properties grouped by exact class
+        if cache && @properties_by_type
+          types.each do |type|
+            @properties_by_type[type].each(&)
+          end
+
+          return
+        end
+
+        # Build cache during first full scan
+        @properties_by_type = Hash.new { |h, k| h[k] = {} } if cache
+
+        self[:properties]&.each do |key, property|
+          type = property.class
+
+          if types.include?(type)
+            @properties_by_type[type][key] = property if cache
+            yield key, property
+          end
+        end
+      end
+
       #############
       # Utilities #
       #############
@@ -885,9 +919,7 @@ module JSF
 
           # iterate properties and call recursive on JSF::Forms::Section
           unless ignore_sections
-            properties&.each_value do |prop|
-              next unless prop.is_a?(JSF::Forms::Section)
-
+            each_property_of_type(JSF::Forms::Section) do |_k, prop|
               next if skip_tree_when_hidden && !prop.visible?(is_create:)
 
               prop[:items]&.each_form(
@@ -946,6 +978,11 @@ module JSF
       def each_form_with_document(document, section_or_shared: nil, document_path: [], skip_on_condition: false, condition_proc: nil, **kwargs, &)
         empty_document = {}
 
+        ignore_sections = kwargs[:ignore_sections]
+        ignore_defs = kwargs[:ignore_defs]
+        skip_tree_when_hidden = kwargs[:skip_tree_when_hidden]
+        is_create = kwargs[:is_create]
+
         # since JSF::Forms::Field::Shared and JSF::Forms::Section are already
         # handled, we ignore them in the each_form iterator
         each_form(ignore_sections: true, ignore_defs: true, **kwargs) do |form, condition, *args|
@@ -963,22 +1000,37 @@ module JSF
           )
 
           # handle all properties that have a value in which the document_path is modified (sections, shared)
-          form[:properties].each do |key, property|
-            next if kwargs[:skip_tree_when_hidden] && !property.visible?(is_create: kwargs[:is_create])
+          unless ignore_sections && ignore_defs
+            form.each_property_of_type(JSF::Forms::Section, JSF::Forms::Field::Shared) do |key, property|
+              next if skip_tree_when_hidden && !property.visible?(is_create:)
 
-            # go recursive
-            if !kwargs[:ignore_sections] && property.is_a?(JSF::Forms::Section)
-              if !property.repeatable?
-                document[key] ||= []
-                document[key].push({}) if document[key].empty?
-              end
-              empty_document[key] ||= []
-              document[key]&.map&.with_index do |doc, i|
-                empty_document[key][i] = property
-                  .form
+              # go recursive
+              if !ignore_sections && property.is_a?(JSF::Forms::Section)
+                if !property.repeatable?
+                  document[key] ||= []
+                  document[key].push({}) if document[key].empty?
+                end
+                empty_document[key] ||= []
+                document[key]&.map&.with_index do |doc, i|
+                  empty_document[key][i] = property
+                    .form
+                    .each_form_with_document(
+                      doc,
+                      document_path: document_path + [key, i],
+                      skip_on_condition:,
+                      section_or_shared: property,
+                      condition_proc:,
+                      **kwargs,
+                      &
+                    )
+                end
+              elsif !ignore_defs && property.is_a?(JSF::Forms::Field::Shared)
+                value = document[key] || {}
+                empty_document[key] = property
+                  .shared_def
                   .each_form_with_document(
-                    doc,
-                    document_path: document_path + [key, i],
+                    value,
+                    document_path: (document_path + [key]),
                     skip_on_condition:,
                     section_or_shared: property,
                     condition_proc:,
@@ -986,19 +1038,6 @@ module JSF
                     &
                   )
               end
-            elsif !kwargs[:ignore_defs] && property.is_a?(JSF::Forms::Field::Shared)
-              value = document[key] || {}
-              empty_document[key] = property
-                .shared_def
-                .each_form_with_document(
-                  value,
-                  document_path: (document_path + [key]),
-                  skip_on_condition:,
-                  section_or_shared: property,
-                  condition_proc:,
-                  **kwargs,
-                  &
-                )
             end
           end
         end
@@ -1111,7 +1150,7 @@ module JSF
               # remove all offsets of inner sections
               section_or_shared[:items].each_form do |form, condition|
                 offsets.delete(condition.condition_property_key) if condition
-                form.properties.each_value do |v|
+                form[:properties].each_value do |v|
                   next unless v.is_a?(JSF::Forms::Section)
 
                   offsets.delete(v.key_name)
@@ -1313,7 +1352,7 @@ module JSF
         else
           has_scoring = false
           each_form(**args) do |form|
-            form.properties&.each_value do |field|
+            form[:properties]&.each_value do |field|
               if field.scored?
                 has_scoring = true
                 break
@@ -1610,7 +1649,7 @@ module JSF
           ignore_defs: false,
           skip_tree_when_hidden: true
         ) do |form, _condition, _current_level, current_doc, _current_empty_doc, _document_path|
-          form.properties.each do |k, v|
+          form[:properties].each do |k, v|
             doc_value = current_doc[k]
             next if skip_nil && doc_value.nil?
 
@@ -1684,6 +1723,11 @@ module JSF
       # @return [<Type>] <description>
       def raise_unless_subschema(msg = 'method cannot be called for root form')
         raise StandardError.new(msg) unless @meta[:is_subschema]
+      end
+
+      # @return [void]
+      def expire_local_cache!
+        remove_instance_variable(:@properties_by_type) if defined?(@properties_by_type)
       end
 
     end

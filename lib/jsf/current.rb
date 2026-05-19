@@ -2,7 +2,14 @@
 
 # Allows activating cache at a global level (not all cache is tied to this)
 module JSF
-  class Current < ActiveSupport::CurrentAttributes
-    attribute :use_cache, default: -> { false }
+  module Current
+    def self.use_cache
+      Thread.current[:jsf_use_cache]
+    end
+
+    # @param value [Boolean]
+    def self.use_cache=(value)
+      Thread.current[:jsf_use_cache] = value
+    end
   end
 end
