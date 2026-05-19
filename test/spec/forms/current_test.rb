@@ -3,16 +3,8 @@
 require 'test_helper'
 
 class CurrentTest < Minitest::Test
-  def setup
-    JSF::Current.reset
-  end
-
-  def teardown
-    JSF::Current.reset
-  end
-
   def test_use_cache
-    assert_equal false, JSF::Current.use_cache
+    assert_nil JSF::Current.use_cache
 
     JSF::Current.use_cache = true
 

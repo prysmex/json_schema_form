@@ -102,7 +102,7 @@ module JSF
       # @param [String] value
       # @param [Boolean] cache
       # @return [NilClass, Hash]
-      def get_response_from_value(value, cache: JSF::Current.use_cache)
+      def get_response_from_value(value, cache: Thread.current[:jsf_use_cache])
         if cache
           @response_lookup ||= self[:anyOf]&.index_by { |r| r[:const] } || {}
           @response_lookup[value]
