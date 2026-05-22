@@ -828,8 +828,8 @@ module JSF
         self[:properties]&.each do |key, property|
           type = property.class
 
+          @properties_by_type[type][key] = property if cache
           if types.include?(type)
-            @properties_by_type[type][key] = property if cache
             yield key, property
           end
         end
@@ -1001,6 +1001,7 @@ module JSF
 
           # handle all properties that have a value in which the document_path is modified (sections, shared)
           unless ignore_sections && ignore_defs
+            # form[:properties].each do |key, property|
             form.each_property_of_type(JSF::Forms::Section, JSF::Forms::Field::Shared) do |key, property|
               next if skip_tree_when_hidden && !property.visible?(is_create:)
 
