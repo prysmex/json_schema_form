@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Convinient way to manage json schema forms'
   # spec.homepage      = "TODO: Put your gem's website or public repo URL here."
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.4.7'
+  spec.required_ruby_version = '>= 4.0.6'
 
   # spec.metadata["homepage_uri"] = spec.homepage
   # spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
@@ -35,6 +35,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activesupport', '>= 8.0', '< 8.2'
   spec.add_dependency 'super_hash', '~> 0.5'
-  spec.add_dependency 'dry-schema', '1.14.1'
+  spec.add_dependency 'dry-schema', '1.16.0'
   spec.add_dependency 'json_schemer', '2.5.0'
 end
