@@ -19,6 +19,7 @@ class FormTest < Minitest::Test
       append_property(:checkbox, example('checkbox'))
       append_property(:shared, example('shared'))
       append_property(:date_input, example('date_input'))
+      append_property(:date_only, example('date_input', :date))
       append_property(:file_input, example('file_input'))
       append_property(:markdown, example('markdown'))
       append_property(:number_input, example('number_input'))
@@ -40,8 +41,11 @@ class FormTest < Minitest::Test
     assert_instance_of JSF::Forms::ResponseSet, form[:$defs][:response_set_1]
     assert_instance_of JSF::Forms::SharedRef, form[:$defs].find { |k, _v| k.start_with?('shared') }&.last
 
+    # date input traits use the same field class
+    assert_instance_of JSF::Forms::Field::DateInput, form[:properties][:date_only]
+
     # all field types
-    form[:properties].each do |name, field|
+    form[:properties].except(:date_only).each do |name, field|
       classified_name = name.to_s.split('_').collect(&:capitalize).join
 
       assert_instance_of Object.const_get("JSF::Forms::Field::#{classified_name}"), field

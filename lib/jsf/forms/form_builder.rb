@@ -13,86 +13,86 @@ module JSF
       # Returns an example for a class
       #
       # @param [Class, String] klass
+      # @param [Symbol, String, nil] trait Optional example trait
       # @param [Proc] &block <description>
       # @return [Hash]
-      def example_for(klass, *, &)
+      def example_for(klass, trait = nil, &)
         klass_name = klass.is_a?(String) ? klass : klass.name
 
         # demodulize and underscore class name
         underscore_name = klass_name.split('::').last.split(/(?=[A-Z])/).map(&:downcase).join('_')
-        example(underscore_name, *, &)
+        example(underscore_name, trait, &)
       end
 
       # Returns an example based on a name
       #
-      # @param [Class, String] klass
+      # When a trait is provided, loads the example from a nested path.
+      # For example:
+      #
+      #   example('response', :scoring)
+      #   # => /response/scoring.json
+      #
+      #   example('date_input', :date)
+      #   # => /field/date_input/date.json
+      #
+      # @param [Class, String] ex_name
+      # @param [Symbol, String, nil] trait Optional example trait
       # @param [Proc] &block
       # @return [Hash]
-      def example(ex_name, *, &)
+      def example(ex_name, trait = nil, &)
         path = case ex_name.to_s
           when 'shared_ref'
-            '/shared_ref.json'
+            '/shared_ref'
           when 'form'
-            '/form.json'
+            '/form'
           when 'response_set'
-            '/response_set.json'
+            '/response_set'
           when 'response'
-            response_path(*)
+            '/response'
           when 'section'
-            '/section.json'
+            '/section'
           # fields
           when 'checkbox'
-            '/field/checkbox.json'
+            '/field/checkbox'
           when 'shared'
-            '/field/shared.json'
+            '/field/shared'
           when 'date_input'
-            '/field/date_input.json'
+            '/field/date_input'
           when 'file_input'
-            '/field/file_input.json'
+            '/field/file_input'
           when 'geo_points'
-            '/field/geo_points.json'
+            '/field/geo_points'
           when 'markdown'
-            '/field/markdown.json'
+            '/field/markdown'
           when 'number_input'
-            '/field/number_input.json'
+            '/field/number_input'
           when 'select'
-            '/field/select.json'
+            '/field/select'
           when 'signature'
-            '/field/signature.json'
+            '/field/signature'
           when 'slider'
-            '/field/slider.json'
+            '/field/slider'
           when 'static'
-            '/field/static.json'
+            '/field/static'
           when 'switch'
-            '/field/switch.json'
+            '/field/switch'
           when 'text_input'
-            '/field/text_input.json'
+            '/field/text_input'
           when 'time_input'
-            '/field/time_input.json'
+            '/field/time_input'
           when 'video'
-            '/field/video.json'
+            '/field/video'
           when 'slideshow'
-            '/field/slideshow.json'
+            '/field/slideshow'
           else
             raise StandardError.new("invalid example name: #{ex_name}")
           end
 
-        parse_example(path, &)
+        path = "#{path}/#{trait}" if trait
+        parse_example("#{path}.json", &)
       end
 
       private
-
-      # Returns a path for a path
-      #
-      # @param [Symbol] type
-      # @return [String]
-      def response_path(type = nil)
-        if type
-          "/response/#{type}.json"
-        else
-          '/response.json'
-        end
-      end
 
       # @param [String]
       def gem_directory_path
@@ -107,7 +107,7 @@ module JSF
         @file_cache ||= {}
         hash = @file_cache[example_path] ||= JSON.parse(File.read(gem_directory_path + example_path))
         hash = hash.deep_dup
-        yield (hash) if block_given?
+        yield(hash) if block_given?
         hash = hash.deep_symbolize_keys # change to deep_stringify_keys to run tests with string keys
         hash
       end

@@ -17,10 +17,33 @@ class DateInputTest < Minitest::Test
   ###########
 
   def test_sample_value
-    field = JSF::Forms::Field::DateInput.new(JSF::Forms::FormBuilder.example('date_input'))
-    sample = field.sample_value
+    [
+      JSF::Forms::FormBuilder.example('date_input'),
+      JSF::Forms::FormBuilder.example('date_input', :date)
+    ].each do |hash|
+      field = JSF::Forms::Field::DateInput.new(hash)
+      sample = field.sample_value
 
-    assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
+      assert_equal true, JSONSchemer.schema(field.legalize!.as_json).valid?(sample)
+    end
+  end
+
+  def test_date_only
+    field = JSF::Forms::Field::DateInput.new(
+      JSF::Forms::FormBuilder.example('date_input', :date)
+    )
+
+    assert_equal true, field.date_only?
+    assert_equal false, field.date_time?
+  end
+
+  def test_date_time
+    field = JSF::Forms::Field::DateInput.new(
+      JSF::Forms::FormBuilder.example('date_input')
+    )
+
+    assert_equal false, field.date_only?
+    assert_equal true, field.date_time?
   end
 
   # UTC
