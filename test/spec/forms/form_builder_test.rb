@@ -31,7 +31,10 @@ class FormbuilderTest < Minitest::Test
       JSF::Forms::Field::Shared => [
         {errors_args: {unless: ->(_i, key) { key == :ref_presence } }}
       ],
-      JSF::Forms::Field::DateInput => [],
+      JSF::Forms::Field::DateInput => [
+        {trait: nil, errors_args: {}},
+        {trait: :date, errors_args: {}}
+      ],
       JSF::Forms::Field::FileInput => [],
       JSF::Forms::Field::GeoPoints => [],
       JSF::Forms::Field::Markdown => [],

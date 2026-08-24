@@ -1,0 +1,26 @@
+{
+  // "$id": "",
+  "displayProperties": {
+    "component": "date_input",
+    // "hidden": false
+    // "hideOnCreate": false,
+    "i18n": {
+      "label": {
+        "es": "Fecha",
+        "en": "Date"
+      },
+      "helpText": {}
+    },
+    // "modifyWarning": "Some warning",
+    // "notes": "My awesome notes",
+    "pictures": [],
+    // "readOnly": false,
+    "sort": 0,
+    "visibility": {
+      "label": true
+    }
+  },
+  "format": "date",
+  // "title": "date_input",
+  "type": "string"
+}

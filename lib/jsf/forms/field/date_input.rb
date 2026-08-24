@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'date'
 require 'time'
 
 module JSF
@@ -54,7 +55,7 @@ module JSF
               end
               optional(:initExpr)
               optional(:extra).value(:array?).array(:str?).each(included_in?: %w[reports notes pictures]) if extras
-              required(:format).value(eql?: 'date-time')
+              required(:format).value(included_in?: %w[date-time date])
               required(:type)
             end
           end
@@ -64,11 +65,23 @@ module JSF
         # METHODS #
         ###########
 
+        # @return [Boolean]
+        def date_only?
+          self[:format] == 'date'
+        end
+
+        # @return [Boolean]
+        def date_time?
+          self[:format] == 'date-time'
+        end
+
         def sample_value
           half_range_seconds = 60 * 60 * 24 * 365
           range = (half_range_seconds * -1)...half_range_seconds
           seconds = rand(range)
-          (Time.now + seconds).iso8601
+          time = Time.now + seconds
+
+          date_only? ? time.to_date.iso8601 : time.iso8601
         end
 
       end
