@@ -1047,7 +1047,19 @@ module JSF
       end
 
       # @return void
-      def each_sorted_property(**)
+      # Yields properties in form display order.
+      #
+      # - Places conditional properties after their controlling property.
+      # - Visits conditional branches without evaluating document values.
+      # - Includes section and shared-form children unless traversal options exclude them.
+      # - Omits hidden properties by default; +include_hidden+ retains them and their branches.
+      # - Preserves the existing treatment of hide-on-create fields as visible.
+      #
+      # @param include_hidden [Boolean] include hidden properties and dependent branches
+      # @param options [Hash] traversal options forwarded to +each_form+
+      # @yieldparam property [Object] schema property in display order
+      # @return [void]
+      def each_sorted_property(include_hidden: false, **)
         is_create = false
 
         all_sorted_properties = []
@@ -1055,27 +1067,30 @@ module JSF
         find_index = ->(prop) { all_sorted_properties.size - all_sorted_properties.reverse.find_index { |a| a[0] == prop } - 1 }
 
         each_form(
-          skip_tree_when_hidden: true,
+          # Hidden controllers and their dependent branches must be included together.
+          skip_tree_when_hidden: !include_hidden,
           ignore_defs: false,
           is_create:,
           **
         ) do |form, condition, _current_level|
           current_arrays = form.sorted_properties.each_with_object([]) do |property, array|
-            next unless property.visible?(is_create:)
+            # Hidden controllers provide insertion anchors for their children.
+            next unless include_hidden || property.visible?(is_create:)
 
-            value = [property]
-            array.push(value)
+            array.push([property])
           end
 
           key_names = current_arrays.map { |a| a[0].key_name }
 
           index = nil
           if condition
+            # Keep sibling branches after earlier children of the same controller.
             offset_key = condition.condition_property_key
             offset = (offsets[offset_key] ||= [])
             index = find_index.call(condition.condition_property) + offset.size + 1
             offsets[offset_key] += key_names
           elsif (parent = form.meta[:parent])
+            # Place nested properties after their section or shared-field anchor.
             section_or_shared = if parent.class == JSF::Forms::Section
               parent
             elsif form&.key_name&.match?(/\Ashared_schema_template_\d+\z/)
@@ -1089,7 +1104,6 @@ module JSF
           end
 
           index ||= 0
-
           all_sorted_properties.insert(index, *current_arrays)
         end
 
