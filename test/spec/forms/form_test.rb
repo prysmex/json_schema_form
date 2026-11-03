@@ -893,6 +893,87 @@ class FormTest < Minitest::Test
     assert_equal array, %w[switch_1 number_input_1 markdown_1 markdown_2 markdown_3 number_input_2 section_2 switch_4 switch_5 section_1 switch_6]
   end
 
+  def test_each_sorted_property_omits_hidden_properties_and_branches_by_default
+    keys = []
+    visibility_form.each_sorted_property { |property| keys << property.key_name }
+
+    assert_equal %w[
+      visible_gate visible_detail create_gate create_detail tail
+    ], keys
+  end
+
+  def test_each_sorted_property_includes_hidden_properties_and_nested_branches
+    keys = []
+    visibility_form.each_sorted_property(include_hidden: true) do |property|
+      keys << property.key_name
+    end
+
+    assert_equal %w[
+      visible_gate visible_detail hidden_leaf hidden_gate hidden_detail
+      nested_gate nested_detail create_gate create_detail
+      hidden_section section_child tail
+    ], keys
+  end
+
+  def test_each_sorted_property_can_keep_sections_as_terminal_properties
+    keys = []
+    visibility_form.each_sorted_property(
+      include_hidden: true,
+      ignore_sections: true,
+      ignore_defs: true
+    ) do |property|
+      keys << property.key_name
+    end
+
+    assert_equal %w[
+      visible_gate visible_detail hidden_leaf hidden_gate hidden_detail
+      nested_gate nested_detail create_gate create_detail hidden_section tail
+    ], keys
+  end
+
+  def visibility_form
+    JSF::Forms::FormBuilder.build do
+      append_property(:visible_gate, example('switch')) do
+        append_property(:visible_detail, example('text_input'),
+                        type: :const, value: true)
+      end
+
+      append_property(:hidden_leaf, example('text_input')) do |field|
+        field.hidden = true
+      end
+
+      append_property(:hidden_gate, example('switch')) do |field|
+        field.hidden = true
+
+        append_property(:hidden_detail, example('text_input'),
+                        type: :const, value: true)
+
+        append_property(:nested_gate, example('switch'),
+                        type: :const, value: true) do
+          append_property(:nested_detail, example('text_input'),
+                          type: :const, value: true)
+        end
+      end
+
+      append_property(:create_gate, example('switch')) do |field|
+        field.hideOnCreate = true
+
+        append_property(:create_detail, example('text_input'),
+                        type: :const, value: true)
+      end
+
+      append_property(:hidden_section, example('section')) do |section|
+        section.hidden = true
+
+        section.form.instance_eval do
+          append_property(:section_child, example('text_input'))
+        end
+      end
+
+      append_property(:tail, example('text_input'))
+    end
+  end
+
   def test_each_sorted_form_with_document
     form = JSF::Forms::FormBuilder.build do
       append_property(:switch_1, example('switch')) do
